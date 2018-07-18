@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2018-07-18T15:13:48+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">A basic I2C controller - part 2</title><link href="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html" rel="alternate" type="text/html" title="A basic I2C controller - part 2" /><published>2018-07-18T00:00:00+02:00</published><updated>2018-07-18T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html">&lt;p&gt;In this post we will integrate our I2C controller simulation with QEMU. If
+you didn’t already know &lt;a href=&quot;https://en.wikipedia.org/wiki/QEMU&quot;&gt;QEMU&lt;/a&gt; is a free and
+open-source emulator that performs hardware virtualization. More specifically
+it will allow us to emulate an ARM system where we can connect our I2C
+controller as a memory mapped device. We are going to pick the ARM
+VersatileExpress development board, that is already emulated by QEMU, and
+modify it by adding our device.&lt;/p&gt;
+
+&lt;h2 id=&quot;get-modify-and-build-qemu&quot;&gt;Get, modify and build QEMU&lt;/h2&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;export $ROOT=some/path
+cd $ROOT
+wget https://download.qemu.org/qemu-2.12.0.tar.xz
+tar xf qemu-2.12.0.tar.xz
+mkdir qemu-build
+cd qemu-build
+../qemu-2.12.0/configure --prefix=$ROOT/qemu-install
+make install -j8
+export PATH=$ROOT/qemu-install/bin:$PATH
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;To register our device we need to add the following line to the
+&lt;em&gt;a9_daughterboard_init&lt;/em&gt; function of &lt;em&gt;qemu-2.12.0/hw/arm/vexpress.c&lt;/em&gt;&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sysbus_create_simple(&quot;axi_master_client_device&quot;, 0x1e00b000, NULL);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;For the actual implementation of our device (in our repository the file
+&lt;em&gt;qemu/axi_master_client_device.c&lt;/em&gt;) I simply sym-linked to it, and remembered to
+update the &lt;em&gt;hw/arm/Makefile.objs&lt;/em&gt; so that it gets built.&lt;/p&gt;
+
+&lt;h2 id=&quot;prepare-the-linux-system&quot;&gt;Prepare the Linux system&lt;/h2&gt;
+&lt;p&gt;Second we are going to go ahead and build a complete little Linux system
+(kernel and busybox file system). While it is strictly not needed for what we
+are trying to achieve in this post it will be convenient to have for testing as
+you will see shortly.&lt;/p&gt;
+
+&lt;p&gt;Before we do anything we need to make sure that we have a usable cross compiler
+for our intended target. I grabbed a pre-built one from
+&lt;a href=&quot;https://releases.linaro.org/components/toolchain/binaries/latest-6/arm-linux-gnueabihf/&quot;&gt;here&lt;/a&gt;.
+Then we need to acquire build the kernel sources&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.17.8.tar.xz
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vexpress_defconfig
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm -j8
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;After that BusyBox&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;wget http://busybox.net/downloads/busybox-1.29.1.tar.bz2
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vdefconfig
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vmenuconfig (enable static link option)
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vinstall
+cd _install
+mkdir proc sys dev etc etc/init.d
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;put the following lines in etc/init.d/rcS&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; proc none /proc
+mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; sysfs none /sys
+/sbin/mdev &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;and finally create the FS image&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;find . -print0 | cpio --null -ov --format=newc   | gzip -9 &amp;gt; ../initramfs.cpio.gz
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Could use status register busy bit as clock request for simulation? Meaning
+that as long as we have clock request the i2c controller keeps running
+regardless if we have something to recv from the socket or not.&lt;/p&gt;
+
+&lt;h2 id=&quot;testing&quot;&gt;Testing&lt;/h2&gt;
+
+&lt;h3 id=&quot;linux-boot&quot;&gt;Linux boot&lt;/h3&gt;
+&lt;p&gt;First let us boot up the Linux system&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;qemu-system-arm -M vexpress-a9 -kernel arch/arm/boot/zImage -dtb ./arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -initrd initramfs.cpio.gz -append &quot;console=ttyAMA0 ignore_loglevel log_buf_len=10M print_fatal_signals=1 LOGLEVEL=8 earlyprintk=vga,keep sched_debug root=/dev/ram rdinit=/sbin/init&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;QEMU has a monitor that can be entered by issuing &lt;strong&gt;ctrl-a c&lt;/strong&gt;. There is also a
+shorthand for the very useful quit command by pressing &lt;strong&gt;ctrl-a x&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;At this point just verify that the Linux system boots up and that you can enter
+the BusyBox shell.&lt;/p&gt;
+
+&lt;h3 id=&quot;the-qemu-and-axi-part&quot;&gt;The QEMU and AXI part&lt;/h3&gt;
+&lt;p&gt;BusyBox has a very convenient utility command called &lt;em&gt;devmem&lt;/em&gt; that allows us to
+access physical memory addresses without the hassle of having to write a kernel
+module at this point (or having to write a custom user space program to fiddle
+with &lt;em&gt;/dev/mem&lt;/em&gt; for that matter sice that is exactly what &lt;em&gt;devmem&lt;/em&gt; is).&lt;/p&gt;
+
+&lt;p&gt;The AXI slave of our I2C controller implements a few dummy registers (they can
+be written and read but serve no other purpose) that we can use to verify our
+system. The three registers are mapped at 0x1e00b000, 0x1e00b004 and
+0x1e00b008.&lt;/p&gt;
+
+&lt;p&gt;First start the RTL simulation with AXI master server&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;vvp -M. -mvpi_axi_master i2c.vvp
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Then start the QEMU system (as described above) and use &lt;em&gt;devmem&lt;/em&gt; to fire away a
+few writes and verify that the values read back are as expected.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;devmem 0x1e00b000 w 0x11112222
+devmem 0x1e00b004 w 0x33334444
+devmem 0x1e00b008 w 0x55556666
+
+devmem 0x1e00b004
+devmem 0x1e00b000
+devmem 0x1e00b008
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Note that we already verified that the I2C controller was working reasonably
+well in the preivous post so we can delay further testing of that until the
+next post where we implement a proper device driver.&lt;/p&gt;
+
+&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
+&lt;p&gt;That concludes todays post.&lt;/p&gt;
+
+&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we will integrate our I2C controller simulation with QEMU. If you didn’t already know QEMU is a free and open-source emulator that performs hardware virtualization. More specifically it will allow us to emulate an ARM system where we can connect our I2C controller as a memory mapped device. We are going to pick the ARM VersatileExpress development board, that is already emulated by QEMU, and modify it by adding our device.</summary></entry><entry><title type="html">A basic I2C controller - part 1</title><link href="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html" rel="alternate" type="text/html" title="A basic I2C controller - part 1" /><published>2018-07-17T00:00:00+02:00</published><updated>2018-07-17T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html">&lt;p&gt;For a recent project I needed to interface the audio codec on a ZedBoard to
+generate a sine wave. The codec had quite an extensive set of registers that
+needed to be configured before it was willing to output any sound at all and
+these registers were of course accessible to the FPGA via the I2C two wire bus
+protocol. Now I2C isn’t all that complicated, and the register writes were only
+needed at startup, so you could get away with a simple software implementation
+using GPIOs. However I thought it would be neater to implement an actual
+controller block in the FPGA and connect that to the AXI bus.&lt;/p&gt;
+
+&lt;p&gt;After some thinking I decided that the AXI interface of my simple I2C
+controller should expose these two registers:&lt;/p&gt;
+
+&lt;h4 id=&quot;control-register&quot;&gt;Control register&lt;/h4&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Field&lt;/th&gt;
+      &lt;th&gt;Bits&lt;/th&gt;
+      &lt;th&gt;Description&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;we&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;Write enable i.e. should we be driving the SDA during the transaction&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;start&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;Generate start condition before&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;stop&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;Generate stop condition after&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;byte&lt;/td&gt;
+      &lt;td&gt;8&lt;/td&gt;
+      &lt;td&gt;Data byte to write (could be address in which case the 8:th bit indicates read or write during following transaction)&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h4 id=&quot;status-and-read-register&quot;&gt;Status (and read) register&lt;/h4&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Field&lt;/th&gt;
+      &lt;th&gt;Bits&lt;/th&gt;
+      &lt;th&gt;Description&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;busy&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;Controller busy with ongoing transaction&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ack&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;Acknowledge status for last transaction&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;byte&lt;/td&gt;
+      &lt;td&gt;8&lt;/td&gt;
+      &lt;td&gt;Data byte read if last transaction was read (we always sample data even if we are driving SDA ourselves)&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;For testing I found this
+&lt;a href=&quot;https://github.com/olofk/i2c/blob/master/bench/verilog/i2c_slave_model.v&quot;&gt;this&lt;/a&gt;
+slave model of a I2C EPROM.&lt;/p&gt;
+
+&lt;p&gt;Now since the interface is AXI writing a testbench for this in verilog seemed
+like a pain and it would be much easier if we could generate the AXI register
+writes (and reads) from plain C code. Luckily it is rather easy to interface
+a Verilog simulator with your favorite programming language (C of
+course) by using VPI (Verilog Procedural Interface).&lt;/p&gt;
+
+&lt;p&gt;Using VPI we connect a callback on value change events for the AXI clock signal
+and from there we can manipulate the remainder of the bus signals. We have a
+simple software driven state machine that, in its idle state, receives commands
+from a socket and, whether it was a read or a write, drives the bus signals
+accordingly.&lt;/p&gt;
+
+&lt;p&gt;Now performing AXI reads and writes in our simulation is a simple matter of
+sending the appropriate command packet over the socket and by so we have
+achieved a reasonable separation between our simulation environment and the bus
+interface to it.&lt;/p&gt;
+
+&lt;p&gt;To try it all out follow the instructions below&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone https://github.com/markus-zzz/i2c-controller
+cd i2c-controller
+./build-all.sh
+./run-all.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;In the next post we try to integrate our socket based model with QEMU and later
+on in a third post we will attempt to write a Linux device driver for the
+EPROM.&lt;/p&gt;</content><author><name></name></author><summary type="html">For a recent project I needed to interface the audio codec on a ZedBoard to generate a sine wave. The codec had quite an extensive set of registers that needed to be configured before it was willing to output any sound at all and these registers were of course accessible to the FPGA via the I2C two wire bus protocol. Now I2C isn’t all that complicated, and the register writes were only needed at startup, so you could get away with a simple software implementation using GPIOs. However I thought it would be neater to implement an actual controller block in the FPGA and connect that to the AXI bus.</summary></entry><entry><title type="html">An LLVM exercise</title><link href="https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html" rel="alternate" type="text/html" title="An LLVM exercise" /><published>2018-07-16T00:00:00+02:00</published><updated>2018-07-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/16/llvm-exercise</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html">&lt;p&gt;Let’s write an LLVM optimization pass to familiarize ourselves with the
+environment. Of course LLVM already does everything even remotely interesting
+so in order to have some non-trivial example (or non-stupid if you will) we are
+going to replace an existing pass. The pass of choice is going to be &lt;em&gt;mem2reg&lt;/em&gt;
+mainly because it is quite central and I happen to have experience implementing
+this very pass in a different compiler framework.&lt;/p&gt;
+
+&lt;h2 id=&quot;background&quot;&gt;Background&lt;/h2&gt;
+&lt;p&gt;One interesting thing about LLVM is the approach to entering SSA-form (i.e.
+satisfying the static single assignment condition by placement of phi-nodes).
+Traditionally this is considered a front end responsibility to place phi-nodes
+but LLVM however takes a different approach. Namely have the front end generate
+loads and stores for each variable access. Note that technically speaking this
+code is already in SSA form (it is just that it is terribly inefficient). Later
+on the pass &lt;em&gt;mem2reg&lt;/em&gt; comes along and optimizes this effectively removing almost
+all memory accesses for these variables.&lt;/p&gt;
+
+&lt;p&gt;This is nice because it makes the front end simple, it can focus on its AST to
+IR translation without additional complexities. On the downside you could argue
+that it makes the compilation process inefficient because you have the front end
+generate a bunch of IR that will almost immediately be optimized away in the
+middle end (and I have witnessed some horrible cases of this). In my opinion
+though that is the name of the game in compiler engineering, to not worrying
+about everything at once but instead have each part do one thing well and have
+an efficient IR and infrastructure that allows for cheap IR updates.&lt;/p&gt;
+
+&lt;h2 id=&quot;prerequisites&quot;&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;To follow along you will need to have an LLVM development environment setup.
+This is all pretty well described
+&lt;a href=&quot;https://llvm.org/docs/GettingStarted.html&quot;&gt;here&lt;/a&gt; but in short this is what I
+did&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;export ROOT=&amp;lt;some path&amp;gt;
+export PATH=$ROOT/install/bin:$PATH
+mkdir -p $ROOT
+mkdir -p $ROOT/build
+mkdir -p $ROOT/install
+cd $ROOT
+wget http://releases.llvm.org/6.0.1/llvm-6.0.1.src.tar.xz
+wget http://releases.llvm.org/6.0.1/cfe-6.0.1.src.tar.xz
+tar xf llvm-6.0.1.src.tar.xz
+cd $ROOT/llvm-6.0.1.src/tools/
+tar xf $ROOT/cfe-6.0.1.src.tar.xz
+cd $ROOT/build
+cmake -G Ninja $ROOT/llvm-6.0.1.src/ -DCMAKE_INSTALL_PREFIX=$ROOT/install -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON -DLLVM_TARGETS_TO_BUILD=&quot;ARM&quot;
+ninja install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;experiment&quot;&gt;Experiment&lt;/h2&gt;
+&lt;p&gt;Let us start by looking at the LLVM IR before and after &lt;em&gt;mem2reg&lt;/em&gt; for the following example&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Invoking the front end and emitting IR without applying any optimizations is as simple as&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;clang -target armv7h -mfloat-abi=hard sum.c -O0 -S -emit-llvm -o sum.ll
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;define arm_aapcs_vfpcc i32 @sum(i32* %data, i32 %len) #0 {
+entry:
+  %data.addr = alloca i32*, align 4
+  %len.addr = alloca i32, align 4
+  %s = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i32* %data, i32** %data.addr, align 4
+  store i32 %len, i32* %len.addr, align 4
+  store i32 0, i32* %s, align 4
+  store i32 0, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %0 = load i32, i32* %i, align 4
+  %1 = load i32, i32* %len.addr, align 4
+  %cmp = icmp slt i32 %0, %1
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %2 = load i32*, i32** %data.addr, align 4
+  %3 = load i32, i32* %i, align 4
+  %arrayidx = getelementptr inbounds i32, i32* %2, i32 %3
+  %4 = load i32, i32* %arrayidx, align 4
+  %5 = load i32, i32* %s, align 4
+  %add = add nsw i32 %5, %4
+  store i32 %add, i32* %s, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %6 = load i32, i32* %i, align 4
+  %inc = add nsw i32 %6, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %7 = load i32, i32* %s, align 4
+  ret i32 %7
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Then running the standard &lt;em&gt;mem2reg&lt;/em&gt; pass on this IR&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;opt -passes mem2reg -S sum.ll -o sum-mem2reg.ll
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;define arm_aapcs_vfpcc i32 @sum(i32* %data, i32 %len) #0 {
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %s.0 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
+  %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
+  %cmp = icmp slt i32 %i.0, %len
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %arrayidx = getelementptr inbounds i32, i32* %data, i32 %i.0
+  %0 = load i32, i32* %arrayidx, align 4
+  %add = add nsw i32 %s.0, %0
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %inc = add nsw i32 %i.0, 1
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  ret i32 %s.0
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;As can be seen the effects of the &lt;em&gt;mem2reg&lt;/em&gt; pass are rather dramatic. Gone are the
+inefficient variable &lt;em&gt;loads&lt;/em&gt;, &lt;em&gt;stores&lt;/em&gt; and &lt;em&gt;alloca&lt;/em&gt; instructions.&lt;/p&gt;
+
+&lt;h2 id=&quot;implement-our-own&quot;&gt;Implement our own&lt;/h2&gt;
+&lt;p&gt;Now let’s implement our own &lt;em&gt;mem2reg&lt;/em&gt; pass (and call it &lt;em&gt;ourmem2reg&lt;/em&gt;) and see if we
+can achieve similar results. The algoritm we will use will be the classical one
+by Cytron et al. and the interested reader can find all the details in [1].&lt;/p&gt;
+
+&lt;p&gt;The basics of writing an LLVM pass are described
+&lt;a href=&quot;http://llvm.org/docs/WritingAnLLVMPass.html&quot;&gt;here&lt;/a&gt;. Pay special attention to
+the section about setting up the build environment to build the pass as a
+loadable module. Doing so will save a lot of pain.&lt;/p&gt;
+
+&lt;p&gt;I went ahead and wrote &lt;a href=&quot;https://www.zzzconsulting.se/download/OurMem2Reg.cpp&quot;&gt;OurMem2Reg.cpp&lt;/a&gt;
+and will now try to describe its contents in some detail.&lt;/p&gt;
+
+&lt;h3 id=&quot;linkdefsandusestovar&quot;&gt;linkDefsAndUsesToVar&lt;/h3&gt;
+&lt;p&gt;Given a variable (i.e. an alloca) we need to find the definitions and uses of
+this variable. This corresponds to finding the store and load instructions that
+use the alloca as an address. We also need to make sure that these are the only
+uses of the alloca i.e. the address does not escape and allow for potential
+modifictaion else where.&lt;/p&gt;
+
+&lt;h3 id=&quot;renamerecursive&quot;&gt;renameRecursive&lt;/h3&gt;
+&lt;p&gt;Here we walk the dominator tree and perform a pre-order action and a post-order action.&lt;/p&gt;
+&lt;h4 id=&quot;pre-order-action&quot;&gt;Pre-order action&lt;/h4&gt;
+&lt;p&gt;Scan for def and use instructions in the block and maintain a definition stack
+for each variable. A use (i.e. a load instruction) get replaced by the value on
+top of the definition stack and a def (store instruction) pushes the value
+stored onto the stack.&lt;/p&gt;
+&lt;h4 id=&quot;post-order-action&quot;&gt;Post-order action&lt;/h4&gt;
+&lt;p&gt;For the post-order action we need to pop the definitions put on the stack once
+we are done at a level in the dominator tree and about to move up. Obviously
+once we are done with a block and all the blocks that are dominated by it we
+need to remove the variable definitions that came from that block since they
+are no longer valid.&lt;/p&gt;
+
+&lt;h3 id=&quot;runonfunction&quot;&gt;runOnFunction&lt;/h3&gt;
+&lt;p&gt;The driver of the pass&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Look for &lt;em&gt;alloca&lt;/em&gt; instructions (and according to LLVM conventions they are
+all located in the entry block of the function) and call
+&lt;em&gt;linkDefsAndUsesToVar&lt;/em&gt; on them to gather information.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;In the previous step we took note of in which blocks there were definitions
+of the variable. Now we need to insert phi-nodes in the dominance frontier
+of these blocks (and keeping in mind that when we a insert a phi-node that acts
+as a new definition so we need to insert a phi-node in the dominance frontier
+of that block as well). In other words we need to insert phi-nodes in the
+iterated dominance frontier of the original definition blocks.  Luckily LLVM
+has a new fancy framework for computing the iterated dominance frontier set
+from a set of definition blocks so we simply use that (if we were to compute it
+ourselves I would recommend the method described in [2]).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Now we enter the actual work horse of the algorithm - the renaming phase.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The only thing that is left to do now is to remove the trash left behind,
+i.e. removing now useless load, store and alloca instructions.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;getanalysisusage&quot;&gt;getAnalysisUsage&lt;/h3&gt;
+&lt;p&gt;Simply informing the pass manager that we need a valid dominator tree and that
+we are not going to make changes to the CFG.&lt;/p&gt;
+
+&lt;h2 id=&quot;evaluate&quot;&gt;Evaluate&lt;/h2&gt;
+&lt;p&gt;Running the optimizer with our pass loaded as a module&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;opt -load $ROOT/build/lib/LLVMOurMem2Reg.so -ourmem2reg -S sum.ll -o sum-ourmem2reg.ll
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;giving us the following result which looks rather identical to what we get with
+the stock &lt;em&gt;mem2reg&lt;/em&gt; pass&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;define arm_aapcs_vfpcc i32 @sum(i32* %data, i32 %len) #0 {
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
+  %1 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
+  %cmp = icmp slt i32 %0, %len
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %arrayidx = getelementptr inbounds i32, i32* %data, i32 %0
+  %2 = load i32, i32* %arrayidx, align 4
+  %add = add nsw i32 %1, %2
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %inc = add nsw i32 %0, 1
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  ret i32 %1
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
+&lt;p&gt;So what have we touched in this exercise?&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Traversing the CFG&lt;/li&gt;
+  &lt;li&gt;Traversing the SSA graph (looking for uses of an instruction)&lt;/li&gt;
+  &lt;li&gt;Requesting a dominator tree and traversing it&lt;/li&gt;
+  &lt;li&gt;Using the iterated dominance frontier machinery&lt;/li&gt;
+  &lt;li&gt;Replacing instructions&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Finally I make no claim that the pass implemented is 100% correct and there are
+surely corner cases that would need to be handled for a proper implementation.
+That however was not the purpose of this post but rather to provide an exercise
+to familiarize oneself with the LLVM API using a somewhat real example doing
+something useful.&lt;/p&gt;
+
+&lt;p&gt;In fact there is one issue if a variable is used before it is defined (e.g. not
+initializing the summation variable in the example above) will result in a
+compiler crash. Of course using a variable before it is defined is hardly good
+practice but the pass should still handle it correctly. Fixing this is left as
+an exercise for the reader but it is simply a matter of inserting a undef
+instruction if we encounter a use while the definition stack is empty.&lt;/p&gt;
+
+&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;p&gt;[1] Ron Cytron, Jeanne Ferrante, Barry K. Rosen, Mark N. Wegman, and F. Kenneth
+Zadeck. 1991. Efficiently computing static single assignment form and the
+control dependence graph. ACM Trans. Program. Lang. Syst. 13, 4 (October 1991),
+451-490. DOI=http://dx.doi.org/10.1145/115372.115320&lt;/p&gt;
+
+&lt;p&gt;[2] Cooper, Keith &amp;amp; Harvey, Timothy &amp;amp; Kennedy, Ken. (2006). A Simple, Fast
+Dominance Algorithm. Rice University, CS Technical Report 06-33870.&lt;/p&gt;</content><author><name></name></author><summary type="html">Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example (or non-stupid if you will) we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework.</summary></entry></feed>

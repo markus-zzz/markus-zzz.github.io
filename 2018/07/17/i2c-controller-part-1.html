@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>A basic I2C controller - part 1 | ZZZ-Consulting</title>
+<meta name="generator" content="Jekyll v3.8.3" />
+<meta property="og:title" content="A basic I2C controller - part 1" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="For a recent project I needed to interface the audio codec on a ZedBoard to generate a sine wave. The codec had quite an extensive set of registers that needed to be configured before it was willing to output any sound at all and these registers were of course accessible to the FPGA via the I2C two wire bus protocol. Now I2C isn’t all that complicated, and the register writes were only needed at startup, so you could get away with a simple software implementation using GPIOs. However I thought it would be neater to implement an actual controller block in the FPGA and connect that to the AXI bus." />
+<meta property="og:description" content="For a recent project I needed to interface the audio codec on a ZedBoard to generate a sine wave. The codec had quite an extensive set of registers that needed to be configured before it was willing to output any sound at all and these registers were of course accessible to the FPGA via the I2C two wire bus protocol. Now I2C isn’t all that complicated, and the register writes were only needed at startup, so you could get away with a simple software implementation using GPIOs. However I thought it would be neater to implement an actual controller block in the FPGA and connect that to the AXI bus." />
+<link rel="canonical" href="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html" />
+<meta property="og:url" content="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html" />
+<meta property="og:site_name" content="ZZZ-Consulting" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-07-17T00:00:00+02:00" />
+<script type="application/ld+json">
+{"description":"For a recent project I needed to interface the audio codec on a ZedBoard to generate a sine wave. The codec had quite an extensive set of registers that needed to be configured before it was willing to output any sound at all and these registers were of course accessible to the FPGA via the I2C two wire bus protocol. Now I2C isn’t all that complicated, and the register writes were only needed at startup, so you could get away with a simple software implementation using GPIOs. However I thought it would be neater to implement an actual controller block in the FPGA and connect that to the AXI bus.","@type":"BlogPosting","url":"https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html","headline":"A basic I2C controller - part 1","dateModified":"2018-07-17T00:00:00+02:00","datePublished":"2018-07-17T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">A basic I2C controller - part 1</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-07-17T00:00:00+02:00" itemprop="datePublished">Jul 17, 2018
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>For a recent project I needed to interface the audio codec on a ZedBoard to
+generate a sine wave. The codec had quite an extensive set of registers that
+needed to be configured before it was willing to output any sound at all and
+these registers were of course accessible to the FPGA via the I2C two wire bus
+protocol. Now I2C isn’t all that complicated, and the register writes were only
+needed at startup, so you could get away with a simple software implementation
+using GPIOs. However I thought it would be neater to implement an actual
+controller block in the FPGA and connect that to the AXI bus.</p>
+
+<p>After some thinking I decided that the AXI interface of my simple I2C
+controller should expose these two registers:</p>
+
+<h4 id="control-register">Control register</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Bits</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>we</td>
+      <td>1</td>
+      <td>Write enable i.e. should we be driving the SDA during the transaction</td>
+    </tr>
+    <tr>
+      <td>start</td>
+      <td>1</td>
+      <td>Generate start condition before</td>
+    </tr>
+    <tr>
+      <td>stop</td>
+      <td>1</td>
+      <td>Generate stop condition after</td>
+    </tr>
+    <tr>
+      <td>byte</td>
+      <td>8</td>
+      <td>Data byte to write (could be address in which case the 8:th bit indicates read or write during following transaction)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="status-and-read-register">Status (and read) register</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Bits</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>busy</td>
+      <td>1</td>
+      <td>Controller busy with ongoing transaction</td>
+    </tr>
+    <tr>
+      <td>ack</td>
+      <td>1</td>
+      <td>Acknowledge status for last transaction</td>
+    </tr>
+    <tr>
+      <td>byte</td>
+      <td>8</td>
+      <td>Data byte read if last transaction was read (we always sample data even if we are driving SDA ourselves)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For testing I found this
+<a href="https://github.com/olofk/i2c/blob/master/bench/verilog/i2c_slave_model.v">this</a>
+slave model of a I2C EPROM.</p>
+
+<p>Now since the interface is AXI writing a testbench for this in verilog seemed
+like a pain and it would be much easier if we could generate the AXI register
+writes (and reads) from plain C code. Luckily it is rather easy to interface
+a Verilog simulator with your favorite programming language (C of
+course) by using VPI (Verilog Procedural Interface).</p>
+
+<p>Using VPI we connect a callback on value change events for the AXI clock signal
+and from there we can manipulate the remainder of the bus signals. We have a
+simple software driven state machine that, in its idle state, receives commands
+from a socket and, whether it was a read or a write, drives the bus signals
+accordingly.</p>
+
+<p>Now performing AXI reads and writes in our simulation is a simple matter of
+sending the appropriate command packet over the socket and by so we have
+achieved a reasonable separation between our simulation environment and the bus
+interface to it.</p>
+
+<p>To try it all out follow the instructions below</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/markus-zzz/i2c-controller
+cd i2c-controller
+./build-all.sh
+./run-all.sh
+</code></pre></div></div>
+
+<p>In the next post we try to integrate our socket based model with QEMU and later
+on in a third post we will attempt to write a Linux device driver for the
+EPROM.</p>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html';
+      this.page.identifier = 'https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2018/07/17/i2c-controller-part-1.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ZZZ-Consulting</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ZZZ-Consulting</li><li><a class="u-email" href="mailto:info@zzzconsulting.se">info@zzzconsulting.se</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/markus-zzz"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">markus-zzz</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
