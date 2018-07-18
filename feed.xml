@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2018-07-18T15:13:48+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">A basic I2C controller - part 2</title><link href="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html" rel="alternate" type="text/html" title="A basic I2C controller - part 2" /><published>2018-07-18T00:00:00+02:00</published><updated>2018-07-18T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html">&lt;p&gt;In this post we will integrate our I2C controller simulation with QEMU. If
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2018-07-18T20:58:54+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">A basic I2C controller - part 2</title><link href="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html" rel="alternate" type="text/html" title="A basic I2C controller - part 2" /><published>2018-07-18T00:00:00+02:00</published><updated>2018-07-18T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html">&lt;p&gt;In this post we will integrate our I2C controller simulation with QEMU. If
 you didn’t already know &lt;a href=&quot;https://en.wikipedia.org/wiki/QEMU&quot;&gt;QEMU&lt;/a&gt; is a free and
 open-source emulator that performs hardware virtualization. More specifically
 it will allow us to emulate an ARM system where we can connect our I2C
@@ -22,9 +22,13 @@ export PATH=$ROOT/qemu-install/bin:$PATH
 &lt;em&gt;a9_daughterboard_init&lt;/em&gt; function of &lt;em&gt;qemu-2.12.0/hw/arm/vexpress.c&lt;/em&gt;&lt;/p&gt;
 &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sysbus_create_simple(&quot;axi_master_client_device&quot;, 0x1e00b000, NULL);
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;For the actual implementation of our device (in our repository the file
-&lt;em&gt;qemu/axi_master_client_device.c&lt;/em&gt;) I simply sym-linked to it, and remembered to
-update the &lt;em&gt;hw/arm/Makefile.objs&lt;/em&gt; so that it gets built.&lt;/p&gt;
+&lt;p&gt;For the actual implementation of our device
+(&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/qemu/axi_master_client_device.c&quot;&gt;axi_master_client_device.c&lt;/a&gt;)
+I simply sym-linked to it, and remembered to update the &lt;em&gt;hw/arm/Makefile.objs&lt;/em&gt;
+so that it gets built. As can be seen adding a memory mapped device to an ARM
+based QEMU system turned out to be rather straight forward and all we really
+needed to do was to implement one hook for memory reads and one hook for memory
+writes to our region.&lt;/p&gt;
 
 &lt;h2 id=&quot;prepare-the-linux-system&quot;&gt;Prepare the Linux system&lt;/h2&gt;
 &lt;p&gt;Second we are going to go ahead and build a complete little Linux system
@@ -35,7 +39,7 @@ you will see shortly.&lt;/p&gt;
 &lt;p&gt;Before we do anything we need to make sure that we have a usable cross compiler
 for our intended target. I grabbed a pre-built one from
 &lt;a href=&quot;https://releases.linaro.org/components/toolchain/binaries/latest-6/arm-linux-gnueabihf/&quot;&gt;here&lt;/a&gt;.
-Then we need to acquire build the kernel sources&lt;/p&gt;
+Then we need to acquire and build the kernel sources&lt;/p&gt;
 &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.17.8.tar.xz
 make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vexpress_defconfig
 make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm -j8
@@ -54,7 +58,7 @@ mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; proc none /proc
 mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; sysfs none /sys
 /sbin/mdev &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;and finally create the FS image&lt;/p&gt;
+&lt;p&gt;and finally create the file system image&lt;/p&gt;
 &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;find . -print0 | cpio --null -ov --format=newc   | gzip -9 &amp;gt; ../initramfs.cpio.gz
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;p&gt;Could use status register busy bit as clock request for simulation? Meaning
@@ -103,7 +107,8 @@ well in the preivous post so we can delay further testing of that until the
 next post where we implement a proper device driver.&lt;/p&gt;
 
 &lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
-&lt;p&gt;That concludes todays post.&lt;/p&gt;
+&lt;p&gt;That concludes todays post. As always the interesting details are in the code
+so be sure to look at it.&lt;/p&gt;
 
 &lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we will integrate our I2C controller simulation with QEMU. If you didn’t already know QEMU is a free and open-source emulator that performs hardware virtualization. More specifically it will allow us to emulate an ARM system where we can connect our I2C controller as a memory mapped device. We are going to pick the ARM VersatileExpress development board, that is already emulated by QEMU, and modify it by adding our device.</summary></entry><entry><title type="html">A basic I2C controller - part 1</title><link href="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html" rel="alternate" type="text/html" title="A basic I2C controller - part 1" /><published>2018-07-17T00:00:00+02:00</published><updated>2018-07-17T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html">&lt;p&gt;For a recent project I needed to interface the audio codec on a ZedBoard to
 generate a sine wave. The codec had quite an extensive set of registers that
@@ -200,6 +205,30 @@ accordingly.&lt;/p&gt;
 sending the appropriate command packet over the socket and by so we have
 achieved a reasonable separation between our simulation environment and the bus
 interface to it.&lt;/p&gt;
+
+&lt;p&gt;The attentive reader might realise that the approach of having the RTL
+simulator block on a socket inside the value change callback for the AXI clock
+will effectively block the simulation unless it is constantly being fed with
+command packets over the socket. As a lucky coincidence this stream of socket
+commands is exactly what happens in the test suite used in this post as it
+constantly busy waits after each write to the control register.&lt;/p&gt;
+
+&lt;p&gt;Later on though when we use QEMU and a proper interrupt driven device driver
+this will present a problem so we might as well try to solve it now. On the
+opposite side of blocking we could do the receive in non-blocking mode and
+effectively have the RTL simulation running at full speed all the time. While
+this would be functionally correct it is somewhat undesirable since it would be
+a huge wast of simulation cycles (and possibly producing some huge dump.vcd
+files).&lt;/p&gt;
+
+&lt;p&gt;A better approach is to do a bit of both with the concept of a clock request
+signal from the block (we can use the busy bit of the status register for this
+purpose). While the block is busy it needs a clock to finish (and become ready)
+and in this state we use a non-blocking receive. On the other hand when the
+block is ready it is safe to fall back on blocking receives as there is no work
+to do until we get a command from the AXI.&lt;/p&gt;
+
+&lt;p&gt;The code for this post series is found &lt;a href=&quot;https://github.com/markus-zzz/i2c-controller&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
 
 &lt;p&gt;To try it all out follow the instructions below&lt;/p&gt;
 &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone https://github.com/markus-zzz/i2c-controller

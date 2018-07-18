@@ -17,7 +17,19 @@
 <script type="application/ld+json">
 {"description":"For a recent project I needed to interface the audio codec on a ZedBoard to generate a sine wave. The codec had quite an extensive set of registers that needed to be configured before it was willing to output any sound at all and these registers were of course accessible to the FPGA via the I2C two wire bus protocol. Now I2C isn’t all that complicated, and the register writes were only needed at startup, so you could get away with a simple software implementation using GPIOs. However I thought it would be neater to implement an actual controller block in the FPGA and connect that to the AXI bus.","@type":"BlogPosting","url":"https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html","headline":"A basic I2C controller - part 1","dateModified":"2018-07-17T00:00:00+02:00","datePublished":"2018-07-17T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html"},"@context":"http://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /></head>
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-122494618-1', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+</head>
 <body><header class="site-header" role="banner">
 
   <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
@@ -140,6 +152,30 @@ accordingly.</p>
 sending the appropriate command packet over the socket and by so we have
 achieved a reasonable separation between our simulation environment and the bus
 interface to it.</p>
+
+<p>The attentive reader might realise that the approach of having the RTL
+simulator block on a socket inside the value change callback for the AXI clock
+will effectively block the simulation unless it is constantly being fed with
+command packets over the socket. As a lucky coincidence this stream of socket
+commands is exactly what happens in the test suite used in this post as it
+constantly busy waits after each write to the control register.</p>
+
+<p>Later on though when we use QEMU and a proper interrupt driven device driver
+this will present a problem so we might as well try to solve it now. On the
+opposite side of blocking we could do the receive in non-blocking mode and
+effectively have the RTL simulation running at full speed all the time. While
+this would be functionally correct it is somewhat undesirable since it would be
+a huge wast of simulation cycles (and possibly producing some huge dump.vcd
+files).</p>
+
+<p>A better approach is to do a bit of both with the concept of a clock request
+signal from the block (we can use the busy bit of the status register for this
+purpose). While the block is busy it needs a clock to finish (and become ready)
+and in this state we use a non-blocking receive. On the other hand when the
+block is ready it is safe to fall back on blocking receives as there is no work
+to do until we get a command from the AXI.</p>
+
+<p>The code for this post series is found <a href="https://github.com/markus-zzz/i2c-controller">here</a>.</p>
 
 <p>To try it all out follow the instructions below</p>
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/markus-zzz/i2c-controller
