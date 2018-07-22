@@ -1,4 +1,84 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2018-07-18T20:58:54+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">A basic I2C controller - part 2</title><link href="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html" rel="alternate" type="text/html" title="A basic I2C controller - part 2" /><published>2018-07-18T00:00:00+02:00</published><updated>2018-07-18T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html">&lt;p&gt;In this post we will integrate our I2C controller simulation with QEMU. If
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2018-07-22T14:52:51+02:00</updated><id>http://localhost:4000/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">A basic I2C controller - part 3</title><link href="http://localhost:4000/2018/07/19/i2c-controller-part-3.html" rel="alternate" type="text/html" title="A basic I2C controller - part 3" /><published>2018-07-19T00:00:00+02:00</published><updated>2018-07-19T00:00:00+02:00</updated><id>http://localhost:4000/2018/07/19/i2c-controller-part-3</id><content type="html" xml:base="http://localhost:4000/2018/07/19/i2c-controller-part-3.html">&lt;p&gt;In today’s post we will start writing a Linux device driver for our simulated
+I2C EPROM. It will be a simple character device that shows up as &lt;em&gt;/dev/zzz-i2c-eprom&lt;/em&gt;
+and allows data to be read and written as in&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;echo &quot;Hello EPROM!&quot; &amp;gt; /dev/zzz-i2c-eprom
+cat /dev/zzz-i2c-eprom
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h2 id=&quot;interrupts&quot;&gt;Interrupts&lt;/h2&gt;
+&lt;p&gt;Since I2C is slow and we do not want to busy-wait on the status register inside
+the driver (we actually could if we kept calling &lt;em&gt;schedule()&lt;/em&gt; but lets try to
+do it properly) we need to generate a interrupt from the block once the busy
+status de-asserts.&lt;/p&gt;
+
+&lt;p&gt;Generating asynchronous signals from the block poses a problem for our current
+socket based simulation system as it is totally synchronous and everything is
+initiated from the QEMU side.&lt;/p&gt;
+
+&lt;p&gt;To deal with the asynchronous nature of interrupts we are going to introduce a
+second socket on which the VPI code can post interrupt requests. In our QEMU
+device we will create a thread that blocks on a receive on this socket and once
+a IRQ arrives it will acquire the &lt;em&gt;Big QEMU Lock&lt;/em&gt; and pass the IRQ on to the
+QEMU internals.&lt;/p&gt;
+
+&lt;h2 id=&quot;problems&quot;&gt;Problems&lt;/h2&gt;
+&lt;p&gt;Unfortunately it turns out that getting an interrupt mapped through Linux in
+modern days is a bit more difficult than I expected. Seemingly to get this
+machinery to play along nicely with us we will have to do it the real proper
+way using the &lt;em&gt;platform device&lt;/em&gt; framework and adding &lt;em&gt;device tree (DTS)&lt;/em&gt;
+entries. Doing so will quite frankly require a bit of read up from my side so
+we will postpone that to the next post in this series. For now let’s just do it
+the busy-wait way and verify that everything works.&lt;/p&gt;
+
+&lt;h2 id=&quot;implementation&quot;&gt;Implementation&lt;/h2&gt;
+&lt;p&gt;Now that we got that out of the way let’s get started with our device driver.
+We are going to implement it as an out-of-tree kernel module as it simplifies
+building.&lt;/p&gt;
+
+&lt;p&gt;The code for the non-interrupt driven device driver can be found in
+&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/linux/i2c-eprom-driver.c&quot;&gt;linux/i2c-eprom-driver.c&lt;/a&gt;.
+Notice that we are reusing a lot of code from
+&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/axi_master_client.c&quot;&gt;axi_master_client.c&lt;/a&gt;
+from the first post.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT/i2c-controller/linux
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm -C $ZZZ_ROOT/linux M=${PWD} modules
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;After building the driver be sure to remember to copy the resulting
+&lt;em&gt;i2c-eprom-driver.ko&lt;/em&gt; to the BusyBox file system and rebuild the image&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cp $ZZZ_ROOT/i2c-controller/linux/i2c-eprom-driver.ko $ZZZ_ROOT/busybox/_install/
+pushd $ZZZ_ROOT/busybox/_install
+find . -print0 | cpio --null -ov --format=newc | gzip -9 &amp;gt; $ZZZ_ROOT/initramfs.cpio.gz
+popd
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;testing&quot;&gt;Testing&lt;/h2&gt;
+&lt;p&gt;Once built and moved to the BusyBox filesystem the module installs as follows
+into our running Linux system&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;insmod i2c-eprom-driver.ko
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Since we already setup the BusyBox hotplug daemon &lt;em&gt;mdev&lt;/em&gt; in the previous post
+the device file &lt;em&gt;/dev/zzz-i2c-eprom&lt;/em&gt; should automatically appear in the file
+system once the module is installed.&lt;/p&gt;
+
+&lt;p&gt;Now we can finally try out the full system! Let’s start by clearing the memory
+with zeros, then write some string into it and verify that it reads back.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;dd if=/dev/zero of=/dev/zzz-i2c-eprom count=16 bs=1
+echo &quot;Hello world!!!&quot; &amp;gt; /dev/zzz-i2c-eprom
+cat /dev/zzz-i2c-eprom
+echo -n &quot;J&quot; &amp;gt; /dev/zzz-i2c-eprom
+cat /dev/zzz-i2c-eprom
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
+&lt;p&gt;And there we have it, a complete simulation chain from custom RTL to a Linux
+device driver. In my opinion this is pretty cool and the best thing of all is
+that it does not use any pesky proprietary software or vendor branches.&lt;/p&gt;
+
+&lt;p&gt;In the next post we will be looking at the interrupt mapping and improving the
+device driver.&lt;/p&gt;
+
+&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In today’s post we will start writing a Linux device driver for our simulated I2C EPROM. It will be a simple character device that shows up as /dev/zzz-i2c-eprom and allows data to be read and written as in</summary></entry><entry><title type="html">A basic I2C controller - part 2</title><link href="http://localhost:4000/2018/07/18/i2c-controller-part-2.html" rel="alternate" type="text/html" title="A basic I2C controller - part 2" /><published>2018-07-18T00:00:00+02:00</published><updated>2018-07-18T00:00:00+02:00</updated><id>http://localhost:4000/2018/07/18/i2c-controller-part-2</id><content type="html" xml:base="http://localhost:4000/2018/07/18/i2c-controller-part-2.html">&lt;p&gt;In this post we will integrate our I2C controller simulation with QEMU. If
 you didn’t already know &lt;a href=&quot;https://en.wikipedia.org/wiki/QEMU&quot;&gt;QEMU&lt;/a&gt; is a free and
 open-source emulator that performs hardware virtualization. More specifically
 it will allow us to emulate an ARM system where we can connect our I2C
@@ -7,15 +87,14 @@ VersatileExpress development board, that is already emulated by QEMU, and
 modify it by adding our device.&lt;/p&gt;
 
 &lt;h2 id=&quot;get-modify-and-build-qemu&quot;&gt;Get, modify and build QEMU&lt;/h2&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;export $ROOT=some/path
-cd $ROOT
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT
 wget https://download.qemu.org/qemu-2.12.0.tar.xz
 tar xf qemu-2.12.0.tar.xz
 mkdir qemu-build
-cd qemu-build
-../qemu-2.12.0/configure --prefix=$ROOT/qemu-install
+cd $ZZZ_ROOT/qemu-build
+../qemu-2.12.0/configure --prefix=$ZZZ_ROOT/qemu-install
 make install -j8
-export PATH=$ROOT/qemu-install/bin:$PATH
+export PATH=$ZZZ_ROOT/qemu-install/bin:$PATH
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;p&gt;To register our device we need to add the following line to the
@@ -23,7 +102,7 @@ export PATH=$ROOT/qemu-install/bin:$PATH
 &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sysbus_create_simple(&quot;axi_master_client_device&quot;, 0x1e00b000, NULL);
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;p&gt;For the actual implementation of our device
-(&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/qemu/axi_master_client_device.c&quot;&gt;axi_master_client_device.c&lt;/a&gt;)
+(&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/qemu/axi_master_client_device.c&quot;&gt;qemu/axi_master_client_device.c&lt;/a&gt;)
 I simply sym-linked to it, and remembered to update the &lt;em&gt;hw/arm/Makefile.objs&lt;/em&gt;
 so that it gets built. As can be seen adding a memory mapped device to an ARM
 based QEMU system turned out to be rather straight forward and all we really
@@ -40,15 +119,23 @@ you will see shortly.&lt;/p&gt;
 for our intended target. I grabbed a pre-built one from
 &lt;a href=&quot;https://releases.linaro.org/components/toolchain/binaries/latest-6/arm-linux-gnueabihf/&quot;&gt;here&lt;/a&gt;.
 Then we need to acquire and build the kernel sources&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.17.8.tar.xz
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT
+wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.17.8.tar.xz
+tar xf linux-4.17.8.tar.xz
+ln -s linux-4.17.8 linux
+cd $ZZZ_ROOT/linux
 make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vexpress_defconfig
 make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm -j8
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;p&gt;After that BusyBox&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;wget http://busybox.net/downloads/busybox-1.29.1.tar.bz2
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vdefconfig
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vmenuconfig (enable static link option)
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vinstall
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT
+wget http://busybox.net/downloads/busybox-1.29.1.tar.bz2
+tar xf busybox-1.29.1.tar.bz2
+ln -s busybox-1.29.1 busybox
+cd $ZZZ_ROOT/busybox
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm defconfig
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm menuconfig (enable static link option)
+make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm -j8 install
 cd _install
 mkdir proc sys dev etc etc/init.d
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
@@ -56,20 +143,24 @@ mkdir proc sys dev etc etc/init.d
 &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
 mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; proc none /proc
 mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; sysfs none /sys
+mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; debugfs none /sys/kernel/debug/
+&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; /sbin/mdev &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; /proc/sys/kernel/hotplug
 /sbin/mdev &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;and finally create the file system image&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;find . -print0 | cpio --null -ov --format=newc   | gzip -9 &amp;gt; ../initramfs.cpio.gz
+&lt;p&gt;and make it executable&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;chmod +x etc/init.d/rcS
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Could use status register busy bit as clock request for simulation? Meaning
-that as long as we have clock request the i2c controller keeps running
-regardless if we have something to recv from the socket or not.&lt;/p&gt;
+&lt;p&gt;now finally create the file system image&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;pushd $ZZZ_ROOT/busybox/_install
+find . -print0 | cpio --null -ov --format=newc | gzip -9 &amp;gt; $ZZZ_ROOT/initramfs.cpio.gz
+popd
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;h2 id=&quot;testing&quot;&gt;Testing&lt;/h2&gt;
 
 &lt;h3 id=&quot;linux-boot&quot;&gt;Linux boot&lt;/h3&gt;
 &lt;p&gt;First let us boot up the Linux system&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;qemu-system-arm -M vexpress-a9 -kernel arch/arm/boot/zImage -dtb ./arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -initrd initramfs.cpio.gz -append &quot;console=ttyAMA0 ignore_loglevel log_buf_len=10M print_fatal_signals=1 LOGLEVEL=8 earlyprintk=vga,keep sched_debug root=/dev/ram rdinit=/sbin/init&quot;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;qemu-system-arm -M vexpress-a9 -kernel $ZZZ_ROOT/linux/arch/arm/boot/zImage -dtb $ZZZ_ROOT/linux/arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -initrd $ZZZ_ROOT/initramfs.cpio.gz -append &quot;console=ttyAMA0 ignore_loglevel log_buf_len=10M print_fatal_signals=1 LOGLEVEL=8 earlyprintk=vga,keep sched_debug root=/dev/ram rdinit=/sbin/init&quot;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;p&gt;QEMU has a monitor that can be entered by issuing &lt;strong&gt;ctrl-a c&lt;/strong&gt;. There is also a
 shorthand for the very useful quit command by pressing &lt;strong&gt;ctrl-a x&lt;/strong&gt;.&lt;/p&gt;
@@ -80,8 +171,8 @@ the BusyBox shell.&lt;/p&gt;
 &lt;h3 id=&quot;the-qemu-and-axi-part&quot;&gt;The QEMU and AXI part&lt;/h3&gt;
 &lt;p&gt;BusyBox has a very convenient utility command called &lt;em&gt;devmem&lt;/em&gt; that allows us to
 access physical memory addresses without the hassle of having to write a kernel
-module at this point (or having to write a custom user space program to fiddle
-with &lt;em&gt;/dev/mem&lt;/em&gt; for that matter sice that is exactly what &lt;em&gt;devmem&lt;/em&gt; is).&lt;/p&gt;
+module at this point, or having to write a custom user space program to fiddle
+with &lt;em&gt;/dev/mem&lt;/em&gt; for that matter (since that is exactly what &lt;em&gt;devmem&lt;/em&gt; does).&lt;/p&gt;
 
 &lt;p&gt;The AXI slave of our I2C controller implements a few dummy registers (they can
 be written and read but serve no other purpose) that we can use to verify our
@@ -103,24 +194,63 @@ devmem 0x1e00b000
 devmem 0x1e00b008
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;p&gt;Note that we already verified that the I2C controller was working reasonably
-well in the preivous post so we can delay further testing of that until the
+well in the previous post so we can delay further testing of that until the
 next post where we implement a proper device driver.&lt;/p&gt;
 
 &lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
-&lt;p&gt;That concludes todays post. As always the interesting details are in the code
-so be sure to look at it.&lt;/p&gt;
+&lt;p&gt;That concludes today’s post. As always the interesting details are in the code
+so be sure to check it out.&lt;/p&gt;
 
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we will integrate our I2C controller simulation with QEMU. If you didn’t already know QEMU is a free and open-source emulator that performs hardware virtualization. More specifically it will allow us to emulate an ARM system where we can connect our I2C controller as a memory mapped device. We are going to pick the ARM VersatileExpress development board, that is already emulated by QEMU, and modify it by adding our device.</summary></entry><entry><title type="html">A basic I2C controller - part 1</title><link href="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html" rel="alternate" type="text/html" title="A basic I2C controller - part 1" /><published>2018-07-17T00:00:00+02:00</published><updated>2018-07-17T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html">&lt;p&gt;For a recent project I needed to interface the audio codec on a ZedBoard to
-generate a sine wave. The codec had quite an extensive set of registers that
-needed to be configured before it was willing to output any sound at all and
-these registers were of course accessible to the FPGA via the I2C two wire bus
-protocol. Now I2C isn’t all that complicated, and the register writes were only
-needed at startup, so you could get away with a simple software implementation
-using GPIOs. However I thought it would be neater to implement an actual
-controller block in the FPGA and connect that to the AXI bus.&lt;/p&gt;
+&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we will integrate our I2C controller simulation with QEMU. If you didn’t already know QEMU is a free and open-source emulator that performs hardware virtualization. More specifically it will allow us to emulate an ARM system where we can connect our I2C controller as a memory mapped device. We are going to pick the ARM VersatileExpress development board, that is already emulated by QEMU, and modify it by adding our device.</summary></entry><entry><title type="html">A basic I2C controller - part 1</title><link href="http://localhost:4000/2018/07/17/i2c-controller-part-1.html" rel="alternate" type="text/html" title="A basic I2C controller - part 1" /><published>2018-07-17T00:00:00+02:00</published><updated>2018-07-17T00:00:00+02:00</updated><id>http://localhost:4000/2018/07/17/i2c-controller-part-1</id><content type="html" xml:base="http://localhost:4000/2018/07/17/i2c-controller-part-1.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;I2C is this two wire bus protocol that is very common in the embedded sphere
+and the reader is most likely already familiar with it so the introduction here
+will be brief.  As the name suggests it is a protocol for communicating between
+ICs and the specification for the protocol can be found
+&lt;a href=&quot;http://cache.nxp.com/documents/user_manual/UM10204.pdf&quot;&gt;here&lt;/a&gt;.  The two wires
+consist of a clock (SCL) and a data (SDA), the master is responsible for
+initiating all transactions. Since it is a bit more complicated than just a
+shift-register there are special rules for when &lt;em&gt;SDA&lt;/em&gt; transitions may occur
+with respect to &lt;em&gt;SCL&lt;/em&gt; (i.e. not just data sampled at rising edge of clk
+end-of-story). For example:&lt;/p&gt;
 
+&lt;ul&gt;
+  &lt;li&gt;A SDA 1 -&amp;gt; 0 transition when SCL is high signals a START condition&lt;/li&gt;
+  &lt;li&gt;A SDA 0 -&amp;gt; 1 transition when SCL is high signals a STOP condition&lt;/li&gt;
+  &lt;li&gt;SDA transitions when SCL is low are used for normal data signaling&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Of course there are more details to it but you can read all about those in the
+spec above.&lt;/p&gt;
+
+&lt;p&gt;In this post we are going to outline the RTL (Verilog) implementation and
+simulation of a basic I2C controller that connects to a host as an AXI slave. In
+future posts we will connect the simulation with QEMU and finish it all up by
+writing a Linux device driver.&lt;/p&gt;
+
+&lt;h2 id=&quot;preparations&quot;&gt;Preparations&lt;/h2&gt;
+&lt;p&gt;To follow along the reader is urged to acquire the following packages (Verilog
+simulator and waveform viewer)&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo apt-get install iverilog gtkwave
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;As always with these things a lot of commands will be issued and a lot of paths
+will be used so in an attempt to keep the commands copy-pastable (without the
+reader having to manually modify the paths all the time) we are going to
+introduce the following environment variable and use that as much as possible
+through out the posts&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;export ZZZ_ROOT=some/path
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Now let us begin by checking out the Git repository
+&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller&quot;&gt;https://github.com/markus-zzz/i2c-controller&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT
+git clone https://github.com/markus-zzz/i2c-controller
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;It should be noted that a single repository and single branch is used for the
+entire post series so some of the files may contain code that will first be
+relevant for the later posts.&lt;/p&gt;
+
+&lt;h2 id=&quot;implementation&quot;&gt;Implementation&lt;/h2&gt;
 &lt;p&gt;After some thinking I decided that the AXI interface of my simple I2C
-controller should expose these two registers:&lt;/p&gt;
+controller should expose these two registers&lt;/p&gt;
 
 &lt;h4 id=&quot;control-register&quot;&gt;Control register&lt;/h4&gt;
 
@@ -185,15 +315,44 @@ controller should expose these two registers:&lt;/p&gt;
   &lt;/tbody&gt;
 &lt;/table&gt;
 
-&lt;p&gt;For testing I found this
+&lt;p&gt;If one thinks a bit more about the signaling one realises that dividing the SCL
+into four phases might be a good idea so we use a clock enable scheme as
+follows:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;// I2C clocking scheme
+//
+//        -+                             +-----------------------------+
+// SCL     |                             |                             |
+//         +-----------------------------+                             +-
+//
+//        -+            +-+            +-+            +-+            +-+
+// 4x_en   |            | |            | |            | |            | |
+//         +------------+ +------------+ +------------+ +------------+ +-
+//
+// phase      2'b00          2'b01          2'b10          2'b11
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;In other words we use the same clock domain as the AXI bus and ‘divide’ the clock
+locally by producing a clock enable signal with four pulses per &lt;em&gt;SCL&lt;/em&gt; period. For
+each pulse we increment the two bit phase counter that is used by the remainder
+of the design.&lt;/p&gt;
+
+&lt;p&gt;The implementation of the controller is in
+&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/i2c_controller.v&quot;&gt;i2c_controller.v&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Next thing we need to wrap an AXI slave interface around the controller and
+that can be seen in
+&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/i2c_axi_slave.v&quot;&gt;i2c_axi_slave.v&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;simulation&quot;&gt;Simulation&lt;/h2&gt;
+&lt;p&gt;For testing I found
 &lt;a href=&quot;https://github.com/olofk/i2c/blob/master/bench/verilog/i2c_slave_model.v&quot;&gt;this&lt;/a&gt;
 slave model of a I2C EPROM.&lt;/p&gt;
 
-&lt;p&gt;Now since the interface is AXI writing a testbench for this in verilog seemed
-like a pain and it would be much easier if we could generate the AXI register
-writes (and reads) from plain C code. Luckily it is rather easy to interface
-a Verilog simulator with your favorite programming language (C of
-course) by using VPI (Verilog Procedural Interface).&lt;/p&gt;
+&lt;p&gt;Now if you think about the amount of AXI signaling that would be required to
+write and read something from the EPROM model you quickly realise that it would
+be a pain to write all that in plain Verilog. In fact it would be much easier
+if we could write all this in a programming language like C and luckily thanks
+to VPI (Verilog Procedural Interface) this is a straight forward task.&lt;/p&gt;
 
 &lt;p&gt;Using VPI we connect a callback on value change events for the AXI clock signal
 and from there we can manipulate the remainder of the bus signals. We have a
@@ -211,7 +370,8 @@ simulator block on a socket inside the value change callback for the AXI clock
 will effectively block the simulation unless it is constantly being fed with
 command packets over the socket. As a lucky coincidence this stream of socket
 commands is exactly what happens in the test suite used in this post as it
-constantly busy waits after each write to the control register.&lt;/p&gt;
+constantly busy-waits on the status register after each write to the control
+register.&lt;/p&gt;
 
 &lt;p&gt;Later on though when we use QEMU and a proper interrupt driven device driver
 this will present a problem so we might as well try to solve it now. On the
@@ -228,42 +388,50 @@ and in this state we use a non-blocking receive. On the other hand when the
 block is ready it is safe to fall back on blocking receives as there is no work
 to do until we get a command from the AXI.&lt;/p&gt;
 
-&lt;p&gt;The code for this post series is found &lt;a href=&quot;https://github.com/markus-zzz/i2c-controller&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;To try it all out follow the instructions below&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone https://github.com/markus-zzz/i2c-controller
-cd i2c-controller
+&lt;p&gt;To try it all out simply do&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT/i2c-controller
 ./build-all.sh
 ./run-all.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;If all went well this should have executed the test code in
+&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/axi_master_client.c&quot;&gt;axi_master_client.c&lt;/a&gt;
+writing patterns to the I2C connected memory and then reading back and
+verifying.&lt;/p&gt;
+
+&lt;p&gt;To really see what is going on this might be a good opertunity to bring up the
+waveform viewer and inspect the signals in &lt;em&gt;tb.dut&lt;/em&gt;&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;gtkwave dump.vcd
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;p&gt;In the next post we try to integrate our socket based model with QEMU and later
 on in a third post we will attempt to write a Linux device driver for the
-EPROM.&lt;/p&gt;</content><author><name></name></author><summary type="html">For a recent project I needed to interface the audio codec on a ZedBoard to generate a sine wave. The codec had quite an extensive set of registers that needed to be configured before it was willing to output any sound at all and these registers were of course accessible to the FPGA via the I2C two wire bus protocol. Now I2C isn’t all that complicated, and the register writes were only needed at startup, so you could get away with a simple software implementation using GPIOs. However I thought it would be neater to implement an actual controller block in the FPGA and connect that to the AXI bus.</summary></entry><entry><title type="html">An LLVM exercise</title><link href="https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html" rel="alternate" type="text/html" title="An LLVM exercise" /><published>2018-07-16T00:00:00+02:00</published><updated>2018-07-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/16/llvm-exercise</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html">&lt;p&gt;Let’s write an LLVM optimization pass to familiarize ourselves with the
+EPROM.&lt;/p&gt;
+
+&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction I2C is this two wire bus protocol that is very common in the embedded sphere and the reader is most likely already familiar with it so the introduction here will be brief. As the name suggests it is a protocol for communicating between ICs and the specification for the protocol can be found here. The two wires consist of a clock (SCL) and a data (SDA), the master is responsible for initiating all transactions. Since it is a bit more complicated than just a shift-register there are special rules for when SDA transitions may occur with respect to SCL (i.e. not just data sampled at rising edge of clk end-of-story). For example:</summary></entry><entry><title type="html">An LLVM exercise</title><link href="http://localhost:4000/2018/07/16/llvm-exercise.html" rel="alternate" type="text/html" title="An LLVM exercise" /><published>2018-07-16T00:00:00+02:00</published><updated>2018-07-16T00:00:00+02:00</updated><id>http://localhost:4000/2018/07/16/llvm-exercise</id><content type="html" xml:base="http://localhost:4000/2018/07/16/llvm-exercise.html">&lt;p&gt;Let’s write an LLVM optimization pass to familiarize ourselves with the
 environment. Of course LLVM already does everything even remotely interesting
-so in order to have some non-trivial example (or non-stupid if you will) we are
-going to replace an existing pass. The pass of choice is going to be &lt;em&gt;mem2reg&lt;/em&gt;
-mainly because it is quite central and I happen to have experience implementing
-this very pass in a different compiler framework.&lt;/p&gt;
+so in order to have some non-trivial example we are going to replace an
+existing pass. The pass of choice is going to be &lt;em&gt;mem2reg&lt;/em&gt; mainly because it is
+quite central and I happen to have experience implementing this very pass in a
+different compiler framework.&lt;/p&gt;
 
 &lt;h2 id=&quot;background&quot;&gt;Background&lt;/h2&gt;
-&lt;p&gt;One interesting thing about LLVM is the approach to entering SSA-form (i.e.
+&lt;p&gt;One interesting thing about LLVM is its approach to entering SSA-form (i.e.
 satisfying the static single assignment condition by placement of phi-nodes).
 Traditionally this is considered a front end responsibility to place phi-nodes
-but LLVM however takes a different approach. Namely have the front end generate
-loads and stores for each variable access. Note that technically speaking this
-code is already in SSA form (it is just that it is terribly inefficient). Later
-on the pass &lt;em&gt;mem2reg&lt;/em&gt; comes along and optimizes this effectively removing almost
-all memory accesses for these variables.&lt;/p&gt;
+but LLVM takes a different approach. Namely have the front end generate an
+alloca for each variable then loads for the uses and stores for the defs.  Note
+that technically speaking this code is already in SSA form (it is just that it
+is terribly inefficient). Later on the pass &lt;em&gt;mem2reg&lt;/em&gt; comes along and optimizes
+this effectively removing the inefficient memory accesses for these variables.&lt;/p&gt;
 
-&lt;p&gt;This is nice because it makes the front end simple, it can focus on its AST to
+&lt;p&gt;This is nice because it makes the front end simpler, it can focus on its AST to
 IR translation without additional complexities. On the downside you could argue
-that it makes the compilation process inefficient because you have the front end
-generate a bunch of IR that will almost immediately be optimized away in the
-middle end (and I have witnessed some horrible cases of this). In my opinion
-though that is the name of the game in compiler engineering, to not worrying
-about everything at once but instead have each part do one thing well and have
-an efficient IR and infrastructure that allows for cheap IR updates.&lt;/p&gt;
+that it makes the compilation process inefficient because you have the front
+end generate a bunch of IR that will almost immediately be optimized away in
+the middle end. In my opinion though that is the name of the game in compiler
+engineering, to not worrying about everything at once but instead have each
+part do one thing well and have an efficient IR infrastructure that allows for
+cheap IR updates.&lt;/p&gt;
 
 &lt;h2 id=&quot;prerequisites&quot;&gt;Prerequisites&lt;/h2&gt;
 &lt;p&gt;To follow along you will need to have an LLVM development environment setup.
@@ -382,7 +550,7 @@ by Cytron et al. and the interested reader can find all the details in [1].&lt;/
 the section about setting up the build environment to build the pass as a
 loadable module. Doing so will save a lot of pain.&lt;/p&gt;
 
-&lt;p&gt;I went ahead and wrote &lt;a href=&quot;https://www.zzzconsulting.se/download/OurMem2Reg.cpp&quot;&gt;OurMem2Reg.cpp&lt;/a&gt;
+&lt;p&gt;I went ahead and wrote &lt;a href=&quot;http://localhost:4000/download/OurMem2Reg.cpp&quot;&gt;OurMem2Reg.cpp&lt;/a&gt;
 and will now try to describe its contents in some detail.&lt;/p&gt;
 
 &lt;h3 id=&quot;linkdefsandusestovar&quot;&gt;linkDefsAndUsesToVar&lt;/h3&gt;
@@ -418,7 +586,7 @@ all located in the entry block of the function) and call
   &lt;li&gt;
     &lt;p&gt;In the previous step we took note of in which blocks there were definitions
 of the variable. Now we need to insert phi-nodes in the dominance frontier
-of these blocks (and keeping in mind that when we a insert a phi-node that acts
+of these blocks (and keeping in mind that when we insert a phi-node that acts
 as a new definition so we need to insert a phi-node in the dominance frontier
 of that block as well). In other words we need to insert phi-nodes in the
 iterated dominance frontier of the original definition blocks.  Luckily LLVM
@@ -471,7 +639,8 @@ for.end:                                          ; preds = %for.cond
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
-&lt;p&gt;So what have we touched in this exercise?&lt;/p&gt;
+&lt;p&gt;So what areas of the LLVM infrastructure have we familiarized ourselves with in
+this exercise?&lt;/p&gt;
 &lt;ul&gt;
   &lt;li&gt;Traversing the CFG&lt;/li&gt;
   &lt;li&gt;Traversing the SSA graph (looking for uses of an instruction)&lt;/li&gt;
@@ -503,4 +672,4 @@ control dependence graph. ACM Trans. Program. Lang. Syst. 13, 4 (October 1991),
 451-490. DOI=http://dx.doi.org/10.1145/115372.115320&lt;/p&gt;
 
 &lt;p&gt;[2] Cooper, Keith &amp;amp; Harvey, Timothy &amp;amp; Kennedy, Ken. (2006). A Simple, Fast
-Dominance Algorithm. Rice University, CS Technical Report 06-33870.&lt;/p&gt;</content><author><name></name></author><summary type="html">Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example (or non-stupid if you will) we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework.</summary></entry></feed>
+Dominance Algorithm. Rice University, CS Technical Report 06-33870.&lt;/p&gt;</content><author><name></name></author><summary type="html">Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework.</summary></entry></feed>

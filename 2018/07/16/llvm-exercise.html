@@ -7,29 +7,17 @@
 <meta name="generator" content="Jekyll v3.8.3" />
 <meta property="og:title" content="An LLVM exercise" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example (or non-stupid if you will) we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework." />
-<meta property="og:description" content="Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example (or non-stupid if you will) we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework." />
-<link rel="canonical" href="https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html" />
-<meta property="og:url" content="https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html" />
+<meta name="description" content="Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework." />
+<meta property="og:description" content="Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework." />
+<link rel="canonical" href="http://localhost:4000/2018/07/16/llvm-exercise.html" />
+<meta property="og:url" content="http://localhost:4000/2018/07/16/llvm-exercise.html" />
 <meta property="og:site_name" content="ZZZ-Consulting" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2018-07-16T00:00:00+02:00" />
 <script type="application/ld+json">
-{"description":"Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example (or non-stupid if you will) we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework.","@type":"BlogPosting","url":"https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html","headline":"An LLVM exercise","dateModified":"2018-07-16T00:00:00+02:00","datePublished":"2018-07-16T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html"},"@context":"http://schema.org"}</script>
+{"description":"Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework.","@type":"BlogPosting","url":"http://localhost:4000/2018/07/16/llvm-exercise.html","headline":"An LLVM exercise","dateModified":"2018-07-16T00:00:00+02:00","datePublished":"2018-07-16T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2018/07/16/llvm-exercise.html"},"@context":"http://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
-if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-122494618-1', 'auto');
-  ga('send', 'pageview');
-}
-</script>
-  
-</head>
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="ZZZ-Consulting" /></head>
 <body><header class="site-header" role="banner">
 
   <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
@@ -59,29 +47,29 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
   <div class="post-content e-content" itemprop="articleBody">
     <p>Let’s write an LLVM optimization pass to familiarize ourselves with the
 environment. Of course LLVM already does everything even remotely interesting
-so in order to have some non-trivial example (or non-stupid if you will) we are
-going to replace an existing pass. The pass of choice is going to be <em>mem2reg</em>
-mainly because it is quite central and I happen to have experience implementing
-this very pass in a different compiler framework.</p>
+so in order to have some non-trivial example we are going to replace an
+existing pass. The pass of choice is going to be <em>mem2reg</em> mainly because it is
+quite central and I happen to have experience implementing this very pass in a
+different compiler framework.</p>
 
 <h2 id="background">Background</h2>
-<p>One interesting thing about LLVM is the approach to entering SSA-form (i.e.
+<p>One interesting thing about LLVM is its approach to entering SSA-form (i.e.
 satisfying the static single assignment condition by placement of phi-nodes).
 Traditionally this is considered a front end responsibility to place phi-nodes
-but LLVM however takes a different approach. Namely have the front end generate
-loads and stores for each variable access. Note that technically speaking this
-code is already in SSA form (it is just that it is terribly inefficient). Later
-on the pass <em>mem2reg</em> comes along and optimizes this effectively removing almost
-all memory accesses for these variables.</p>
+but LLVM takes a different approach. Namely have the front end generate an
+alloca for each variable then loads for the uses and stores for the defs.  Note
+that technically speaking this code is already in SSA form (it is just that it
+is terribly inefficient). Later on the pass <em>mem2reg</em> comes along and optimizes
+this effectively removing the inefficient memory accesses for these variables.</p>
 
-<p>This is nice because it makes the front end simple, it can focus on its AST to
+<p>This is nice because it makes the front end simpler, it can focus on its AST to
 IR translation without additional complexities. On the downside you could argue
-that it makes the compilation process inefficient because you have the front end
-generate a bunch of IR that will almost immediately be optimized away in the
-middle end (and I have witnessed some horrible cases of this). In my opinion
-though that is the name of the game in compiler engineering, to not worrying
-about everything at once but instead have each part do one thing well and have
-an efficient IR and infrastructure that allows for cheap IR updates.</p>
+that it makes the compilation process inefficient because you have the front
+end generate a bunch of IR that will almost immediately be optimized away in
+the middle end. In my opinion though that is the name of the game in compiler
+engineering, to not worrying about everything at once but instead have each
+part do one thing well and have an efficient IR infrastructure that allows for
+cheap IR updates.</p>
 
 <h2 id="prerequisites">Prerequisites</h2>
 <p>To follow along you will need to have an LLVM development environment setup.
@@ -200,7 +188,7 @@ by Cytron et al. and the interested reader can find all the details in [1].</p>
 the section about setting up the build environment to build the pass as a
 loadable module. Doing so will save a lot of pain.</p>
 
-<p>I went ahead and wrote <a href="https://www.zzzconsulting.se/download/OurMem2Reg.cpp">OurMem2Reg.cpp</a>
+<p>I went ahead and wrote <a href="http://localhost:4000/download/OurMem2Reg.cpp">OurMem2Reg.cpp</a>
 and will now try to describe its contents in some detail.</p>
 
 <h3 id="linkdefsandusestovar">linkDefsAndUsesToVar</h3>
@@ -236,7 +224,7 @@ all located in the entry block of the function) and call
   <li>
     <p>In the previous step we took note of in which blocks there were definitions
 of the variable. Now we need to insert phi-nodes in the dominance frontier
-of these blocks (and keeping in mind that when we a insert a phi-node that acts
+of these blocks (and keeping in mind that when we insert a phi-node that acts
 as a new definition so we need to insert a phi-node in the dominance frontier
 of that block as well). In other words we need to insert phi-nodes in the
 iterated dominance frontier of the original definition blocks.  Luckily LLVM
@@ -289,7 +277,8 @@ for.end:                                          ; preds = %for.cond
 </code></pre></div></div>
 
 <h2 id="wrap-up">Wrap up</h2>
-<p>So what have we touched in this exercise?</p>
+<p>So what areas of the LLVM infrastructure have we familiarized ourselves with in
+this exercise?</p>
 <ul>
   <li>Traversing the CFG</li>
   <li>Traversing the SSA graph (looking for uses of an instruction)</li>
@@ -324,23 +313,7 @@ control dependence graph. ACM Trans. Program. Lang. Syst. 13, 4 (October 1991),
 Dominance Algorithm. Rice University, CS Technical Report 06-33870.</p>
 
 
-  </div><div id="disqus_thread"></div>
-  <script>
-    var disqus_config = function () {
-      this.page.url = 'https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html';
-      this.page.identifier = 'https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html';
-    };
-
-    (function() {
-      var d = document, s = d.createElement('script');
-
-      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
-
-      s.setAttribute('data-timestamp', +new Date());
-      (d.head || d.body).appendChild(s);
-    })();
-  </script>
-  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2018/07/16/llvm-exercise.html" hidden></a>
+  </div><a class="u-url" href="/2018/07/16/llvm-exercise.html" hidden></a>
 </article>
 
       </div>
