@@ -1,0 +1,30 @@
+
+define @dot( %r0 %r1 %r2 ) [0x0,0x4070] {
+bb0: ;; loop{nest=0, type=0, pre=0, rpost=0}
+  %r3 = mov #0x0
+  %r4 = mov #0x0
+  branch %bb1
+bb1: ;; loop{nest=1, type=1, pre=1, rpost=1}
+  cmp %r4, %r2
+  branch{lt} %bb4, %bb2
+bb2: ;; loop{nest=0, type=0, pre=4, rpost=2}
+  branch %bb3
+bb3: ;; loop{nest=0, type=0, pre=5, rpost=3}
+  %r0 = mov %r3
+bb4: ;; loop{nest=1, type=0, pre=2, rpost=4}
+  %r5 = mov #0x4
+  %r5 = mul %r4, %r5
+  %r5 = add %r0, %r5
+  %r5 = ldr [%r5]
+  %r6 = mov #0x4
+  %r6 = mul %r4, %r6
+  %r6 = add %r1, %r6
+  %r6 = ldr [%r6]
+  %r5 = mul %r5, %r6
+  %r3 = add %r3, %r5
+  branch %bb5
+bb5: ;; loop{nest=1, type=0, pre=3, rpost=5}
+  %r4 = add %r4, #0x1
+  branch %bb1
+}
+

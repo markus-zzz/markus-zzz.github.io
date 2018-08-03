@@ -1,4 +1,151 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2018-07-27T09:56:51+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">A basic I2C controller - part 4</title><link href="https://www.zzzconsulting.se/2018/07/27/i2c-controller-part-4.html" rel="alternate" type="text/html" title="A basic I2C controller - part 4" /><published>2018-07-27T00:00:00+02:00</published><updated>2018-07-27T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/27/i2c-controller-part-4</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/27/i2c-controller-part-4.html">&lt;p&gt;Now we are going to revisit the device driver from part 3 of this series and
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2018-08-03T19:54:32+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Building a modem - part 1</title><link href="https://www.zzzconsulting.se/2018/08/03/build-a-modem-part-1.html" rel="alternate" type="text/html" title="Building a modem - part 1" /><published>2018-08-03T00:00:00+02:00</published><updated>2018-08-03T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/03/build-a-modem-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/03/build-a-modem-part-1.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;This is the first post of a new series where we are going to attempt the build
+a simple modem. In other words we will try to build a digital communications
+link where the sender modulates a communication message, a stream of bytes, to
+make it suitable for transmission over a given media and the receiver
+demodulates to recover the original message.&lt;/p&gt;
+
+&lt;p&gt;Since your author is no expert (to put it mildly) in the fields of
+&lt;em&gt;communications theory&lt;/em&gt; or &lt;em&gt;signal processing&lt;/em&gt; this post series will not focus
+on the theoretical details of that but instead refer to the excellent
+presentation of those matters over at &lt;a href=&quot;http://dspillustrations.com&quot;&gt;DSP
+Illustrations&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;I envision the complete system to run on a &lt;a href=&quot;http://zedboard.org/&quot;&gt;ZedBoard&lt;/a&gt; (or
+actually two to make it more interesting) and use the onboard audio codec (i.e.
+sound waves in the range 20Hz-20kHz) as the transmission media. However the
+actual hardware is not really important to follow along as we will rely
+extensively on a QEMU / RTL simulation environment.&lt;/p&gt;
+
+&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
+&lt;p&gt;Let’s begin by presenting an overview.&lt;/p&gt;
+
+&lt;h3 id=&quot;linux-device-driver&quot;&gt;Linux device driver&lt;/h3&gt;
+&lt;p&gt;A Linux device driver presents the device node &lt;em&gt;/dev/zzzmodem&lt;/em&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;em&gt;write&lt;/em&gt; - queues a message for transmission. A single call to &lt;em&gt;write&lt;/em&gt; results
+in a single message queued.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;read&lt;/em&gt; - returns a received message. A call to &lt;em&gt;read&lt;/em&gt; returns a single
+received message (i.e. the buffer size given must be equal to the maximal
+transmission unit (MTU)).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Since the &lt;em&gt;read&lt;/em&gt;/&lt;em&gt;write&lt;/em&gt; interface is based on complete messages the driver
+should allow for multiple processes to &lt;em&gt;read&lt;/em&gt; and &lt;em&gt;write&lt;/em&gt; at the same time.&lt;/p&gt;
+
+&lt;h3 id=&quot;modem-block-memory-mapped-interface&quot;&gt;Modem block memory mapped interface&lt;/h3&gt;
+&lt;p&gt;The modem block exposes two ring buffers in its address map. One for
+transmitting (TX) and one for receiving (RX), each of them are accompanied with
+read and write pointers.&lt;/p&gt;
+
+&lt;p&gt;For TX a device driver &lt;em&gt;write&lt;/em&gt; will result in one full message being put in
+the TX ring buffer. If there is no room then the driver will put the writing
+process to sleep. The read pointer updates in one go as the entire message is
+sent. An interrupt can be generated whenever the read pointer updates.&lt;/p&gt;
+
+&lt;p&gt;For RX a device driver &lt;em&gt;read&lt;/em&gt; will result in one full message being lifted from
+the RX ring buffer. If there are no message to lift then the calling process
+will be put to sleep. An interrupt can be generated when the write pointer
+updates. The write pointer will only be updated when a full message is put in
+the buffer. If the buffer overruns a counter will be incremented and possibly
+interrupt generated.&lt;/p&gt;
+
+&lt;p&gt;Everything is 32 bit aligned inside the ring buffers. A message begins with a
+32 bit header indicating the length of the message. The next message in the
+ring buffer will begin (i.e. have its header) at this offset but aligned to a
+32 bit boundary.&lt;/p&gt;
+
+&lt;p&gt;The following suggested address map of our modem device provides the essentials
+and fits well in 4KiB (i.e. 0x1000 bytes).&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Begin&lt;/th&gt;
+      &lt;th&gt;End&lt;/th&gt;
+      &lt;th&gt;Access&lt;/th&gt;
+      &lt;th&gt;Description&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x000&lt;/td&gt;
+      &lt;td&gt;0x3ff&lt;/td&gt;
+      &lt;td&gt;W&lt;/td&gt;
+      &lt;td&gt;TX ring buffer (1 KiB)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x400&lt;/td&gt;
+      &lt;td&gt;0x7ff&lt;/td&gt;
+      &lt;td&gt;R&lt;/td&gt;
+      &lt;td&gt;RX ring buffer (1 KiB)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x800&lt;/td&gt;
+      &lt;td&gt;0x803&lt;/td&gt;
+      &lt;td&gt;R&lt;/td&gt;
+      &lt;td&gt;TX read pointer&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x804&lt;/td&gt;
+      &lt;td&gt;0x807&lt;/td&gt;
+      &lt;td&gt;R/W&lt;/td&gt;
+      &lt;td&gt;TX write pointer&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x808&lt;/td&gt;
+      &lt;td&gt;0x80b&lt;/td&gt;
+      &lt;td&gt;R/W&lt;/td&gt;
+      &lt;td&gt;RX read pointer&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x80c&lt;/td&gt;
+      &lt;td&gt;0x80f&lt;/td&gt;
+      &lt;td&gt;R&lt;/td&gt;
+      &lt;td&gt;RX write pointer&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Access permissions are what one would expect, that is software cannot write to
+registers/memory owned by the modem block. All registers should be readable by
+software though to ease debugging. Writes to a read-only address are simply
+ignored.&lt;/p&gt;
+
+&lt;h3 id=&quot;signal-processing&quot;&gt;Signal processing&lt;/h3&gt;
+&lt;p&gt;The modulation of choice for our modem will be Quadrature Phase Shift Keying
+(QPSK), meaning that each &lt;em&gt;symbol&lt;/em&gt; will convey two data bits. A &lt;em&gt;symbol mapper&lt;/em&gt;
+will take care of the straight forward task of turning our byte stream message
+into a stream of QPSK symbols. For these symbols we then intend to apply the
+signal processing chain described
+&lt;a href=&quot;http://dspillustrations.com/pages/posts/misc/baseband-up-and-downconversion-and-iq-modulation.html&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Of course a lot more needs to be said about that and we will constantly return
+to this topic as needed. For now though, for the purpose of an overview, this
+should be enough.&lt;/p&gt;
+
+&lt;h2 id=&quot;implementation&quot;&gt;Implementation&lt;/h2&gt;
+&lt;p&gt;As there is certainly no shortage of work to be done for this project how do we
+decide what to do first?&lt;/p&gt;
+
+&lt;p&gt;Well, let us approach this from the top down so I say let’s begin with the ring
+buffers and their software interface.&lt;/p&gt;
+
+&lt;p&gt;To quickly have something that is testable we can set our first goal as
+follows: Implement RX and TX ring buffers and tie them together in loop back
+mode with some silly action like transforming lowercase letters to uppercase.&lt;/p&gt;
+
+&lt;p&gt;Having those parts in place early will hopefully allow us to develop a more
+sophisticated testing framework that will come in handy later on when we
+approach the more mathematical areas further down the pipe. As well as giving
+us additional mileage on our perhaps mundane but oh so error prone byte
+shoveling machinery.&lt;/p&gt;
+
+&lt;p&gt;That’s it for this post! When we return in the next post we will look into the
+details of implementing the ‘byte shoveling machinery’.&lt;/p&gt;
+
+&lt;p&gt;Until then, as usual, if there are questions or feedback - leave a comment
+below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction This is the first post of a new series where we are going to attempt the build a simple modem. In other words we will try to build a digital communications link where the sender modulates a communication message, a stream of bytes, to make it suitable for transmission over a given media and the receiver demodulates to recover the original message.</summary></entry><entry><title type="html">A basic I2C controller - part 4</title><link href="https://www.zzzconsulting.se/2018/07/27/i2c-controller-part-4.html" rel="alternate" type="text/html" title="A basic I2C controller - part 4" /><published>2018-07-27T00:00:00+02:00</published><updated>2018-07-27T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/27/i2c-controller-part-4</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/27/i2c-controller-part-4.html">&lt;p&gt;Now we are going to revisit the device driver from part 3 of this series and
 redo it properly.&lt;/p&gt;
 
 &lt;p&gt;Modern Linux uses something called a &lt;em&gt;device tree&lt;/em&gt; to describe the

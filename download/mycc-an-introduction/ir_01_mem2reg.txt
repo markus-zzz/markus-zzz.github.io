@@ -1,0 +1,42 @@
+define i32 @dot(p32, p32, i32) {
+ bb1:
+  %4 = getparam p32 0
+  %7 = getparam p32 1
+  %10 = getparam i32 2
+  %17 = const i32 0x00000000
+  %23 = const i32 0x00000000
+  br label %bb3
+
+ bb3:
+  %50 = phi i32 [%17, %bb1], [%42, %bb5]
+  %51 = phi i32 [%23, %bb1], [%46, %bb5]
+  %27 = icmp_slt i32 %51, %10
+  br %27, label %bb4, label %bb6
+
+ bb6:
+  br label %bb2
+
+ bb2:
+  ret i32 %50
+
+ bb4:
+  %31 = const i32 0x00000004
+  %32 = mul i32 %51, %31
+  %33 = add p32 %4, %32
+  %34 = load i32 %33
+  %37 = const i32 0x00000004
+  %38 = mul i32 %51, %37
+  %39 = add p32 %7, %38
+  %40 = load i32 %39
+  %41 = mul i32 %34, %40
+  %42 = add i32 %50, %41
+  br label %bb5
+
+ bb5:
+  %45 = const i32 0x00000001
+  %46 = add i32 %51, %45
+  br label %bb3
+
+}
+
+

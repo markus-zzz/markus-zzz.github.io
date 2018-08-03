@@ -1,0 +1,32 @@
+
+define @dot( %v33 %v34 %v35 ) [0x0,0x4000] {
+bb0: ;; loop{nest=0, type=0, pre=0, rpost=0}
+  %v32 = mov #0x0
+  %v31 = mov #0x0
+  branch %bb1
+bb1: ;; loop{nest=1, type=1, pre=1, rpost=1}
+  %v16 = phi [%v21, %bb5], [%v32, %bb0]
+  %v17 = phi [%v20, %bb5], [%v31, %bb0]
+  cmp %v17, %v35
+  branch{lt} %bb4, %bb2
+bb2: ;; loop{nest=0, type=0, pre=4, rpost=2}
+  branch %bb3
+bb3: ;; loop{nest=0, type=0, pre=5, rpost=3}
+  ret %v16
+bb4: ;; loop{nest=1, type=0, pre=2, rpost=4}
+  %v30 = mov #0x4
+  %v29 = mul %v17, %v30
+  %v28 = add %v33, %v29
+  %v27 = ldr [%v28]
+  %v26 = mov #0x4
+  %v25 = mul %v17, %v26
+  %v24 = add %v34, %v25
+  %v23 = ldr [%v24]
+  %v22 = mul %v27, %v23
+  %v21 = add %v16, %v22
+  branch %bb5
+bb5: ;; loop{nest=1, type=0, pre=3, rpost=5}
+  %v20 = add %v17, #0x1
+  branch %bb1
+}
+

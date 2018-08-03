@@ -1,0 +1,64 @@
+define i32 @dot(p32, p32, i32) {
+ bb1:
+  %3 = alloca p32 4, 1
+  %4 = getparam p32 0
+  %5 = store p32 %3, %4
+  %6 = alloca p32 4, 1
+  %7 = getparam p32 1
+  %8 = store p32 %6, %7
+  %9 = alloca p32 4, 1
+  %10 = getparam i32 2
+  %11 = store i32 %9, %10
+  %12 = alloca p32 4, 1
+  %15 = alloca p32 4, 1
+  %16 = alloca p32 4, 1
+  %17 = const i32 0x00000000
+  %18 = store i32 %16, %17
+  %23 = const i32 0x00000000
+  %24 = store i32 %15, %23
+  br label %bb3
+
+ bb3:
+  %25 = load i32 %15
+  %26 = load i32 %9
+  %27 = icmp_slt i32 %25, %26
+  br %27, label %bb4, label %bb6
+
+ bb6:
+  %48 = load i32 %16
+  %49 = store i32 %12, %48
+  br label %bb2
+
+ bb2:
+  %13 = load i32 %12
+  ret i32 %13
+
+ bb4:
+  %28 = load i32 %16
+  %29 = load p32 %3
+  %30 = load i32 %15
+  %31 = const i32 0x00000004
+  %32 = mul i32 %30, %31
+  %33 = add p32 %29, %32
+  %34 = load i32 %33
+  %35 = load p32 %6
+  %36 = load i32 %15
+  %37 = const i32 0x00000004
+  %38 = mul i32 %36, %37
+  %39 = add p32 %35, %38
+  %40 = load i32 %39
+  %41 = mul i32 %34, %40
+  %42 = add i32 %28, %41
+  %43 = store i32 %16, %42
+  br label %bb5
+
+ bb5:
+  %44 = load i32 %15
+  %45 = const i32 0x00000001
+  %46 = add i32 %44, %45
+  %47 = store i32 %15, %46
+  br label %bb3
+
+}
+
+
