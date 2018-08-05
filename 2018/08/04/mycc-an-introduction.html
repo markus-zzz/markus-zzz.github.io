@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>MyCC - an introduction | ZZZ-Consulting</title>
+<meta name="generator" content="Jekyll v3.8.3" />
+<meta property="og:title" content="MyCC - an introduction" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Today we will be looking at a prototype toy C compiler that I have been working on every now and then for a while. Of course it is nowhere near complete nor even useful for any particular purpose at all besides perhaps my own amusement and possibly that of others." />
+<meta property="og:description" content="Today we will be looking at a prototype toy C compiler that I have been working on every now and then for a while. Of course it is nowhere near complete nor even useful for any particular purpose at all besides perhaps my own amusement and possibly that of others." />
+<link rel="canonical" href="https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html" />
+<meta property="og:url" content="https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html" />
+<meta property="og:site_name" content="ZZZ-Consulting" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-08-04T00:00:00+02:00" />
+<script type="application/ld+json">
+{"description":"Today we will be looking at a prototype toy C compiler that I have been working on every now and then for a while. Of course it is nowhere near complete nor even useful for any particular purpose at all besides perhaps my own amusement and possibly that of others.","@type":"BlogPosting","url":"https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html","headline":"MyCC - an introduction","dateModified":"2018-08-04T00:00:00+02:00","datePublished":"2018-08-04T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-122494618-1', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">MyCC - an introduction</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-08-04T00:00:00+02:00" itemprop="datePublished">Aug 4, 2018
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>Today we will be looking at a prototype toy C compiler that I have been working
+on every now and then for a while. Of course it is nowhere near complete nor
+even useful for any particular purpose at all besides perhaps my own amusement
+and possibly that of others.</p>
+
+<p>Still I think that it serves as a meaningful exercise to start from a clean
+slate every now and then and do things the way that you feel are right (which
+may be the simplest or most naive way possible) and not being burdened by any
+particular framework.</p>
+
+<p>Say for instance that you read this really interesting article about
+implementing a SSA based register allocator and now you want to try it out. So
+you turn to a well established compiler framework like LLVM or GCC. Okay, so
+the code base is huge and the compiler build time is insane and you just wanted
+to play around a bit. Clearly that situation is not ideal and at these times a
+much much simpler and smaller framework would be useful. Preferably one that
+still preserves some of the good ideas from the larger ones.</p>
+
+<p>Now I do not want to bash on big compiler frameworks (looking your way LLVM)
+but the fact remains that these huge frameworks are not suitable for every
+possible purpose and depending on what your intended purpose is they may in
+fact make things a lot more complicated than they need to be.</p>
+
+<h2 id="mycc">MyCC</h2>
+
+<p>The design of MyCC borrows heavily from LLVM. One of the best things about LLVM
+is the use of a very well defined intermediate representation in the middle
+end. This LLVM IR is linearised and resembles assembly language so much that
+they in fact call it <a href="https://llvm.org/docs/LangRef.html">the LLVM Assembly
+Language</a>.</p>
+
+<p>As stated in that document one of the design criteria for the LLVM IR was to
+represents well both in graph form in compiler memory as well as in human
+readable textual form in dump files. The importance of the latter cannot be
+overstated.</p>
+
+<p>While a well defined IR allows us to import and export the entire compilation
+state between passes it also allows us to create a virtual machine that can
+execute this IR. Together these two provide for the development of some very
+powerful testing tool.</p>
+
+<h2 id="preparations">Preparations</h2>
+<p>To acquire the code base and build the compiler follow these steps. Note that
+the compiler build time for a full debug build is just a second or two (which
+is hardly surprising since there is so little code and it is not C++).</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>export ZZZ_ROOT=some/path
+cd $ZZZ_ROOT
+git clone https://github.com/markus-zzz/mycc.git
+mkdir $ZZZ_ROOT/mycc/build
+cd $ZZZ_ROOT/mycc/build
+make -f $ZZZ_ROOT/mycc/src/Makefile -j8
+</code></pre></div></div>
+<p>Next we run the test suite by executing the following commands.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd $ZZZ_ROOT/mycc/test
+./runner.pl
+</code></pre></div></div>
+<p>Now what just happened here is actually quite interesting so let’s look into
+that. If we enforce the convention that each of our tests shall return a 32 bit
+integer as its result (and preferably not just <em>true</em>/<em>false</em> as that would
+increase the risk of falsely indicating that a test passes due to a miscompile)
+we can do the following.</p>
+
+<ul>
+  <li>Use a reference compiler (e.g. gcc) to produce a known good value</li>
+  <li>Use the IR simulator to verify that the IR simulates to the same good value
+after each pass</li>
+  <li>Verify that the final executable produces the good value</li>
+</ul>
+
+<p>Of course this testing is not immune to all kind of problems but I would argue
+that it provides a pretty good coverage for rather little effort once you have
+the basic machinery in place. To add a new test, simply add a well defined C
+code snippet that produces an integer as result.</p>
+
+<h2 id="a-tour-down-the-compilation-pipeline">A tour down the compilation pipeline</h2>
+<p>Let us take a look at a simple example and see how the code gets transformed as
+we move further down the compilation pipeline. Consider something simple such
+as <em>dot.c</em> given below</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int dot(int *a, int *b, int len)
+{
+	int i;
+	int sum = 0;
+	for (i = 0; i &lt; len; i = i + 1) {
+		sum = sum + a[i] * b[i];
+	}
+
+	return sum;
+}
+</code></pre></div></div>
+<p>Begin by invoking the compiler driver as in</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./build/driver --dump-all dot.c
+</code></pre></div></div>
+<p>doing so should produce a set of dump files where the intermediate
+representation at the given stage is dumped. These files are very important for
+debugging since they often times allow you to pinpoint at what stage things go
+wrong</p>
+
+<ul>
+  <li><a href="https://www.zzzconsulting.se/download/mycc-an-introduction/ast_00_pristine.txt">ast_00_pristine.txt</a> -
+When the front end parses the input code it produces an Abstract Syntax Tree
+(AST). This representation is extremely verbose and essentially contains an AST
+node for each grammar rule applied.</li>
+  <li><a href="https://www.zzzconsulting.se/download/mycc-an-introduction/ir_00_pristine.txt">ir_00_pristine.txt</a> -
+Middle end Intermediate Representation (what we simply call IR) immediately
+after being translated from AST.</li>
+  <li><a href="https://www.zzzconsulting.se/download/mycc-an-introduction/ir_01_mem2reg.txt">ir_01_mem2reg.txt</a> -
+IR after applying the <em>mem2reg</em> optimization pass.</li>
+  <li><a href="https://www.zzzconsulting.se/download/mycc-an-introduction/cg_00_iselect.txt">cg_00_iselect.txt</a> -
+Code Generator intermediate representation after selecting machine instructions
+for the middle end IR. Note that this IR is using virtual registers and is
+still in SSA form.</li>
+  <li><a href="https://www.zzzconsulting.se/download/mycc-an-introduction/cg_01_regalloc.txt">cg_01_regalloc.txt</a> -
+Machine instructions after allocating physical registers.</li>
+  <li><a href="https://www.zzzconsulting.se/download/mycc-an-introduction/cg_02_branch_predication.txt">cg_02_branch_predication.txt</a> -
+Machine instructions after performing branch predication optimization pass.</li>
+</ul>
+
+<h2 id="wrap-up">Wrap up</h2>
+<p>That is it for this post. When we return to MyCC in a later post I intend to
+write about the implementation of its SSA based register allocator.</p>
+
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html';
+      this.page.identifier = 'https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2018/08/04/mycc-an-introduction.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ZZZ-Consulting</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ZZZ-Consulting</li><li><a class="u-email" href="mailto:info@zzzconsulting.se">info@zzzconsulting.se</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/markus-zzz"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">markus-zzz</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
