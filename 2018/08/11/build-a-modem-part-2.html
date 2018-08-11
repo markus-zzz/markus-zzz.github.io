@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Building a modem - part 2 | ZZZ-Consulting</title>
+<meta name="generator" content="Jekyll v3.8.3" />
+<meta property="og:title" content="Building a modem - part 2" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Introduction In this post we return to our modem building project to checkup on the progress." />
+<meta property="og:description" content="Introduction In this post we return to our modem building project to checkup on the progress." />
+<link rel="canonical" href="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html" />
+<meta property="og:url" content="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html" />
+<meta property="og:site_name" content="ZZZ-Consulting" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-08-11T00:00:00+02:00" />
+<script type="application/ld+json">
+{"description":"Introduction In this post we return to our modem building project to checkup on the progress.","@type":"BlogPosting","url":"https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html","headline":"Building a modem - part 2","dateModified":"2018-08-11T00:00:00+02:00","datePublished":"2018-08-11T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-122494618-1', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Building a modem - part 2</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-08-11T00:00:00+02:00" itemprop="datePublished">Aug 11, 2018
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="introduction">Introduction</h2>
+<p>In this post we return to our modem building project to checkup on the
+progress.</p>
+
+<p>The code corresponding to the progress of this post is available as branch
+<a href="https://github.com/markus-zzz/modem/tree/part-2">part-2</a> of the modem GitHub
+repository.</p>
+
+<h3 id="hardware-blocks">Hardware blocks</h3>
+<p>The current implementation exposes two AXI mapped ring buffers, and some
+control register, using the address map from the <a href="/2018/08/03/build-a-modem-part-1.html">previous
+post</a>.</p>
+
+<p>Each ring buffer is currently implemented using a dual ported synchronous SRAM
+block with one port being tied to the AXI and the other to the internal data
+path of the modem.</p>
+
+<p>Now dual ported memories are large and expensive and for the modest data rates
+we plan to put on these memories we can certainly get a way both AXI and
+internal data path sharing the single port on a single ported memory. Doing so
+is of course not free and it will be at the expense of some increased
+implementation complexity but that we can handle later. So in other words, for
+now dual ported is good since they allow for slightly simpler implementation
+but we should eventually switch to using single ported.</p>
+
+<p>Either way, dual ported or not, Synchronous SRAM blocks have one slightly
+annoying property with respect to reads and that is that the read address is
+clocked. That is the behavioural model looks like this</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    // read operation
+    always @(posedge rclk) begin
+        if (rce) begin
+            ra &lt;= raddr;
+        end
+    end
+
+    assign do = mem[ra];
+</code></pre></div></div>
+<p>In other words you cannot simply present the read address (<em>raddr</em>) and expect
+to latch the data (<em>do</em>) at the next rising clock edge but instead you have to
+wait an additional cycle. Of course it is all pretty obvious when you think
+about it (they are called synchronous for a reason) but I for one tend to
+forget this ever so often.</p>
+
+<p>One place where this shows up is in the AXI read channel response logic in
+<a href="https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/modem_axi_slave.v">rtl/verilog/modem_axi_slave.v</a>
+since we have to delay the read response for ring buffer reads by one cycle
+compared to if it was a register read.</p>
+
+<p>Another thing that slightly complicates matters is that we cannot simply drain
+the TX ring buffer at constant full speed but instead need to repeatedly do
+stop and go to avoid overflowing the internal data path as it operates at a
+much lower speed (one byte is several symbols, one symbol is several samples,
+etc, etc).</p>
+
+<p>To deal with this we need a <em>handshake</em> mechanism, and we have chosen to do one
+using two signals, <em>valid</em> and <em>ready</em>, as follows.</p>
+<ul>
+  <li>Producer asserts <em>valid</em> when valid data is output</li>
+  <li>Consumer asserts <em>ready</em> when it can accept data</li>
+  <li>The transaction occurs on a rising clock edge when both <em>ready</em> and <em>valid</em>
+are sampled high</li>
+</ul>
+
+<p>Right now the TX and RX ring buffers are tied together in loop-back mode with
+the silly action of transforming lower-case letters to upper-case and vice
+versa.</p>
+
+<p>An interrupt pulse is generated when the hardware updates the read pointer of
+the TX ring and the write pointer of the RX ring.</p>
+
+<p>See <a href="https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/modem_axi_top.v">rtl/verilog/modem_axi_top.v</a></p>
+
+<h4 id="tx-ctrl">TX-Ctrl</h4>
+<p>This is the controller for the transmit ring buffer. It is basically a state
+machine that sits around waiting for the read pointer to be become unequal the
+write pointer (indicating that the buffer is no longer empty) and then starts
+reading words.</p>
+
+<p>The fact that the internal data path needs to be fed with bytes, the pipelined
+read behaviour of the memory and the presence of flow control slightly
+complicates things. This in combination with the long term ambition to switch
+to a single ported memory results in the current simple design, with perhaps a
+seemingly abundant number of states.</p>
+
+<p>See <a href="https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/tx_ctrl.v">rtl/verilog/tx_ctrl.v</a></p>
+
+<h4 id="rx-ctrl">RX-Ctrl</h4>
+<p>This is the controller for the receive ring buffer. It is quite similar to its
+transmit counterpart although it operates in the opposite direction and as a
+result does not have to deal with the issues of memory reads.</p>
+
+<p>One thing we do have to deal with here however is the detection of overflows,
+but that is rather straight forward and we simply skip writing the message
+header and advancing the write pointer when this condition is detected.
+Eventually we should set a status bit indicating the overflow in the header of
+the next message written to the ring and have the device driver informing
+user-space somehow (perhaps by one <em>read</em> returning <em>EOVERFLOW</em>).</p>
+
+<p>See <a href="https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/rx_ctrl.v">rtl/verilog/rx_ctrl.v</a></p>
+
+<h3 id="linux-device-driver">Linux device driver</h3>
+<p>The current device driver resembles the one from the I2C series quite a lot. A
+<em>read</em> operation will block if the RX ring is empty and a <em>write</em> operation
+will block if the TX ring has insufficient space left for the message. In
+either case the sleeping process will be awoken by previously mentioned
+interrupt pulse (indicating that the HW has updated its pointers).</p>
+
+<p>This implementation seems to work for now but later on should probably add
+mutexes to protect the ring buffers from concurrent access (i.e. many processes
+doing <em>read</em> at the same time and similarly for <em>write</em>). Not sure if that
+use-case make a ton of sense though but we should properly handle that
+situation anyway.</p>
+
+<p>Also we would likely benefit from a more fine grained interrupt control, being
+able to see if the source was RX or TX and being able to mask.</p>
+
+<p>For details see
+<a href="https://github.com/markus-zzz/modem/blob/part-2/linux/zzz-modem-driver.c">linux/zzz-modem-driver.c</a></p>
+
+<h3 id="try-it-out">Try it out!</h3>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/markus-zzz/modem.git
+cd modem
+git checkout part-2
+</code></pre></div></div>
+<p>As a sanity check run the simple standalone test transmitting a sequence of
+test messages from size 4 to size 16</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./build-all.sh &amp;&amp; ./run-all.sh
+</code></pre></div></div>
+<p>After that we can move on to do testing with QEMU and the Linux device driver.
+The steps for setting this up are almost identical to what was described in the
+I2C controller series (especially <a href="/2018/07/18/i2c-controller-part-2.html">part-2</a> and <a href="/2018/07/27/i2c-controller-part-4.html">part-4</a>) so repetion here will be brief.</p>
+
+<p>Modify the Linux device tree for our modem device</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gh">diff --git a/arch/arm/boot/dts/vexpress-v2m.dtsi b/arch/arm/boot/dts/vexpress-v2m.dtsi
+index b0021a8..2279196 100644
+</span><span class="gd">--- a/arch/arm/boot/dts/vexpress-v2m.dtsi
+</span><span class="gi">+++ b/arch/arm/boot/dts/vexpress-v2m.dtsi
+</span><span class="gu">@@ -179,8 +179,8 @@
+</span>                                clock-names = "uartclk", "apb_pclk";
+                        };
+
+<span class="gd">-                       v2m_serial3: uart@c000 {
+-                               compatible = "arm,pl011", "arm,primecell";
+</span><span class="gi">+                       zzz_modem: zzz_modem@c000 {
++                               compatible = "zzz-modem";
+</span>                                reg = &lt;0x0c000 0x1000&gt;;
+                                interrupts = &lt;8&gt;;
+                                clocks = &lt;&amp;v2m_oscclk2&gt;, &lt;&amp;smbclk&gt;;
+<span class="gh">diff --git a/arch/arm/boot/dts/vexpress-v2p-ca9.dts b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
+index 5814460..98206c0 100644
+</span><span class="gd">--- a/arch/arm/boot/dts/vexpress-v2p-ca9.dts
+</span><span class="gi">+++ b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
+</span><span class="gu">@@ -25,7 +25,6 @@
+</span>                serial0 = &amp;v2m_serial0;
+                serial1 = &amp;v2m_serial1;
+                serial2 = &amp;v2m_serial2;
+<span class="gd">-               serial3 = &amp;v2m_serial3;
+</span>                i2c0 = &amp;v2m_i2c_dvi;
+                i2c1 = &amp;v2m_i2c_pcie;
+        };
+</code></pre></div></div>
+<p>For QEMU we need to be using
+<a href="https://github.com/markus-zzz/modem/blob/part-2/qemu/axi_master_client_device.c">qemu/axi_master_client_device.c</a>
+and not the corresponding file from the previous repository.</p>
+
+<p>Once everything is built and moved to the proper places the RTL simulation is
+started with</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>vvp -M. -mvpi_axi_master modem.vvp
+</code></pre></div></div>
+<p>and QEMU as before. Watch Linux boot, then login, install the module and do the
+following</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cat /dev/zzz-modem &gt; rx.txt &amp;
+echo "Hello World!" &gt; /dev/zzz-modem
+cat rx.txt
+</code></pre></div></div>
+<p>And to transmit some more messages of varying length</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>for i in $(seq 100); do echo "Hello $(seq -s " " $i)" &gt; /dev/zzz-modem; done
+</code></pre></div></div>
+<h3 id="what-is-next">What is next?</h3>
+
+<p>Right now we have implemented the loop-back at the highest level possible, i.e.
+right after the ring buffers. This is nice, in my opinion, since it allows for
+easy testing with the <em>/dev/zzz-modem</em> device node right away and gives us more
+time to flush out any annoying bugs in the HW/SW interface.</p>
+
+<p>Since our implementation strategy is to go top down we will continue to do so
+and keep on moving the loop-back loop further down the stack as more layers are
+added.</p>
+
+<p>Currently I imagine that the following milestones will be useful</p>
+
+<ul>
+  <li>Next have loop-back of IQ symbols</li>
+  <li>Then loop-back of sampled pulse shaped IQ symbols</li>
+  <li>Then introduce a shift so that we need to do synchronization in RX</li>
+  <li>Do the same thing as previous step but use passband instead of baseband</li>
+  <li>…</li>
+  <li>Finally, a physical audio loop-back wire on the ZedBoard</li>
+</ul>
+
+<p>That is it for this post. Questions or feedback - leave a comment below!</p>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html';
+      this.page.identifier = 'https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2018/08/11/build-a-modem-part-2.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ZZZ-Consulting</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ZZZ-Consulting</li><li><a class="u-email" href="mailto:info@zzzconsulting.se">info@zzzconsulting.se</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/markus-zzz"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">markus-zzz</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

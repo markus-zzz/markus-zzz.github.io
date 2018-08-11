@@ -1,4 +1,205 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2018-08-05T09:06:46+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">MyCC - an introduction</title><link href="https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html" rel="alternate" type="text/html" title="MyCC - an introduction" /><published>2018-08-04T00:00:00+02:00</published><updated>2018-08-04T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html">&lt;p&gt;Today we will be looking at a prototype toy C compiler that I have been working
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2018-08-11T12:37:58+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Building a modem - part 2</title><link href="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html" rel="alternate" type="text/html" title="Building a modem - part 2" /><published>2018-08-11T00:00:00+02:00</published><updated>2018-08-11T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;In this post we return to our modem building project to checkup on the
+progress.&lt;/p&gt;
+
+&lt;p&gt;The code corresponding to the progress of this post is available as branch
+&lt;a href=&quot;https://github.com/markus-zzz/modem/tree/part-2&quot;&gt;part-2&lt;/a&gt; of the modem GitHub
+repository.&lt;/p&gt;
+
+&lt;h3 id=&quot;hardware-blocks&quot;&gt;Hardware blocks&lt;/h3&gt;
+&lt;p&gt;The current implementation exposes two AXI mapped ring buffers, and some
+control register, using the address map from the &lt;a href=&quot;/2018/08/03/build-a-modem-part-1.html&quot;&gt;previous
+post&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Each ring buffer is currently implemented using a dual ported synchronous SRAM
+block with one port being tied to the AXI and the other to the internal data
+path of the modem.&lt;/p&gt;
+
+&lt;p&gt;Now dual ported memories are large and expensive and for the modest data rates
+we plan to put on these memories we can certainly get a way both AXI and
+internal data path sharing the single port on a single ported memory. Doing so
+is of course not free and it will be at the expense of some increased
+implementation complexity but that we can handle later. So in other words, for
+now dual ported is good since they allow for slightly simpler implementation
+but we should eventually switch to using single ported.&lt;/p&gt;
+
+&lt;p&gt;Either way, dual ported or not, Synchronous SRAM blocks have one slightly
+annoying property with respect to reads and that is that the read address is
+clocked. That is the behavioural model looks like this&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    // read operation
+    always @(posedge rclk) begin
+        if (rce) begin
+            ra &amp;lt;= raddr;
+        end
+    end
+
+    assign do = mem[ra];
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;In other words you cannot simply present the read address (&lt;em&gt;raddr&lt;/em&gt;) and expect
+to latch the data (&lt;em&gt;do&lt;/em&gt;) at the next rising clock edge but instead you have to
+wait an additional cycle. Of course it is all pretty obvious when you think
+about it (they are called synchronous for a reason) but I for one tend to
+forget this ever so often.&lt;/p&gt;
+
+&lt;p&gt;One place where this shows up is in the AXI read channel response logic in
+&lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/modem_axi_slave.v&quot;&gt;rtl/verilog/modem_axi_slave.v&lt;/a&gt;
+since we have to delay the read response for ring buffer reads by one cycle
+compared to if it was a register read.&lt;/p&gt;
+
+&lt;p&gt;Another thing that slightly complicates matters is that we cannot simply drain
+the TX ring buffer at constant full speed but instead need to repeatedly do
+stop and go to avoid overflowing the internal data path as it operates at a
+much lower speed (one byte is several symbols, one symbol is several samples,
+etc, etc).&lt;/p&gt;
+
+&lt;p&gt;To deal with this we need a &lt;em&gt;handshake&lt;/em&gt; mechanism, and we have chosen to do one
+using two signals, &lt;em&gt;valid&lt;/em&gt; and &lt;em&gt;ready&lt;/em&gt;, as follows.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Producer asserts &lt;em&gt;valid&lt;/em&gt; when valid data is output&lt;/li&gt;
+  &lt;li&gt;Consumer asserts &lt;em&gt;ready&lt;/em&gt; when it can accept data&lt;/li&gt;
+  &lt;li&gt;The transaction occurs on a rising clock edge when both &lt;em&gt;ready&lt;/em&gt; and &lt;em&gt;valid&lt;/em&gt;
+are sampled high&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Right now the TX and RX ring buffers are tied together in loop-back mode with
+the silly action of transforming lower-case letters to upper-case and vice
+versa.&lt;/p&gt;
+
+&lt;p&gt;An interrupt pulse is generated when the hardware updates the read pointer of
+the TX ring and the write pointer of the RX ring.&lt;/p&gt;
+
+&lt;p&gt;See &lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/modem_axi_top.v&quot;&gt;rtl/verilog/modem_axi_top.v&lt;/a&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;tx-ctrl&quot;&gt;TX-Ctrl&lt;/h4&gt;
+&lt;p&gt;This is the controller for the transmit ring buffer. It is basically a state
+machine that sits around waiting for the read pointer to be become unequal the
+write pointer (indicating that the buffer is no longer empty) and then starts
+reading words.&lt;/p&gt;
+
+&lt;p&gt;The fact that the internal data path needs to be fed with bytes, the pipelined
+read behaviour of the memory and the presence of flow control slightly
+complicates things. This in combination with the long term ambition to switch
+to a single ported memory results in the current simple design, with perhaps a
+seemingly abundant number of states.&lt;/p&gt;
+
+&lt;p&gt;See &lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/tx_ctrl.v&quot;&gt;rtl/verilog/tx_ctrl.v&lt;/a&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;rx-ctrl&quot;&gt;RX-Ctrl&lt;/h4&gt;
+&lt;p&gt;This is the controller for the receive ring buffer. It is quite similar to its
+transmit counterpart although it operates in the opposite direction and as a
+result does not have to deal with the issues of memory reads.&lt;/p&gt;
+
+&lt;p&gt;One thing we do have to deal with here however is the detection of overflows,
+but that is rather straight forward and we simply skip writing the message
+header and advancing the write pointer when this condition is detected.
+Eventually we should set a status bit indicating the overflow in the header of
+the next message written to the ring and have the device driver informing
+user-space somehow (perhaps by one &lt;em&gt;read&lt;/em&gt; returning &lt;em&gt;EOVERFLOW&lt;/em&gt;).&lt;/p&gt;
+
+&lt;p&gt;See &lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/rx_ctrl.v&quot;&gt;rtl/verilog/rx_ctrl.v&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;linux-device-driver&quot;&gt;Linux device driver&lt;/h3&gt;
+&lt;p&gt;The current device driver resembles the one from the I2C series quite a lot. A
+&lt;em&gt;read&lt;/em&gt; operation will block if the RX ring is empty and a &lt;em&gt;write&lt;/em&gt; operation
+will block if the TX ring has insufficient space left for the message. In
+either case the sleeping process will be awoken by previously mentioned
+interrupt pulse (indicating that the HW has updated its pointers).&lt;/p&gt;
+
+&lt;p&gt;This implementation seems to work for now but later on should probably add
+mutexes to protect the ring buffers from concurrent access (i.e. many processes
+doing &lt;em&gt;read&lt;/em&gt; at the same time and similarly for &lt;em&gt;write&lt;/em&gt;). Not sure if that
+use-case make a ton of sense though but we should properly handle that
+situation anyway.&lt;/p&gt;
+
+&lt;p&gt;Also we would likely benefit from a more fine grained interrupt control, being
+able to see if the source was RX or TX and being able to mask.&lt;/p&gt;
+
+&lt;p&gt;For details see
+&lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/linux/zzz-modem-driver.c&quot;&gt;linux/zzz-modem-driver.c&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;try-it-out&quot;&gt;Try it out!&lt;/h3&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone https://github.com/markus-zzz/modem.git
+cd modem
+git checkout part-2
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;As a sanity check run the simple standalone test transmitting a sequence of
+test messages from size 4 to size 16&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;./build-all.sh &amp;amp;&amp;amp; ./run-all.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;After that we can move on to do testing with QEMU and the Linux device driver.
+The steps for setting this up are almost identical to what was described in the
+I2C controller series (especially &lt;a href=&quot;/2018/07/18/i2c-controller-part-2.html&quot;&gt;part-2&lt;/a&gt; and &lt;a href=&quot;/2018/07/27/i2c-controller-part-4.html&quot;&gt;part-4&lt;/a&gt;) so repetion here will be brief.&lt;/p&gt;
+
+&lt;p&gt;Modify the Linux device tree for our modem device&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gh&quot;&gt;diff --git a/arch/arm/boot/dts/vexpress-v2m.dtsi b/arch/arm/boot/dts/vexpress-v2m.dtsi
+index b0021a8..2279196 100644
+&lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2m.dtsi
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2m.dtsi
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -179,8 +179,8 @@
+&lt;/span&gt;                                clock-names = &quot;uartclk&quot;, &quot;apb_pclk&quot;;
+                        };
+
+&lt;span class=&quot;gd&quot;&gt;-                       v2m_serial3: uart@c000 {
+-                               compatible = &quot;arm,pl011&quot;, &quot;arm,primecell&quot;;
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+                       zzz_modem: zzz_modem@c000 {
++                               compatible = &quot;zzz-modem&quot;;
+&lt;/span&gt;                                reg = &amp;lt;0x0c000 0x1000&amp;gt;;
+                                interrupts = &amp;lt;8&amp;gt;;
+                                clocks = &amp;lt;&amp;amp;v2m_oscclk2&amp;gt;, &amp;lt;&amp;amp;smbclk&amp;gt;;
+&lt;span class=&quot;gh&quot;&gt;diff --git a/arch/arm/boot/dts/vexpress-v2p-ca9.dts b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
+index 5814460..98206c0 100644
+&lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2p-ca9.dts
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -25,7 +25,6 @@
+&lt;/span&gt;                serial0 = &amp;amp;v2m_serial0;
+                serial1 = &amp;amp;v2m_serial1;
+                serial2 = &amp;amp;v2m_serial2;
+&lt;span class=&quot;gd&quot;&gt;-               serial3 = &amp;amp;v2m_serial3;
+&lt;/span&gt;                i2c0 = &amp;amp;v2m_i2c_dvi;
+                i2c1 = &amp;amp;v2m_i2c_pcie;
+        };
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;For QEMU we need to be using
+&lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/qemu/axi_master_client_device.c&quot;&gt;qemu/axi_master_client_device.c&lt;/a&gt;
+and not the corresponding file from the previous repository.&lt;/p&gt;
+
+&lt;p&gt;Once everything is built and moved to the proper places the RTL simulation is
+started with&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;vvp -M. -mvpi_axi_master modem.vvp
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;and QEMU as before. Watch Linux boot, then login, install the module and do the
+following&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cat /dev/zzz-modem &amp;gt; rx.txt &amp;amp;
+echo &quot;Hello World!&quot; &amp;gt; /dev/zzz-modem
+cat rx.txt
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;And to transmit some more messages of varying length&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;for i in $(seq 100); do echo &quot;Hello $(seq -s &quot; &quot; $i)&quot; &amp;gt; /dev/zzz-modem; done
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;what-is-next&quot;&gt;What is next?&lt;/h3&gt;
+
+&lt;p&gt;Right now we have implemented the loop-back at the highest level possible, i.e.
+right after the ring buffers. This is nice, in my opinion, since it allows for
+easy testing with the &lt;em&gt;/dev/zzz-modem&lt;/em&gt; device node right away and gives us more
+time to flush out any annoying bugs in the HW/SW interface.&lt;/p&gt;
+
+&lt;p&gt;Since our implementation strategy is to go top down we will continue to do so
+and keep on moving the loop-back loop further down the stack as more layers are
+added.&lt;/p&gt;
+
+&lt;p&gt;Currently I imagine that the following milestones will be useful&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Next have loop-back of IQ symbols&lt;/li&gt;
+  &lt;li&gt;Then loop-back of sampled pulse shaped IQ symbols&lt;/li&gt;
+  &lt;li&gt;Then introduce a shift so that we need to do synchronization in RX&lt;/li&gt;
+  &lt;li&gt;Do the same thing as previous step but use passband instead of baseband&lt;/li&gt;
+  &lt;li&gt;…&lt;/li&gt;
+  &lt;li&gt;Finally, a physical audio loop-back wire on the ZedBoard&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;That is it for this post. Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction In this post we return to our modem building project to checkup on the progress.</summary></entry><entry><title type="html">MyCC - an introduction</title><link href="https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html" rel="alternate" type="text/html" title="MyCC - an introduction" /><published>2018-08-04T00:00:00+02:00</published><updated>2018-08-04T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html">&lt;p&gt;Today we will be looking at a prototype toy C compiler that I have been working
 on every now and then for a while. Of course it is nowhere near complete nor
 even useful for any particular purpose at all besides perhaps my own amusement
 and possibly that of others.&lt;/p&gt;
