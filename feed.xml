@@ -1,4 +1,83 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.3">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2018-10-14T11:16:43+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Building a modem - part 2</title><link href="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html" rel="alternate" type="text/html" title="Building a modem - part 2" /><published>2018-08-11T00:00:00+02:00</published><updated>2018-08-11T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2019-06-26T15:52:38+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">A look at retro gaming hardware</title><link href="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html" rel="alternate" type="text/html" title="A look at retro gaming hardware" /><published>2019-06-26T00:00:00+02:00</published><updated>2019-06-26T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html">&lt;p&gt;Back when I was a kid in the late 80’s and early 90’s I had a &lt;a href=&quot;https://en.wikipedia.org/wiki/Commodore_64&quot;&gt;Commodore
+64&lt;/a&gt;, a &lt;a href=&quot;https://en.wikipedia.org/wiki/Amiga_500&quot;&gt;Amiga
+500&lt;/a&gt; and eventually a &lt;a href=&quot;https://en.wikipedia.org/wiki/Amiga_1200&quot;&gt;Amiga
+1200&lt;/a&gt;. Now besides playing games and
+calling &lt;a href=&quot;https://en.wikipedia.org/wiki/Bulletin_board_system&quot;&gt;BBS&lt;/a&gt;s I never got
+around to do any programming on these devices.  Something that I quite regret
+now in grown age when I realize how beautiful, and in a way simple, these
+machines were. Well to be honest I did play around a bit with
+&lt;a href=&quot;https://en.wikipedia.org/wiki/BASIC&quot;&gt;BASIC&lt;/a&gt; but as BASIC is well BASIC I never
+really got a hang of anything and didn’t understand much either. It wasn’t
+until years later when I finally learned C that things started to make sense.&lt;/p&gt;
+
+&lt;p&gt;Not too long ago I read about the
+&lt;a href=&quot;https://github.com/MiSTer-devel/Main_MiSTer/wiki&quot;&gt;MiSTer&lt;/a&gt; project and while I
+have known about the &lt;a href=&quot;https://en.wikipedia.org/wiki/Minimig&quot;&gt;Minimig&lt;/a&gt; core for
+a long time it wasn’t until now it appeared to be running on a almost
+off-the-shelf FPGA board not requiring a hard
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Motorola_68000&quot;&gt;m68k&lt;/a&gt; CPU. This and seeing
+Youtube videos of people reverse engineering old arcade PCBs (e.g.
+&lt;a href=&quot;https://www.youtube.com/watch?v=g8gZT1F9UkE&quot;&gt;this&lt;/a&gt;) inspired me to try and do
+some work in this area myself.&lt;/p&gt;
+
+&lt;p&gt;I also found a nice little book called &lt;a href=&quot;https://www.amazon.com/dp/B07LD48CTV/ref=pe_385040_118058080_TE_M1DP&quot;&gt;Designing Video Game Hardware in
+Verilog&lt;/a&gt;
+by a guy named Steven Hugg. The Kindle version sells for only $12 and I highly
+recommend this book, not because it contains tons of stuff you didn’t already
+know or could not figure out yourself but because it is a nice read with
+interesting historical remarks and it comes with a website called
+&lt;a href=&quot;https://8bitworkshop.com/&quot;&gt;8bitworkshops&lt;/a&gt; that is pretty awesome.&lt;/p&gt;
+
+&lt;p&gt;Now the website can actually be fully used without purchasing the book but I
+really think it is an effort worth supporting.&lt;/p&gt;
+
+&lt;p&gt;While the website allows you to interactively program and run old arcade
+systems and consoles such as the Atari 2600 in both C and assembler what totally
+blew my mind is the ability to write a custom hardware design in Verilog,
+producing a VGA video signal and then having that run in the browser displaying
+graphics on a simulated CRT (and with a pretty impressive frame rate too).&lt;/p&gt;
+
+&lt;p&gt;To me that all seemed fictional, did this guy implement a complete Verilog
+simulator in JavaScript that runs that fast? Well it turns out that he did not
+but instead used existing software in clever ways and this post will now
+briefly digress to shed some light on how.&lt;/p&gt;
+
+&lt;p&gt;First, the source code behind the entire 8bitworkshops website is available on
+Github &lt;a href=&quot;https://github.com/sehugg/8bitworkshop&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;To pull off the Verilog stunt described above it uses mainly two components:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://emscripten.org/&quot;&gt;Emscripten&lt;/a&gt; - a LLVM backend that generates
+JavaScript effectively allowing you to compile C++ code into JavaScript and
+execute in a browser.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.veripool.org/wiki/verilator&quot;&gt;Verilator&lt;/a&gt; - a verilog simulator
+that compiles synthesizable verilog modules into C++ code.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Now Verilator is compiled into JavaScript by Emscripten so Verilator will run
+in your browser outputting C++ code for the Verilog modules you provide. The
+following question is of course what happens with this Verilator generated C++.
+One option would be if Emscripten ‘Emsripted’ itself so that your browser had
+the ability to turn C++ into JavaScript but that is not what is happening. The
+C++ generated by Verilator only uses a subset of the full language and is quite
+regular. The fact that this subset is similar, expect for some syntax details,
+to JavaScript is taken advantage of to to simply do a regexp based translation.&lt;/p&gt;
+
+&lt;p&gt;Verilated C++ is translated into JavaScript by
+&lt;a href=&quot;https://github.com/sehugg/8bitworkshop/blob/10f89d0c53e610934b0035bbed5a4af258844786/src/worker/verilator2js.ts&quot;&gt;src/worker/verilator2js.ts&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;If one studies an example of how to use Verilator natively in C++ then one can
+see that pattern being hand translated to JS in
+&lt;a href=&quot;https://github.com/sehugg/8bitworkshop/blob/10f89d0c53e610934b0035bbed5a4af258844786/src/platform/verilog.ts&quot;&gt;src/platform/verilog.ts&lt;/a&gt;.
+Especially the function
+&lt;a href=&quot;https://github.com/sehugg/8bitworkshop/blob/10f89d0c53e610934b0035bbed5a4af258844786/src/platform/verilog.ts#L496-L539&quot;&gt;updateVideoFrameCycles&lt;/a&gt;
+calls vidtick (calling tick2 to toggle the clock and advance simulation) and
+extracting VGA signals from the model, storing to a JS frame buffer for display
+on the web page.&lt;/p&gt;
+
+&lt;p&gt;That concludes this post. Hopefully it will mark the start of a new series
+diving into the details of designing some old school video game hardware.&lt;/p&gt;</content><author><name></name></author><summary type="html">Back when I was a kid in the late 80’s and early 90’s I had a Commodore 64, a Amiga 500 and eventually a Amiga 1200. Now besides playing games and calling BBSs I never got around to do any programming on these devices. Something that I quite regret now in grown age when I realize how beautiful, and in a way simple, these machines were. Well to be honest I did play around a bit with BASIC but as BASIC is well BASIC I never really got a hang of anything and didn’t understand much either. It wasn’t until years later when I finally learned C that things started to make sense.</summary></entry><entry><title type="html">Building a modem - part 2</title><link href="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html" rel="alternate" type="text/html" title="Building a modem - part 2" /><published>2018-08-11T00:00:00+02:00</published><updated>2018-08-11T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;In this post we return to our modem building project to checkup on the
 progress.&lt;/p&gt;
 
@@ -135,12 +214,12 @@ I2C controller series (especially &lt;a href=&quot;/2018/07/18/i2c-controller-pa
 index b0021a8..2279196 100644
 &lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2m.dtsi
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2m.dtsi
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -179,8 +179,8 @@
-&lt;/span&gt;                                clock-names = &quot;uartclk&quot;, &quot;apb_pclk&quot;;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -179,8 +179,8 @@&lt;/span&gt;
+                                clock-names = &quot;uartclk&quot;, &quot;apb_pclk&quot;;
                         };
 
-&lt;span class=&quot;gd&quot;&gt;-                       v2m_serial3: uart@c000 {
--                               compatible = &quot;arm,pl011&quot;, &quot;arm,primecell&quot;;
+-                       v2m_serial3: uart@c000 {
+&lt;span class=&quot;gd&quot;&gt;-                               compatible = &quot;arm,pl011&quot;, &quot;arm,primecell&quot;;
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+                       zzz_modem: zzz_modem@c000 {
 +                               compatible = &quot;zzz-modem&quot;;
 &lt;/span&gt;                                reg = &amp;lt;0x0c000 0x1000&amp;gt;;
@@ -150,8 +229,8 @@ index b0021a8..2279196 100644
 index 5814460..98206c0 100644
 &lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2p-ca9.dts
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -25,7 +25,6 @@
-&lt;/span&gt;                serial0 = &amp;amp;v2m_serial0;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -25,7 +25,6 @@&lt;/span&gt;
+                serial0 = &amp;amp;v2m_serial0;
                 serial1 = &amp;amp;v2m_serial1;
                 serial2 = &amp;amp;v2m_serial2;
 &lt;span class=&quot;gd&quot;&gt;-               serial3 = &amp;amp;v2m_serial3;
@@ -499,12 +578,12 @@ borrow the resources from the last one.&lt;/p&gt;
 index b0021a8..f651956 100644
 &lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2m.dtsi
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2m.dtsi
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -179,8 +179,8 @@
-&lt;/span&gt;                                clock-names = &quot;uartclk&quot;, &quot;apb_pclk&quot;;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -179,8 +179,8 @@&lt;/span&gt;
+                                clock-names = &quot;uartclk&quot;, &quot;apb_pclk&quot;;
                         };
 
-&lt;span class=&quot;gd&quot;&gt;-                       v2m_serial3: uart@c000 {
--                               compatible = &quot;arm,pl011&quot;, &quot;arm,primecell&quot;;
+-                       v2m_serial3: uart@c000 {
+&lt;span class=&quot;gd&quot;&gt;-                               compatible = &quot;arm,pl011&quot;, &quot;arm,primecell&quot;;
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+                       zzz_i2c_eprom: zzz_i2c_eprom@c000 {
 +                               compatible = &quot;zzz-i2c-eprom&quot;;
 &lt;/span&gt;                                reg = &amp;lt;0x0c000 0x1000&amp;gt;;
@@ -514,8 +593,8 @@ index b0021a8..f651956 100644
 index 5814460..98206c0 100644
 &lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2p-ca9.dts
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -25,7 +25,6 @@
-&lt;/span&gt;                serial0 = &amp;amp;v2m_serial0;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -25,7 +25,6 @@&lt;/span&gt;
+                serial0 = &amp;amp;v2m_serial0;
                 serial1 = &amp;amp;v2m_serial1;
                 serial2 = &amp;amp;v2m_serial2;
 &lt;span class=&quot;gd&quot;&gt;-               serial3 = &amp;amp;v2m_serial3;
@@ -530,8 +609,8 @@ following change&lt;/p&gt;
 index 9fad791..c1f7550 100644
 &lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/hw/arm/vexpress.c
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/hw/arm/vexpress.c
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -625,7 +625,11 @@ static void vexpress_common_init(MachineState *machine)
-&lt;/span&gt;     pl011_create(map[VE_UART0], pic[5], serial_hds[0]);
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -625,7 +625,11 @@&lt;/span&gt; static void vexpress_common_init(MachineState *machine)
+     pl011_create(map[VE_UART0], pic[5], serial_hds[0]);
      pl011_create(map[VE_UART1], pic[6], serial_hds[1]);
      pl011_create(map[VE_UART2], pic[7], serial_hds[2]);
 &lt;span class=&quot;gi&quot;&gt;+#if 0

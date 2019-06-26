@@ -4,7 +4,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
 <title>Building a modem - part 2 | ZZZ-Consulting</title>
-<meta name="generator" content="Jekyll v3.8.3" />
+<meta name="generator" content="Jekyll v3.8.5" />
 <meta property="og:title" content="Building a modem - part 2" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Introduction In this post we return to our modem building project to checkup on the progress." />
@@ -209,12 +209,12 @@ I2C controller series (especially <a href="/2018/07/18/i2c-controller-part-2.htm
 index b0021a8..2279196 100644
 </span><span class="gd">--- a/arch/arm/boot/dts/vexpress-v2m.dtsi
 </span><span class="gi">+++ b/arch/arm/boot/dts/vexpress-v2m.dtsi
-</span><span class="gu">@@ -179,8 +179,8 @@
-</span>                                clock-names = "uartclk", "apb_pclk";
+</span><span class="p">@@ -179,8 +179,8 @@</span>
+                                clock-names = "uartclk", "apb_pclk";
                         };
 
-<span class="gd">-                       v2m_serial3: uart@c000 {
--                               compatible = "arm,pl011", "arm,primecell";
+-                       v2m_serial3: uart@c000 {
+<span class="gd">-                               compatible = "arm,pl011", "arm,primecell";
 </span><span class="gi">+                       zzz_modem: zzz_modem@c000 {
 +                               compatible = "zzz-modem";
 </span>                                reg = &lt;0x0c000 0x1000&gt;;
@@ -224,8 +224,8 @@ index b0021a8..2279196 100644
 index 5814460..98206c0 100644
 </span><span class="gd">--- a/arch/arm/boot/dts/vexpress-v2p-ca9.dts
 </span><span class="gi">+++ b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-</span><span class="gu">@@ -25,7 +25,6 @@
-</span>                serial0 = &amp;v2m_serial0;
+</span><span class="p">@@ -25,7 +25,6 @@</span>
+                serial0 = &amp;v2m_serial0;
                 serial1 = &amp;v2m_serial1;
                 serial2 = &amp;v2m_serial2;
 <span class="gd">-               serial3 = &amp;v2m_serial3;

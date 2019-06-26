@@ -4,7 +4,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
 <title>A basic I2C controller - part 4 | ZZZ-Consulting</title>
-<meta name="generator" content="Jekyll v3.8.3" />
+<meta name="generator" content="Jekyll v3.8.5" />
 <meta property="og:title" content="A basic I2C controller - part 4" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Now we are going to revisit the device driver from part 3 of this series and redo it properly." />
@@ -106,12 +106,12 @@ borrow the resources from the last one.</p>
 index b0021a8..f651956 100644
 </span><span class="gd">--- a/arch/arm/boot/dts/vexpress-v2m.dtsi
 </span><span class="gi">+++ b/arch/arm/boot/dts/vexpress-v2m.dtsi
-</span><span class="gu">@@ -179,8 +179,8 @@
-</span>                                clock-names = "uartclk", "apb_pclk";
+</span><span class="p">@@ -179,8 +179,8 @@</span>
+                                clock-names = "uartclk", "apb_pclk";
                         };
 
-<span class="gd">-                       v2m_serial3: uart@c000 {
--                               compatible = "arm,pl011", "arm,primecell";
+-                       v2m_serial3: uart@c000 {
+<span class="gd">-                               compatible = "arm,pl011", "arm,primecell";
 </span><span class="gi">+                       zzz_i2c_eprom: zzz_i2c_eprom@c000 {
 +                               compatible = "zzz-i2c-eprom";
 </span>                                reg = &lt;0x0c000 0x1000&gt;;
@@ -121,8 +121,8 @@ index b0021a8..f651956 100644
 index 5814460..98206c0 100644
 </span><span class="gd">--- a/arch/arm/boot/dts/vexpress-v2p-ca9.dts
 </span><span class="gi">+++ b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-</span><span class="gu">@@ -25,7 +25,6 @@
-</span>                serial0 = &amp;v2m_serial0;
+</span><span class="p">@@ -25,7 +25,6 @@</span>
+                serial0 = &amp;v2m_serial0;
                 serial1 = &amp;v2m_serial1;
                 serial2 = &amp;v2m_serial2;
 <span class="gd">-               serial3 = &amp;v2m_serial3;
@@ -137,8 +137,8 @@ following change</p>
 index 9fad791..c1f7550 100644
 </span><span class="gd">--- a/hw/arm/vexpress.c
 </span><span class="gi">+++ b/hw/arm/vexpress.c
-</span><span class="gu">@@ -625,7 +625,11 @@ static void vexpress_common_init(MachineState *machine)
-</span>     pl011_create(map[VE_UART0], pic[5], serial_hds[0]);
+</span><span class="p">@@ -625,7 +625,11 @@</span> static void vexpress_common_init(MachineState *machine)
+     pl011_create(map[VE_UART0], pic[5], serial_hds[0]);
      pl011_create(map[VE_UART1], pic[6], serial_hds[1]);
      pl011_create(map[VE_UART2], pic[7], serial_hds[2]);
 <span class="gi">+#if 0
