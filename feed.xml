@@ -1,4 +1,293 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2019-06-26T15:52:38+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">A look at retro gaming hardware</title><link href="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html" rel="alternate" type="text/html" title="A look at retro gaming hardware" /><published>2019-06-26T00:00:00+02:00</published><updated>2019-06-26T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html">&lt;p&gt;Back when I was a kid in the late 80’s and early 90’s I had a &lt;a href=&quot;https://en.wikipedia.org/wiki/Commodore_64&quot;&gt;Commodore
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2019-08-12T15:00:54+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Designing retro gaming hardware - part 1</title><link href="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html" rel="alternate" type="text/html" title="Designing retro gaming hardware - part 1" /><published>2019-08-12T00:00:00+02:00</published><updated>2019-08-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html">&lt;p&gt;In this post we visit my latest pet project - that is building a custom 80’s
+style game console. Much fun ahead :)&lt;/p&gt;
+
+&lt;h2 id=&quot;background&quot;&gt;Background&lt;/h2&gt;
+&lt;p&gt;The main motivating factor behind this effort was seeing the game &lt;a href=&quot;https://www.lexaloffle.com/bbs/?tid=2145&quot;&gt;Celeste
+(classic)&lt;/a&gt; running on the
+&lt;a href=&quot;https://www.lexaloffle.com/pico-8.php&quot;&gt;Pico-8&lt;/a&gt; fantasy console. This game is
+in fact the precursor of the very well received 2018’s title
+&lt;a href=&quot;http://www.celestegame.com/&quot;&gt;Celeste&lt;/a&gt; and Pico-8 is a software emulator for a
+80’s game console that never existed. The limited environment offered by such a
+machine has made it quite popular among makers of small games as it turns out
+that having limited resources really can be a good thing when it comes to
+finishing a game project.&lt;/p&gt;
+
+&lt;p&gt;One of the many cool things with Pico-8 is that the cartridge for any game
+distributed is automatically open and its contents (sprites, tiles and maps as
+well as source code) can be examined by anyone, either through the builtin
+Pico-8 IDE or using the python
+&lt;a href=&quot;https://github.com/dansanderson/picotool&quot;&gt;picotool&lt;/a&gt; module.&lt;/p&gt;
+
+&lt;p&gt;I for one find this game to be truly awesome and I am really impressed with how
+well it plays even with such limited resources. As a result the goal of my
+project is now to design 80’s style sprite and tile based video game hardware
+that is capable of playing a game like this and run it on a FPGA.&lt;/p&gt;
+
+&lt;h2 id=&quot;design&quot;&gt;Design&lt;/h2&gt;
+
+&lt;p&gt;Lets begin by looking at the major components of the system.&lt;/p&gt;
+
+&lt;h3 id=&quot;graphics&quot;&gt;Graphics&lt;/h3&gt;
+&lt;p&gt;First there is no frame buffer (remember at this time memory is expensive and
+CPUs are slow). Instead all graphics are produced on the fly having dedicated
+hardware shift out pixel by pixel of movable sprites and stationary background
+tiles as the video beam traces along the screen.&lt;/p&gt;
+
+&lt;p&gt;The lowest video resolution broadly supported by modern display hardware is
+640x480@60Hz. The video timing generator for such a resolution uses a 25Mhz
+pixel clock which is also quite suitable to base the rest of our design on.&lt;/p&gt;
+
+&lt;p&gt;For a retro system 640x480 is too high resolution so we cut it down to 320x240
+by ignoring the lowest bit of the vertical video coordinate (so that even and
+odd scanlines will look the same) and introducing a clock enable (set by the
+lowest bit of the horizontal video coordinate) to have the sprite and tile
+shifters keep the same pixel value for two consecutive horizontal video pixels.&lt;/p&gt;
+
+&lt;p&gt;A sprite/tile in Pico-8 is 8x8 pixels and a pixel holds 4 bits of color
+information. We will do the same.&lt;/p&gt;
+
+&lt;p&gt;A sprite shifter module is basically a shift register combined with some
+triggering logic to make the shifting start only when a programmed horizontal
+position is reached.&lt;/p&gt;
+
+&lt;p&gt;Our system has eight sprite shifters and each of these need to be loaded per
+scanline before the visual region starts. As soon as a scanline starts (or
+rather when the previous one reached position 320) a FSM takes care of
+performing the following steps&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Scan the 64 entry sprite descriptor table in VRAM to find the first eight that
+have sprites intersecting the current scanline. While doing this load the
+corresponding sprite lines into the sprite shifters and set the horizontal
+trigger position.&lt;/li&gt;
+  &lt;li&gt;When the active region starts load the corresponding tile line into the tile
+shifter based simply on the contents of the VRAM tile table.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The sprite descriptor format is:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Field&lt;/th&gt;
+      &lt;th&gt;Bits&lt;/th&gt;
+      &lt;th&gt;Description&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;vpos&lt;/td&gt;
+      &lt;td&gt;8&lt;/td&gt;
+      &lt;td&gt;Vertical start position (0-319).&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;hpos&lt;/td&gt;
+      &lt;td&gt;9&lt;/td&gt;
+      &lt;td&gt;Horizontal start position (0-239).&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;idx&lt;/td&gt;
+      &lt;td&gt;7&lt;/td&gt;
+      &lt;td&gt;Index of sprite (0-127).&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;vflip&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;Flip pixels vertically.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;hflip&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;Flip pixels horizontally.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;active&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;Display sprite.&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h3 id=&quot;vram&quot;&gt;VRAM&lt;/h3&gt;
+&lt;p&gt;As is customary the graphics system has its own memory (VRAM) to which it has
+exclusive access (CPU will stall if it tries to access) except for during the
+vertical blanking period when the CPU gets to update sprite descriptors and
+tile tables.&lt;/p&gt;
+
+&lt;h4 id=&quot;rationale-behind-dimension-and-memory-map&quot;&gt;Rationale behind dimension and memory map&lt;/h4&gt;
+
+&lt;p&gt;Each sprite/tile is 8x8 pixel with a color depth of 4 bits giving it a
+storage requirement of 32 bytes. We need at least 128 of these in VRAM so
+that results in 4096 bytes.&lt;/p&gt;
+
+&lt;p&gt;Each sprite descriptor is 32 bits wide and we need 64 of those, i.e. 256
+bytes.&lt;/p&gt;
+
+&lt;p&gt;With a screen resolution of 320x200 and sprite/tile size of 8x8 a total of
+40x30 tiles are needed to cover the screen using a 8 bit index for each results
+in 1200 bytes. Since we want to be able to index this memory without performing
+multiplication the dimension is rounded up to the nearest power-of-two i.e.
+64x32 resulting in 2048 bytes (in fact the storage size can be much less
+depending on if this is row major or column major).&lt;/p&gt;
+
+&lt;p&gt;The extra rows and columns may come in handy whey trying to support smooth
+scrolling.&lt;/p&gt;
+
+&lt;p&gt;All in all it is reasonable to dimension the VRAM to 8192 bytes. To allow
+efficient 32 bit access from both GFX and CPU this is laid out as 2048 x
+32 meaning that we need an address bus width of 11 bits.&lt;/p&gt;
+
+&lt;p&gt;So to sum it up VRAM is laid out as follows:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Base&lt;/th&gt;
+      &lt;th&gt;Size&lt;/th&gt;
+      &lt;th&gt;Description&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;4096&lt;/td&gt;
+      &lt;td&gt;Table of 128 8x8 sprite/tile bitmaps with 4-bit color depth (each bitmap consumes 32 bytes).&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;4096&lt;/td&gt;
+      &lt;td&gt;256&lt;/td&gt;
+      &lt;td&gt;Table of 64 sprite descriptors each of size 32 bits.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;4352&lt;/td&gt;
+      &lt;td&gt;2048&lt;/td&gt;
+      &lt;td&gt;40x30 table of background tile indices (addressed as if dimensions were 64x32).&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h3 id=&quot;cpu&quot;&gt;CPU&lt;/h3&gt;
+&lt;p&gt;One thing that is not so awesome about 80’s systems is the software tools
+available (especially compilers), so instead of using a CPU from the era this
+project will use a modern &lt;a href=&quot;https://riscv.org/&quot;&gt;RISC-V&lt;/a&gt; 32-bit CPU which is well
+supported by modern tool-chains such as LLVM and GCC. The particular RISC-V
+implementation of choice is
+&lt;a href=&quot;https://github.com/cliffordwolf/picorv32&quot;&gt;PicoRV32&lt;/a&gt; as we favor small size
+over computational efficiency.&lt;/p&gt;
+
+&lt;h3 id=&quot;system-memory-map&quot;&gt;System memory map&lt;/h3&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Base&lt;/th&gt;
+      &lt;th&gt;Size&lt;/th&gt;
+      &lt;th&gt;Memory&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x00000000&lt;/td&gt;
+      &lt;td&gt;16KB&lt;/td&gt;
+      &lt;td&gt;ROM&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x10000000&lt;/td&gt;
+      &lt;td&gt;4KB&lt;/td&gt;
+      &lt;td&gt;RAM&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x20000000&lt;/td&gt;
+      &lt;td&gt;8KB&lt;/td&gt;
+      &lt;td&gt;VRAM&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x30000000&lt;/td&gt;
+      &lt;td&gt;4&lt;/td&gt;
+      &lt;td&gt;System status register&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;current-implementation&quot;&gt;Current implementation&lt;/h2&gt;
+
+&lt;p&gt;The implementation can be found on
+&lt;a href=&quot;https://github.com/markus-zzz/retrocon/tree/dev&quot;&gt;github&lt;/a&gt;. While being very
+much work in progress it is capable of bouncing sprites around over static
+background tiles as can be seen in this animation&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/retrocon-sprite-bounce.apng&quot; alt=&quot;Bouncing sprites&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The PNGs for the animation above were produced by a
+&lt;a href=&quot;https://www.veripool.org/wiki/verilator&quot;&gt;Verilator&lt;/a&gt; based simulation using the
+custom tool
+&lt;a href=&quot;https://github.com/markus-zzz/retrocon/blob/dev/sim/verilator/vgamon.cpp&quot;&gt;vgamon&lt;/a&gt;
+that captures the VGA output of the design either displaying it in real time
+(i.e. on my machine ~8 frames per second) and optionally storing frames to PNG
+files.&lt;/p&gt;
+
+&lt;p&gt;Now Verilator is pretty awesome and this tool has already proven extremely
+useful. Considering the sheer amount of simulation cycles that go into
+producing a single frame makes you quickly realize that traditional simulators
+such as &lt;a href=&quot;http://iverilog.icarus.com/&quot;&gt;Icarus Verilog&lt;/a&gt; don’t quite cut it for
+this purpose.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Usage: ./vgamon [OPTIONS]
+
+  --scale=N             -- set pixel scaling
+  --frame-rate=N        -- try to produce a new frame every N ms
+  --save-frame-from=N   -- dump frames to .png starting from frame #N
+  --save-frame-to=N=N   -- dump frames to .png ending with frame #N
+  --save-frame-prefix=S -- prefix dump frame files with S
+  --exit-after-frame=N  -- exit after frame #N
+  --trace               -- create dump.vcd
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;The design has been tested on a &lt;a href=&quot;https://radiona.org/ulx3s/&quot;&gt;ULX3S&lt;/a&gt; FPGA board
+using the open source &lt;a href=&quot;https://symbiflow.github.io/&quot;&gt;SymbiFlow&lt;/a&gt; tools (Yosys
+and nextpnr). Doing so gives a device utilization as follows for the boards
+&lt;a href=&quot;https://www.latticesemi.com/Products/FPGAandCPLD/ECP5&quot;&gt;ECP5 12F&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Info: Device utilisation:
+Info:          TRELLIS_SLICE:  2822/12144    23%
+Info:             TRELLIS_IO:    10/  196     5%
+Info:                   DCCA:     3/   56     5%
+Info:                 DP16KD:    16/   56    28%
+Info:             MULT18X18D:     0/   28     0%
+Info:                 ALU54B:     0/   14     0%
+Info:                EHXPLLL:     1/    2    50%
+Info:                EXTREFB:     0/    1     0%
+Info:                   DCUA:     0/    1     0%
+Info:              PCSCLKDIV:     0/    2     0%
+Info:                IOLOGIC:     0/  128     0%
+Info:               SIOLOGIC:     8/   68    11%
+Info:                    GSR:     0/    1     0%
+Info:                  JTAGG:     0/    1     0%
+Info:                   OSCG:     0/    1     0%
+Info:                  SEDGA:     0/    1     0%
+Info:                    DTR:     0/    1     0%
+Info:                USRMCLK:     0/    1     0%
+Info:                CLKDIVF:     0/    4     0%
+Info:              ECLKSYNCB:     0/    8     0%
+Info:                DLLDELD:     0/    8     0%
+Info:                 DDRDLL:     0/    4     0%
+Info:                DQSBUFM:     0/    8     0%
+Info:        TRELLIS_ECLKBUF:     0/    8     0%
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;The only video output on ULX3S is a HDMI compatible connector so we borrow the
+code from &lt;a href=&quot;https://github.com/daveshah1/prjtrellis-dvi&quot;&gt;Project Trellis DVI&lt;/a&gt; to
+output DVI over that connector. It works surprisingly well!&lt;/p&gt;
+
+&lt;h2 id=&quot;next-steps&quot;&gt;Next steps&lt;/h2&gt;
+&lt;p&gt;Some ideas for the future:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Implement UART based means to upload CPU code and RAM contents to running
+board (having to re-synthesize as is the case now really slows down the
+development cycle).&lt;/li&gt;
+  &lt;li&gt;Implement horizontal flip and vertical flip sprite flags.&lt;/li&gt;
+  &lt;li&gt;Support for smooth scrolling background tiles (preferably in all directions).&lt;/li&gt;
+  &lt;li&gt;Look into supporting Pico-8 style sound effects.&lt;/li&gt;
+  &lt;li&gt;Fix a million bugs :)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;That is it for now. Hopefully I will make some more progress soon!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we visit my latest pet project - that is building a custom 80’s style game console. Much fun ahead :)</summary></entry><entry><title type="html">A look at retro gaming hardware</title><link href="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html" rel="alternate" type="text/html" title="A look at retro gaming hardware" /><published>2019-06-26T00:00:00+02:00</published><updated>2019-06-26T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html">&lt;p&gt;Back when I was a kid in the late 80’s and early 90’s I had a &lt;a href=&quot;https://en.wikipedia.org/wiki/Commodore_64&quot;&gt;Commodore
 64&lt;/a&gt;, a &lt;a href=&quot;https://en.wikipedia.org/wiki/Amiga_500&quot;&gt;Amiga
 500&lt;/a&gt; and eventually a &lt;a href=&quot;https://en.wikipedia.org/wiki/Amiga_1200&quot;&gt;Amiga
 1200&lt;/a&gt;. Now besides playing games and

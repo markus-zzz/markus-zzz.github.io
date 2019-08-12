@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Designing retro gaming hardware - part 1 | ZZZ-Consulting</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Designing retro gaming hardware - part 1" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="In this post we visit my latest pet project - that is building a custom 80’s style game console. Much fun ahead :)" />
+<meta property="og:description" content="In this post we visit my latest pet project - that is building a custom 80’s style game console. Much fun ahead :)" />
+<link rel="canonical" href="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html" />
+<meta property="og:url" content="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html" />
+<meta property="og:site_name" content="ZZZ-Consulting" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-08-12T00:00:00+02:00" />
+<script type="application/ld+json">
+{"description":"In this post we visit my latest pet project - that is building a custom 80’s style game console. Much fun ahead :)","@type":"BlogPosting","url":"https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html","headline":"Designing retro gaming hardware - part 1","dateModified":"2019-08-12T00:00:00+02:00","datePublished":"2019-08-12T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-122494618-1', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Designing retro gaming hardware - part 1</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2019-08-12T00:00:00+02:00" itemprop="datePublished">Aug 12, 2019
+      </time></p>
+  </header>
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+  
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.1.2/mermaid.min.js">
+</script>
+
+  
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>In this post we visit my latest pet project - that is building a custom 80’s
+style game console. Much fun ahead :)</p>
+
+<h2 id="background">Background</h2>
+<p>The main motivating factor behind this effort was seeing the game <a href="https://www.lexaloffle.com/bbs/?tid=2145">Celeste
+(classic)</a> running on the
+<a href="https://www.lexaloffle.com/pico-8.php">Pico-8</a> fantasy console. This game is
+in fact the precursor of the very well received 2018’s title
+<a href="http://www.celestegame.com/">Celeste</a> and Pico-8 is a software emulator for a
+80’s game console that never existed. The limited environment offered by such a
+machine has made it quite popular among makers of small games as it turns out
+that having limited resources really can be a good thing when it comes to
+finishing a game project.</p>
+
+<p>One of the many cool things with Pico-8 is that the cartridge for any game
+distributed is automatically open and its contents (sprites, tiles and maps as
+well as source code) can be examined by anyone, either through the builtin
+Pico-8 IDE or using the python
+<a href="https://github.com/dansanderson/picotool">picotool</a> module.</p>
+
+<p>I for one find this game to be truly awesome and I am really impressed with how
+well it plays even with such limited resources. As a result the goal of my
+project is now to design 80’s style sprite and tile based video game hardware
+that is capable of playing a game like this and run it on a FPGA.</p>
+
+<h2 id="design">Design</h2>
+
+<p>Lets begin by looking at the major components of the system.</p>
+
+<h3 id="graphics">Graphics</h3>
+<p>First there is no frame buffer (remember at this time memory is expensive and
+CPUs are slow). Instead all graphics are produced on the fly having dedicated
+hardware shift out pixel by pixel of movable sprites and stationary background
+tiles as the video beam traces along the screen.</p>
+
+<p>The lowest video resolution broadly supported by modern display hardware is
+640x480@60Hz. The video timing generator for such a resolution uses a 25Mhz
+pixel clock which is also quite suitable to base the rest of our design on.</p>
+
+<p>For a retro system 640x480 is too high resolution so we cut it down to 320x240
+by ignoring the lowest bit of the vertical video coordinate (so that even and
+odd scanlines will look the same) and introducing a clock enable (set by the
+lowest bit of the horizontal video coordinate) to have the sprite and tile
+shifters keep the same pixel value for two consecutive horizontal video pixels.</p>
+
+<p>A sprite/tile in Pico-8 is 8x8 pixels and a pixel holds 4 bits of color
+information. We will do the same.</p>
+
+<p>A sprite shifter module is basically a shift register combined with some
+triggering logic to make the shifting start only when a programmed horizontal
+position is reached.</p>
+
+<p>Our system has eight sprite shifters and each of these need to be loaded per
+scanline before the visual region starts. As soon as a scanline starts (or
+rather when the previous one reached position 320) a FSM takes care of
+performing the following steps</p>
+
+<ul>
+  <li>Scan the 64 entry sprite descriptor table in VRAM to find the first eight that
+have sprites intersecting the current scanline. While doing this load the
+corresponding sprite lines into the sprite shifters and set the horizontal
+trigger position.</li>
+  <li>When the active region starts load the corresponding tile line into the tile
+shifter based simply on the contents of the VRAM tile table.</li>
+</ul>
+
+<p>The sprite descriptor format is:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Bits</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>vpos</td>
+      <td>8</td>
+      <td>Vertical start position (0-319).</td>
+    </tr>
+    <tr>
+      <td>hpos</td>
+      <td>9</td>
+      <td>Horizontal start position (0-239).</td>
+    </tr>
+    <tr>
+      <td>idx</td>
+      <td>7</td>
+      <td>Index of sprite (0-127).</td>
+    </tr>
+    <tr>
+      <td>vflip</td>
+      <td>1</td>
+      <td>Flip pixels vertically.</td>
+    </tr>
+    <tr>
+      <td>hflip</td>
+      <td>1</td>
+      <td>Flip pixels horizontally.</td>
+    </tr>
+    <tr>
+      <td>active</td>
+      <td>1</td>
+      <td>Display sprite.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="vram">VRAM</h3>
+<p>As is customary the graphics system has its own memory (VRAM) to which it has
+exclusive access (CPU will stall if it tries to access) except for during the
+vertical blanking period when the CPU gets to update sprite descriptors and
+tile tables.</p>
+
+<h4 id="rationale-behind-dimension-and-memory-map">Rationale behind dimension and memory map</h4>
+
+<p>Each sprite/tile is 8x8 pixel with a color depth of 4 bits giving it a
+storage requirement of 32 bytes. We need at least 128 of these in VRAM so
+that results in 4096 bytes.</p>
+
+<p>Each sprite descriptor is 32 bits wide and we need 64 of those, i.e. 256
+bytes.</p>
+
+<p>With a screen resolution of 320x200 and sprite/tile size of 8x8 a total of
+40x30 tiles are needed to cover the screen using a 8 bit index for each results
+in 1200 bytes. Since we want to be able to index this memory without performing
+multiplication the dimension is rounded up to the nearest power-of-two i.e.
+64x32 resulting in 2048 bytes (in fact the storage size can be much less
+depending on if this is row major or column major).</p>
+
+<p>The extra rows and columns may come in handy whey trying to support smooth
+scrolling.</p>
+
+<p>All in all it is reasonable to dimension the VRAM to 8192 bytes. To allow
+efficient 32 bit access from both GFX and CPU this is laid out as 2048 x
+32 meaning that we need an address bus width of 11 bits.</p>
+
+<p>So to sum it up VRAM is laid out as follows:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Base</th>
+      <th>Size</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>4096</td>
+      <td>Table of 128 8x8 sprite/tile bitmaps with 4-bit color depth (each bitmap consumes 32 bytes).</td>
+    </tr>
+    <tr>
+      <td>4096</td>
+      <td>256</td>
+      <td>Table of 64 sprite descriptors each of size 32 bits.</td>
+    </tr>
+    <tr>
+      <td>4352</td>
+      <td>2048</td>
+      <td>40x30 table of background tile indices (addressed as if dimensions were 64x32).</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="cpu">CPU</h3>
+<p>One thing that is not so awesome about 80’s systems is the software tools
+available (especially compilers), so instead of using a CPU from the era this
+project will use a modern <a href="https://riscv.org/">RISC-V</a> 32-bit CPU which is well
+supported by modern tool-chains such as LLVM and GCC. The particular RISC-V
+implementation of choice is
+<a href="https://github.com/cliffordwolf/picorv32">PicoRV32</a> as we favor small size
+over computational efficiency.</p>
+
+<h3 id="system-memory-map">System memory map</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Base</th>
+      <th>Size</th>
+      <th>Memory</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0x00000000</td>
+      <td>16KB</td>
+      <td>ROM</td>
+    </tr>
+    <tr>
+      <td>0x10000000</td>
+      <td>4KB</td>
+      <td>RAM</td>
+    </tr>
+    <tr>
+      <td>0x20000000</td>
+      <td>8KB</td>
+      <td>VRAM</td>
+    </tr>
+    <tr>
+      <td>0x30000000</td>
+      <td>4</td>
+      <td>System status register</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="current-implementation">Current implementation</h2>
+
+<p>The implementation can be found on
+<a href="https://github.com/markus-zzz/retrocon/tree/dev">github</a>. While being very
+much work in progress it is capable of bouncing sprites around over static
+background tiles as can be seen in this animation</p>
+
+<p><img src="/download/retrocon-sprite-bounce.apng" alt="Bouncing sprites" /></p>
+
+<p>The PNGs for the animation above were produced by a
+<a href="https://www.veripool.org/wiki/verilator">Verilator</a> based simulation using the
+custom tool
+<a href="https://github.com/markus-zzz/retrocon/blob/dev/sim/verilator/vgamon.cpp">vgamon</a>
+that captures the VGA output of the design either displaying it in real time
+(i.e. on my machine ~8 frames per second) and optionally storing frames to PNG
+files.</p>
+
+<p>Now Verilator is pretty awesome and this tool has already proven extremely
+useful. Considering the sheer amount of simulation cycles that go into
+producing a single frame makes you quickly realize that traditional simulators
+such as <a href="http://iverilog.icarus.com/">Icarus Verilog</a> don’t quite cut it for
+this purpose.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Usage: ./vgamon [OPTIONS]
+
+  --scale=N             -- set pixel scaling
+  --frame-rate=N        -- try to produce a new frame every N ms
+  --save-frame-from=N   -- dump frames to .png starting from frame #N
+  --save-frame-to=N=N   -- dump frames to .png ending with frame #N
+  --save-frame-prefix=S -- prefix dump frame files with S
+  --exit-after-frame=N  -- exit after frame #N
+  --trace               -- create dump.vcd
+</code></pre></div></div>
+<p>The design has been tested on a <a href="https://radiona.org/ulx3s/">ULX3S</a> FPGA board
+using the open source <a href="https://symbiflow.github.io/">SymbiFlow</a> tools (Yosys
+and nextpnr). Doing so gives a device utilization as follows for the boards
+<a href="https://www.latticesemi.com/Products/FPGAandCPLD/ECP5">ECP5 12F</a>.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Info: Device utilisation:
+Info:          TRELLIS_SLICE:  2822/12144    23%
+Info:             TRELLIS_IO:    10/  196     5%
+Info:                   DCCA:     3/   56     5%
+Info:                 DP16KD:    16/   56    28%
+Info:             MULT18X18D:     0/   28     0%
+Info:                 ALU54B:     0/   14     0%
+Info:                EHXPLLL:     1/    2    50%
+Info:                EXTREFB:     0/    1     0%
+Info:                   DCUA:     0/    1     0%
+Info:              PCSCLKDIV:     0/    2     0%
+Info:                IOLOGIC:     0/  128     0%
+Info:               SIOLOGIC:     8/   68    11%
+Info:                    GSR:     0/    1     0%
+Info:                  JTAGG:     0/    1     0%
+Info:                   OSCG:     0/    1     0%
+Info:                  SEDGA:     0/    1     0%
+Info:                    DTR:     0/    1     0%
+Info:                USRMCLK:     0/    1     0%
+Info:                CLKDIVF:     0/    4     0%
+Info:              ECLKSYNCB:     0/    8     0%
+Info:                DLLDELD:     0/    8     0%
+Info:                 DDRDLL:     0/    4     0%
+Info:                DQSBUFM:     0/    8     0%
+Info:        TRELLIS_ECLKBUF:     0/    8     0%
+</code></pre></div></div>
+<p>The only video output on ULX3S is a HDMI compatible connector so we borrow the
+code from <a href="https://github.com/daveshah1/prjtrellis-dvi">Project Trellis DVI</a> to
+output DVI over that connector. It works surprisingly well!</p>
+
+<h2 id="next-steps">Next steps</h2>
+<p>Some ideas for the future:</p>
+<ul>
+  <li>Implement UART based means to upload CPU code and RAM contents to running
+board (having to re-synthesize as is the case now really slows down the
+development cycle).</li>
+  <li>Implement horizontal flip and vertical flip sprite flags.</li>
+  <li>Support for smooth scrolling background tiles (preferably in all directions).</li>
+  <li>Look into supporting Pico-8 style sound effects.</li>
+  <li>Fix a million bugs :)</li>
+</ul>
+
+<p>That is it for now. Hopefully I will make some more progress soon!</p>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html';
+      this.page.identifier = 'https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2019/08/12/retro-gaming-hw-part-1.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ZZZ-Consulting</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ZZZ-Consulting</li><li><a class="u-email" href="mailto:firstname.lastname@gmail.com">firstname.lastname@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/markus-zzz"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">markus-zzz</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
