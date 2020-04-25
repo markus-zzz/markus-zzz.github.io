@@ -1,4 +1,241 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2019-08-12T15:00:54+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Designing retro gaming hardware - part 1</title><link href="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html" rel="alternate" type="text/html" title="Designing retro gaming hardware - part 1" /><published>2019-08-12T00:00:00+02:00</published><updated>2019-08-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html">&lt;p&gt;In this post we visit my latest pet project - that is building a custom 80’s
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-04-25T20:04:06+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Sigrok and thoughts on building a USB device</title><link href="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html" rel="alternate" type="text/html" title="Sigrok and thoughts on building a USB device" /><published>2020-04-25T00:00:00+02:00</published><updated>2020-04-25T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html">&lt;p&gt;Last summer I bought a &lt;a href=&quot;https://www.dreamsourcelab.com/product/dslogic-plus/&quot;&gt;DSLogic
+Plus&lt;/a&gt; USB-based Logic
+Analyzer, about 6 months ago I tried it for the first time and today I hope to
+finish this post describing the experience. The thing comes with its own
+analyzer software running on the PC called
+&lt;a href=&quot;https://www.dreamsourcelab.com/download/&quot;&gt;DSView&lt;/a&gt;, but I never bothered trying
+that and instead went with the better known &lt;a href=&quot;https://sigrok.org/&quot;&gt;sigrok&lt;/a&gt; (of
+which DSView is a derivative).&lt;/p&gt;
+
+&lt;h2 id=&quot;setting-up-sigrok-for-the-dslogic-plus&quot;&gt;Setting up sigrok for the DSLogic Plus&lt;/h2&gt;
+
+&lt;p&gt;Building from source seemed rather complicated with many dependencies to be
+met, but luckily they also provide self contained
+&lt;a href=&quot;https://appimage.org/&quot;&gt;AppImage&lt;/a&gt; binaries for download
+&lt;a href=&quot;https://sigrok.org/wiki/Downloads&quot;&gt;here&lt;/a&gt;. So I picked up a &lt;em&gt;PulseView&lt;/em&gt; and a
+&lt;em&gt;sigrok-cli&lt;/em&gt; binary.&lt;/p&gt;
+
+&lt;p&gt;Although being self contained two additional steps were required to get things
+going.&lt;/p&gt;
+
+&lt;p&gt;First setting up udev rules&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone git://sigrok.org/libsigrok
+cp libsigrok/contrib/*.rules /etc/udev/rules.d/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;and second, due to legal reasons, the self contained sigrok binaries do not
+contain the necessary firmware for the DSLogic Plus so we need to grab a script
+that fetches those separately&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone git://sigrok.org/sigrok-util
+sudo sigrok-util/firmware/dreamsourcelab-dslogic/sigrok-fwextract-dreamsourcelab-dslogic
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;test-capture&quot;&gt;Test capture&lt;/h2&gt;
+
+&lt;p&gt;Attaching to the USB &lt;strong&gt;D+&lt;/strong&gt; and &lt;strong&gt;D-&lt;/strong&gt; of a STM32 based thumb device and
+capturing the signaling that occurs when the device is connected to the bus.&lt;/p&gt;
+
+&lt;p&gt;For background on USB 2.0 the spec summary &lt;a href=&quot;https://www.beyondlogic.org/usbnutshell/usb1.shtml&quot;&gt;USB in a
+NutShell&lt;/a&gt; is a highly
+recommended read, the similar summary &lt;a href=&quot;http://www.usbmadesimple.co.uk/&quot;&gt;USB Made
+Simple&lt;/a&gt; also provides very valuable
+information. For all the gory details the full specification is available
+&lt;a href=&quot;https://www.usb.org/document-library/usb-20-specification&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Sigrok provides a very neat protocol decoder for USB (as well as for many other
+protocols).&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/sigrok-usb/sigrok-usb-decode.png&quot; alt=&quot;PulseView USB decode&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It is interesting to observe what happens when a new device is connected&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# Newly connected device has address 0.
+host   : SETUP ADDR 0 EP 0
+host   : DATA0 [ 80 06 00 01 00 00 40 00 ]
+device : ACK
+host   : IN ADDR 0 EP 0
+device : NAK
+host   : IN ADDR 0 EP 0
+device : DATA1 [ 12 01 00 02 02 02 00 40 83 04 40 57 00 02 01 02 03 01 ]
+host   : ACK
+
+host   : OUT ADDR 0 EP 0
+host   : DATA1 [ ]
+device : NAK
+host   : OUT ADDR 0 EP 0
+host   : DATA1 [ ]
+device : ACK
+
+host: &amp;lt;RESET for 50ms&amp;gt;
+
+# SET_ADDRESS (=0x05) to 10 (=0x0A)
+host   : SETUP ADDR 0 EP 0
+host   : DATA0 [ 00 05 0A 00 00 00 00 00 ]
+device : ACK
+host   : IN ADDR 0 EP 0
+device : NAK
+host   : IN ADDR 0 EP 0
+device : DATA1 [ ]
+device : ACK
+
+# From this point on the device has address 10.
+
+host   : SETUP ADDR 10 EP 0
+host   : DATA0 [ 80 06 00 01 00 00 12 00 ]
+device : ACK
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;what appears to be going on here is that the host begins by reading the &lt;em&gt;device
+descriptor&lt;/em&gt; containing, among other things, the highest USB version this device
+supports, &lt;em&gt;idVendor&lt;/em&gt; and &lt;em&gt;idProduct&lt;/em&gt;. If these are satisfactory the host
+goes ahead and drives a long reset followed by assigning the device a new
+address.&lt;/p&gt;
+
+&lt;p&gt;A simple &lt;code class=&quot;highlighter-rouge&quot;&gt;lsusb&lt;/code&gt; confirms that &lt;em&gt;idVendor&lt;/em&gt; and &lt;em&gt;idProduct&lt;/em&gt; appear in the
+response message retrieved before the reset.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Bus 001 Device 010: ID 0483:5740 STMicroelectronics STM32F407
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;thoughts-on-building-a-usb-device&quot;&gt;Thoughts on building a USB device&lt;/h2&gt;
+
+&lt;p&gt;If you are so inclined you might now wonder what kind of digital circuitry it
+would take to build a USB device. Common sense says this would be a rather
+significant undertaking so it seems wise to begin with some preparatory
+considerations.&lt;/p&gt;
+
+&lt;h3 id=&quot;ulx3s-setup&quot;&gt;ULX3S setup&lt;/h3&gt;
+
+&lt;p&gt;As usual the platform for my experiment will be the excellent
+&lt;a href=&quot;https://radiona.org/ulx3s/&quot;&gt;ULX3S&lt;/a&gt;. The board has two USB micro female
+connectors where the second (designated US2) is wired directly to the ECP5
+FPGA.&lt;/p&gt;
+
+&lt;h4 id=&quot;schematics&quot;&gt;Schematics&lt;/h4&gt;
+
+&lt;p&gt;Full schematics are found
+&lt;a href=&quot;https://github.com/emard/ulx3s/blob/master/doc/schematics.pdf&quot;&gt;here&lt;/a&gt; but for
+the sake of this discussion I have extracted the relevant parts.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/sigrok-usb/ulx3s-schematics-usb-1.png&quot; alt=&quot;ULX3S US2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;What is interesting to note here is that the &lt;em&gt;USB_FPGA_D+&lt;/em&gt; and &lt;em&gt;USB_FPGA_D-&lt;/em&gt;
+pair is connected to the FPGA twice. One pair is connected to a differential
+IO cell and the second pair is connected to single ended IO cells. Reason is
+that USB requires us to both drive and sample differential as well as single
+ended. Still weird though as ECP5 docs kind of suggest that all of that could
+be done within one IO cell (pair).&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/sigrok-usb/ulx3s-schematics-usb-2.png&quot; alt=&quot;ULX3S US2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The second interesting part is that the board has FPGA controllable pull-ups.
+This allows us to attach/detach from the USB without physically touching any
+cables. As well as choosing if we want to identify as a &lt;em&gt;full-speed&lt;/em&gt; or
+&lt;em&gt;low-speed&lt;/em&gt; device.&lt;/p&gt;
+
+&lt;h4 id=&quot;clocking&quot;&gt;Clocking&lt;/h4&gt;
+
+&lt;p&gt;USB &lt;em&gt;full-speed&lt;/em&gt; is 12Mbit/s and USB &lt;em&gt;low-speed&lt;/em&gt; is 1.5Mbit/s, the ULX3S board
+has a 25Mhz crystal oscillator.&lt;/p&gt;
+
+&lt;p&gt;For &lt;em&gt;full-speed&lt;/em&gt; if we were to sample at exactly the right spot a 12Mhz clock
+should suffice, but in reality this is not possible (without phase adjusting
+the clock). So instead one typically settles for oversampling with a factor of
+four (so a 48Mhz clock would be needed).&lt;/p&gt;
+
+&lt;p&gt;Now a 25Mhz clock does not directly PLL into a 48Mhz clock (nor any other
+reasonable multiple of 12Mhz). It does however PLL it into a 15Mhz clock that
+can be used for &lt;em&gt;low-speed&lt;/em&gt; (oversampling with a factor 10).&lt;/p&gt;
+
+&lt;p&gt;Eventually though for &lt;em&gt;full-speed&lt;/em&gt; we can use two PLLs in cascade configured as
+follows to reach exactly 48Mhz.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;markus@workstation:~$ ecppll -i 25 -o 60
+Pll parameters:
+Refclk divisor: 5
+Feedback divisor: 12
+clkout0 divisor: 10
+clkout0 frequency: 60 MHz
+VCO frequency: 600
+markus@workstation:~$ ecppll -i 60 -o 48
+Pll parameters:
+Refclk divisor: 5
+Feedback divisor: 4
+clkout0 divisor: 12
+clkout0 frequency: 48 MHz
+VCO frequency: 576
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;connecting-the-logic-analyzer&quot;&gt;Connecting the Logic Analyzer&lt;/h4&gt;
+
+&lt;p&gt;A sturdy attachment point for the analyzer is desirable as it is rather
+annoying having test hook clips constantly falling off the board as soon as it
+is moved/touched only the slightest.&lt;/p&gt;
+
+&lt;p&gt;Luckily since it is a FPGA we can route the &lt;em&gt;USB_FPGA_D+&lt;/em&gt; and &lt;em&gt;USB_FPGA_D-&lt;/em&gt;
+pair “out on the other side” to make it available on the pin header. This is
+mechanically stable and has the additional advantage of being isolated from the
+actual signals so there is no risk of interference from the analyzer probes.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/sigrok-usb/ulx3s-pin-header.jpg&quot; alt=&quot;ULX3S US2&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;sigrok-support&quot;&gt;Sigrok support&lt;/h3&gt;
+
+&lt;p&gt;Having powerful tools such as the Sigrok suite and the Logic Analyzer will
+prove invaluable for the task ahead. In fact, as we shall soon see, they will be
+useful in not only the obvious way.&lt;/p&gt;
+
+&lt;p&gt;Capture signaling/traffic between the USB host and FPGA would be the obvious
+application and while this will eventually be its main use we need to get quite
+a lot of things working to reach that point.&lt;/p&gt;
+
+&lt;p&gt;In the meantime we can capture authentic host signaling and feed into RTL
+simulation. Doing so can be easily accomplished with&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sigrok-cli --input-file capture.sr -O csv | awk 'BEGIN{FS=&quot;,&quot;}{print $2$3}' - &amp;gt; capture.vh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;and initializing the Verilog array with &lt;em&gt;$readmemb&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;However this presents an issue with mismatch in sampling rate. The closest the
+analyzer can come to 48Mhz is 50Mhz so this will be an issue for the USB
+device’s clock recovery.&lt;/p&gt;
+
+&lt;p&gt;To avoid the sampling rate mismatch another option is to have sigrok run the
+low level &lt;em&gt;usb-signalling&lt;/em&gt; decoder to reliably extract the &lt;em&gt;J&lt;/em&gt;, &lt;em&gt;K&lt;/em&gt;, &lt;em&gt;SE0&lt;/em&gt; and
+&lt;em&gt;SE1&lt;/em&gt; symbols for us. To do this we use the follow python snippet to translate&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;#!/usr/bin/env python
+&lt;/span&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;sys&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;re&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;pattern_j&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: J$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pattern_k&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: K$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pattern_se0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: SE0$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pattern_se1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: SE1$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;line&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stdin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_j&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'01'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_k&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'10'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_se0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'00'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_se1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'11'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;and then run the entire chain&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sigrok-cli -i capture.sr -P usb_signalling:dp=1:dm=0 | ./usb_signalling2vh.py &amp;gt; capture.vh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Once our RTL simulation generates USB signaling we can feed that into sigrok
+for decode and verification. It is just a matter of having simulation produce a
+  &lt;a href=&quot;https://en.wikipedia.org/wiki/Comma-separated_values&quot;&gt;CSV&lt;/a&gt; file and then&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sigrok-cli -i capture.csv -I csv:samplerate=48000000 -o capture.sr
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;where the file &lt;code class=&quot;highlighter-rouge&quot;&gt;capture.sr&lt;/code&gt; can be opened and graphically decoded in
+&lt;em&gt;PulseView&lt;/em&gt;. Pretty awesome!&lt;/p&gt;
+
+&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
+
+&lt;p&gt;That concludes this post. Next time we will look closer at the design of our
+USB device, its simulation environment and traffic generator. Questions or
+feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Last summer I bought a DSLogic Plus USB-based Logic Analyzer, about 6 months ago I tried it for the first time and today I hope to finish this post describing the experience. The thing comes with its own analyzer software running on the PC called DSView, but I never bothered trying that and instead went with the better known sigrok (of which DSView is a derivative).</summary></entry><entry><title type="html">Designing retro gaming hardware - part 1</title><link href="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html" rel="alternate" type="text/html" title="Designing retro gaming hardware - part 1" /><published>2019-08-12T00:00:00+02:00</published><updated>2019-08-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html">&lt;p&gt;In this post we visit my latest pet project - that is building a custom 80’s
 style game console. Much fun ahead :)&lt;/p&gt;
 
 &lt;h2 id=&quot;background&quot;&gt;Background&lt;/h2&gt;
@@ -1385,269 +1622,4 @@ waveform viewer and inspect the signals in &lt;em&gt;tb.dut&lt;/em&gt;&lt;/p&gt;
 on in a third post we will attempt to write a Linux device driver for the
 EPROM.&lt;/p&gt;
 
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction I2C is this two wire bus protocol that is very common in the embedded sphere and the reader is most likely already familiar with it so the introduction here will be brief. As the name suggests it is a protocol for communicating between ICs and the specification for the protocol can be found here. The two wires consist of a clock (SCL) and a data (SDA), the master is responsible for initiating all transactions. Since it is a bit more complicated than just a shift-register there are special rules for when SDA transitions may occur with respect to SCL (i.e. not just data sampled at rising edge of clk end-of-story). For example:</summary></entry><entry><title type="html">An LLVM exercise</title><link href="https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html" rel="alternate" type="text/html" title="An LLVM exercise" /><published>2018-07-16T00:00:00+02:00</published><updated>2018-07-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/16/llvm-exercise</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/16/llvm-exercise.html">&lt;p&gt;Let’s write an LLVM optimization pass to familiarize ourselves with the
-environment. Of course LLVM already does everything even remotely interesting
-so in order to have some non-trivial example we are going to replace an
-existing pass. The pass of choice is going to be &lt;em&gt;mem2reg&lt;/em&gt; mainly because it is
-quite central and I happen to have experience implementing this very pass in a
-different compiler framework.&lt;/p&gt;
-
-&lt;h2 id=&quot;background&quot;&gt;Background&lt;/h2&gt;
-&lt;p&gt;One interesting thing about LLVM is its approach to entering SSA-form (i.e.
-satisfying the static single assignment condition by placement of phi-nodes).
-Traditionally this is considered a front end responsibility to place phi-nodes
-but LLVM takes a different approach. Namely have the front end generate an
-alloca for each variable then loads for the uses and stores for the defs.  Note
-that technically speaking this code is already in SSA form (it is just that it
-is terribly inefficient). Later on the pass &lt;em&gt;mem2reg&lt;/em&gt; comes along and optimizes
-this effectively removing the inefficient memory accesses for these variables.&lt;/p&gt;
-
-&lt;p&gt;This is nice because it makes the front end simpler, it can focus on its AST to
-IR translation without additional complexities. On the downside you could argue
-that it makes the compilation process inefficient because you have the front
-end generate a bunch of IR that will almost immediately be optimized away in
-the middle end. In my opinion though that is the name of the game in compiler
-engineering, to not worrying about everything at once but instead have each
-part do one thing well and have an efficient IR infrastructure that allows for
-cheap IR updates.&lt;/p&gt;
-
-&lt;h2 id=&quot;prerequisites&quot;&gt;Prerequisites&lt;/h2&gt;
-&lt;p&gt;To follow along you will need to have an LLVM development environment setup.
-This is all pretty well described
-&lt;a href=&quot;https://llvm.org/docs/GettingStarted.html&quot;&gt;here&lt;/a&gt; but in short this is what I
-did&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;export ROOT=&amp;lt;some path&amp;gt;
-export PATH=$ROOT/install/bin:$PATH
-mkdir -p $ROOT
-mkdir -p $ROOT/build
-mkdir -p $ROOT/install
-cd $ROOT
-wget http://releases.llvm.org/6.0.1/llvm-6.0.1.src.tar.xz
-wget http://releases.llvm.org/6.0.1/cfe-6.0.1.src.tar.xz
-tar xf llvm-6.0.1.src.tar.xz
-cd $ROOT/llvm-6.0.1.src/tools/
-tar xf $ROOT/cfe-6.0.1.src.tar.xz
-cd $ROOT/build
-cmake -G Ninja $ROOT/llvm-6.0.1.src/ -DCMAKE_INSTALL_PREFIX=$ROOT/install -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON -DLLVM_TARGETS_TO_BUILD=&quot;ARM&quot;
-ninja install
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;experiment&quot;&gt;Experiment&lt;/h2&gt;
-&lt;p&gt;Let us start by looking at the LLVM IR before and after &lt;em&gt;mem2reg&lt;/em&gt; for the following example&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Invoking the front end and emitting IR without applying any optimizations is as simple as&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;clang -target armv7h -mfloat-abi=hard sum.c -O0 -S -emit-llvm -o sum.ll
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;define arm_aapcs_vfpcc i32 @sum(i32* %data, i32 %len) #0 {
-entry:
-  %data.addr = alloca i32*, align 4
-  %len.addr = alloca i32, align 4
-  %s = alloca i32, align 4
-  %i = alloca i32, align 4
-  store i32* %data, i32** %data.addr, align 4
-  store i32 %len, i32* %len.addr, align 4
-  store i32 0, i32* %s, align 4
-  store i32 0, i32* %i, align 4
-  br label %for.cond
-
-for.cond:                                         ; preds = %for.inc, %entry
-  %0 = load i32, i32* %i, align 4
-  %1 = load i32, i32* %len.addr, align 4
-  %cmp = icmp slt i32 %0, %1
-  br i1 %cmp, label %for.body, label %for.end
-
-for.body:                                         ; preds = %for.cond
-  %2 = load i32*, i32** %data.addr, align 4
-  %3 = load i32, i32* %i, align 4
-  %arrayidx = getelementptr inbounds i32, i32* %2, i32 %3
-  %4 = load i32, i32* %arrayidx, align 4
-  %5 = load i32, i32* %s, align 4
-  %add = add nsw i32 %5, %4
-  store i32 %add, i32* %s, align 4
-  br label %for.inc
-
-for.inc:                                          ; preds = %for.body
-  %6 = load i32, i32* %i, align 4
-  %inc = add nsw i32 %6, 1
-  store i32 %inc, i32* %i, align 4
-  br label %for.cond
-
-for.end:                                          ; preds = %for.cond
-  %7 = load i32, i32* %s, align 4
-  ret i32 %7
-}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Then running the standard &lt;em&gt;mem2reg&lt;/em&gt; pass on this IR&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;opt -passes mem2reg -S sum.ll -o sum-mem2reg.ll
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;define arm_aapcs_vfpcc i32 @sum(i32* %data, i32 %len) #0 {
-entry:
-  br label %for.cond
-
-for.cond:                                         ; preds = %for.inc, %entry
-  %s.0 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
-  %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
-  %cmp = icmp slt i32 %i.0, %len
-  br i1 %cmp, label %for.body, label %for.end
-
-for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds i32, i32* %data, i32 %i.0
-  %0 = load i32, i32* %arrayidx, align 4
-  %add = add nsw i32 %s.0, %0
-  br label %for.inc
-
-for.inc:                                          ; preds = %for.body
-  %inc = add nsw i32 %i.0, 1
-  br label %for.cond
-
-for.end:                                          ; preds = %for.cond
-  ret i32 %s.0
-}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;As can be seen the effects of the &lt;em&gt;mem2reg&lt;/em&gt; pass are rather dramatic. Gone are the
-inefficient variable &lt;em&gt;loads&lt;/em&gt;, &lt;em&gt;stores&lt;/em&gt; and &lt;em&gt;alloca&lt;/em&gt; instructions.&lt;/p&gt;
-
-&lt;h2 id=&quot;implement-our-own&quot;&gt;Implement our own&lt;/h2&gt;
-&lt;p&gt;Now let’s implement our own &lt;em&gt;mem2reg&lt;/em&gt; pass (and call it &lt;em&gt;ourmem2reg&lt;/em&gt;) and see if we
-can achieve similar results. The algoritm we will use will be the classical one
-by Cytron et al. and the interested reader can find all the details in [1].&lt;/p&gt;
-
-&lt;p&gt;The basics of writing an LLVM pass are described
-&lt;a href=&quot;http://llvm.org/docs/WritingAnLLVMPass.html&quot;&gt;here&lt;/a&gt;. Pay special attention to
-the section about setting up the build environment to build the pass as a
-loadable module. Doing so will save a lot of pain.&lt;/p&gt;
-
-&lt;p&gt;I went ahead and wrote &lt;a href=&quot;https://www.zzzconsulting.se/download/OurMem2Reg.cpp&quot;&gt;OurMem2Reg.cpp&lt;/a&gt;
-and will now try to describe its contents in some detail.&lt;/p&gt;
-
-&lt;h3 id=&quot;linkdefsandusestovar&quot;&gt;linkDefsAndUsesToVar&lt;/h3&gt;
-&lt;p&gt;Given a variable (i.e. an alloca) we need to find the definitions and uses of
-this variable. This corresponds to finding the store and load instructions that
-use the alloca as an address. We also need to make sure that these are the only
-uses of the alloca i.e. the address does not escape and allow for potential
-modifictaion else where.&lt;/p&gt;
-
-&lt;h3 id=&quot;renamerecursive&quot;&gt;renameRecursive&lt;/h3&gt;
-&lt;p&gt;Here we walk the dominator tree and perform a pre-order action and a post-order action.&lt;/p&gt;
-&lt;h4 id=&quot;pre-order-action&quot;&gt;Pre-order action&lt;/h4&gt;
-&lt;p&gt;Scan for def and use instructions in the block and maintain a definition stack
-for each variable. A use (i.e. a load instruction) get replaced by the value on
-top of the definition stack and a def (store instruction) pushes the value
-stored onto the stack.&lt;/p&gt;
-&lt;h4 id=&quot;post-order-action&quot;&gt;Post-order action&lt;/h4&gt;
-&lt;p&gt;For the post-order action we need to pop the definitions put on the stack once
-we are done at a level in the dominator tree and about to move up. Obviously
-once we are done with a block and all the blocks that are dominated by it we
-need to remove the variable definitions that came from that block since they
-are no longer valid.&lt;/p&gt;
-
-&lt;h3 id=&quot;runonfunction&quot;&gt;runOnFunction&lt;/h3&gt;
-&lt;p&gt;The driver of the pass&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;Look for &lt;em&gt;alloca&lt;/em&gt; instructions (and according to LLVM conventions they are
-all located in the entry block of the function) and call
-&lt;em&gt;linkDefsAndUsesToVar&lt;/em&gt; on them to gather information.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;In the previous step we took note of in which blocks there were definitions
-of the variable. Now we need to insert phi-nodes in the dominance frontier
-of these blocks (and keeping in mind that when we insert a phi-node that acts
-as a new definition so we need to insert a phi-node in the dominance frontier
-of that block as well). In other words we need to insert phi-nodes in the
-iterated dominance frontier of the original definition blocks.  Luckily LLVM
-has a new fancy framework for computing the iterated dominance frontier set
-from a set of definition blocks so we simply use that (if we were to compute it
-ourselves I would recommend the method described in [2]).&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Now we enter the actual work horse of the algorithm - the renaming phase.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;The only thing that is left to do now is to remove the trash left behind,
-i.e. removing now useless load, store and alloca instructions.&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h3 id=&quot;getanalysisusage&quot;&gt;getAnalysisUsage&lt;/h3&gt;
-&lt;p&gt;Simply informing the pass manager that we need a valid dominator tree and that
-we are not going to make changes to the CFG.&lt;/p&gt;
-
-&lt;h2 id=&quot;evaluate&quot;&gt;Evaluate&lt;/h2&gt;
-&lt;p&gt;Running the optimizer with our pass loaded as a module&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;opt -load $ROOT/build/lib/LLVMOurMem2Reg.so -ourmem2reg -S sum.ll -o sum-ourmem2reg.ll
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;giving us the following result which looks rather identical to what we get with
-the stock &lt;em&gt;mem2reg&lt;/em&gt; pass&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;define arm_aapcs_vfpcc i32 @sum(i32* %data, i32 %len) #0 {
-entry:
-  br label %for.cond
-
-for.cond:                                         ; preds = %for.inc, %entry
-  %0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
-  %1 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
-  %cmp = icmp slt i32 %0, %len
-  br i1 %cmp, label %for.body, label %for.end
-
-for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds i32, i32* %data, i32 %0
-  %2 = load i32, i32* %arrayidx, align 4
-  %add = add nsw i32 %1, %2
-  br label %for.inc
-
-for.inc:                                          ; preds = %for.body
-  %inc = add nsw i32 %0, 1
-  br label %for.cond
-
-for.end:                                          ; preds = %for.cond
-  ret i32 %1
-}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
-&lt;p&gt;So what areas of the LLVM infrastructure have we familiarized ourselves with in
-this exercise?&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Traversing the CFG&lt;/li&gt;
-  &lt;li&gt;Traversing the SSA graph (looking for uses of an instruction)&lt;/li&gt;
-  &lt;li&gt;Requesting a dominator tree and traversing it&lt;/li&gt;
-  &lt;li&gt;Using the iterated dominance frontier machinery&lt;/li&gt;
-  &lt;li&gt;Replacing instructions&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Finally I make no claim that the pass implemented is 100% correct and there are
-surely corner cases that would need to be handled for a proper implementation.
-That however was not the purpose of this post but rather to provide an exercise
-to familiarize oneself with the LLVM API using a somewhat real example doing
-something useful.&lt;/p&gt;
-
-&lt;p&gt;In fact there is one issue if a variable is used before it is defined (e.g. not
-initializing the summation variable in the example above) will result in a
-compiler crash. Of course using a variable before it is defined is hardly good
-practice but the pass should still handle it correctly. Fixing this is left as
-an exercise for the reader but it is simply a matter of inserting a undef
-instruction if we encounter a use while the definition stack is empty.&lt;/p&gt;
-
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;p&gt;[1] Ron Cytron, Jeanne Ferrante, Barry K. Rosen, Mark N. Wegman, and F. Kenneth
-Zadeck. 1991. Efficiently computing static single assignment form and the
-control dependence graph. ACM Trans. Program. Lang. Syst. 13, 4 (October 1991),
-451-490. DOI=http://dx.doi.org/10.1145/115372.115320&lt;/p&gt;
-
-&lt;p&gt;[2] Cooper, Keith &amp;amp; Harvey, Timothy &amp;amp; Kennedy, Ken. (2006). A Simple, Fast
-Dominance Algorithm. Rice University, CS Technical Report 06-33870.&lt;/p&gt;</content><author><name></name></author><summary type="html">Let’s write an LLVM optimization pass to familiarize ourselves with the environment. Of course LLVM already does everything even remotely interesting so in order to have some non-trivial example we are going to replace an existing pass. The pass of choice is going to be mem2reg mainly because it is quite central and I happen to have experience implementing this very pass in a different compiler framework.</summary></entry></feed>
+&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction I2C is this two wire bus protocol that is very common in the embedded sphere and the reader is most likely already familiar with it so the introduction here will be brief. As the name suggests it is a protocol for communicating between ICs and the specification for the protocol can be found here. The two wires consist of a clock (SCL) and a data (SDA), the master is responsible for initiating all transactions. Since it is a bit more complicated than just a shift-register there are special rules for when SDA transitions may occur with respect to SCL (i.e. not just data sampled at rising edge of clk end-of-story). For example:</summary></entry></feed>

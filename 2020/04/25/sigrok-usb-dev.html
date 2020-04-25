@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Sigrok and thoughts on building a USB device | ZZZ-Consulting</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Sigrok and thoughts on building a USB device" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Last summer I bought a DSLogic Plus USB-based Logic Analyzer, about 6 months ago I tried it for the first time and today I hope to finish this post describing the experience. The thing comes with its own analyzer software running on the PC called DSView, but I never bothered trying that and instead went with the better known sigrok (of which DSView is a derivative)." />
+<meta property="og:description" content="Last summer I bought a DSLogic Plus USB-based Logic Analyzer, about 6 months ago I tried it for the first time and today I hope to finish this post describing the experience. The thing comes with its own analyzer software running on the PC called DSView, but I never bothered trying that and instead went with the better known sigrok (of which DSView is a derivative)." />
+<link rel="canonical" href="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html" />
+<meta property="og:url" content="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html" />
+<meta property="og:site_name" content="ZZZ-Consulting" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-04-25T00:00:00+02:00" />
+<script type="application/ld+json">
+{"description":"Last summer I bought a DSLogic Plus USB-based Logic Analyzer, about 6 months ago I tried it for the first time and today I hope to finish this post describing the experience. The thing comes with its own analyzer software running on the PC called DSView, but I never bothered trying that and instead went with the better known sigrok (of which DSView is a derivative).","@type":"BlogPosting","url":"https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html","headline":"Sigrok and thoughts on building a USB device","dateModified":"2020-04-25T00:00:00+02:00","datePublished":"2020-04-25T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-122494618-1', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Sigrok and thoughts on building a USB device</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2020-04-25T00:00:00+02:00" itemprop="datePublished">Apr 25, 2020
+      </time></p>
+  </header>
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+  
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.1.2/mermaid.min.js">
+</script>
+
+  
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>Last summer I bought a <a href="https://www.dreamsourcelab.com/product/dslogic-plus/">DSLogic
+Plus</a> USB-based Logic
+Analyzer, about 6 months ago I tried it for the first time and today I hope to
+finish this post describing the experience. The thing comes with its own
+analyzer software running on the PC called
+<a href="https://www.dreamsourcelab.com/download/">DSView</a>, but I never bothered trying
+that and instead went with the better known <a href="https://sigrok.org/">sigrok</a> (of
+which DSView is a derivative).</p>
+
+<h2 id="setting-up-sigrok-for-the-dslogic-plus">Setting up sigrok for the DSLogic Plus</h2>
+
+<p>Building from source seemed rather complicated with many dependencies to be
+met, but luckily they also provide self contained
+<a href="https://appimage.org/">AppImage</a> binaries for download
+<a href="https://sigrok.org/wiki/Downloads">here</a>. So I picked up a <em>PulseView</em> and a
+<em>sigrok-cli</em> binary.</p>
+
+<p>Although being self contained two additional steps were required to get things
+going.</p>
+
+<p>First setting up udev rules</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone git://sigrok.org/libsigrok
+cp libsigrok/contrib/*.rules /etc/udev/rules.d/
+</code></pre></div></div>
+<p>and second, due to legal reasons, the self contained sigrok binaries do not
+contain the necessary firmware for the DSLogic Plus so we need to grab a script
+that fetches those separately</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone git://sigrok.org/sigrok-util
+sudo sigrok-util/firmware/dreamsourcelab-dslogic/sigrok-fwextract-dreamsourcelab-dslogic
+</code></pre></div></div>
+
+<h2 id="test-capture">Test capture</h2>
+
+<p>Attaching to the USB <strong>D+</strong> and <strong>D-</strong> of a STM32 based thumb device and
+capturing the signaling that occurs when the device is connected to the bus.</p>
+
+<p>For background on USB 2.0 the spec summary <a href="https://www.beyondlogic.org/usbnutshell/usb1.shtml">USB in a
+NutShell</a> is a highly
+recommended read, the similar summary <a href="http://www.usbmadesimple.co.uk/">USB Made
+Simple</a> also provides very valuable
+information. For all the gory details the full specification is available
+<a href="https://www.usb.org/document-library/usb-20-specification">here</a>.</p>
+
+<p>Sigrok provides a very neat protocol decoder for USB (as well as for many other
+protocols).</p>
+
+<p><img src="/download/sigrok-usb/sigrok-usb-decode.png" alt="PulseView USB decode" /></p>
+
+<p>It is interesting to observe what happens when a new device is connected</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Newly connected device has address 0.
+host   : SETUP ADDR 0 EP 0
+host   : DATA0 [ 80 06 00 01 00 00 40 00 ]
+device : ACK
+host   : IN ADDR 0 EP 0
+device : NAK
+host   : IN ADDR 0 EP 0
+device : DATA1 [ 12 01 00 02 02 02 00 40 83 04 40 57 00 02 01 02 03 01 ]
+host   : ACK
+
+host   : OUT ADDR 0 EP 0
+host   : DATA1 [ ]
+device : NAK
+host   : OUT ADDR 0 EP 0
+host   : DATA1 [ ]
+device : ACK
+
+host: &lt;RESET for 50ms&gt;
+
+# SET_ADDRESS (=0x05) to 10 (=0x0A)
+host   : SETUP ADDR 0 EP 0
+host   : DATA0 [ 00 05 0A 00 00 00 00 00 ]
+device : ACK
+host   : IN ADDR 0 EP 0
+device : NAK
+host   : IN ADDR 0 EP 0
+device : DATA1 [ ]
+device : ACK
+
+# From this point on the device has address 10.
+
+host   : SETUP ADDR 10 EP 0
+host   : DATA0 [ 80 06 00 01 00 00 12 00 ]
+device : ACK
+...
+</code></pre></div></div>
+<p>what appears to be going on here is that the host begins by reading the <em>device
+descriptor</em> containing, among other things, the highest USB version this device
+supports, <em>idVendor</em> and <em>idProduct</em>. If these are satisfactory the host
+goes ahead and drives a long reset followed by assigning the device a new
+address.</p>
+
+<p>A simple <code class="highlighter-rouge">lsusb</code> confirms that <em>idVendor</em> and <em>idProduct</em> appear in the
+response message retrieved before the reset.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Bus 001 Device 010: ID 0483:5740 STMicroelectronics STM32F407
+</code></pre></div></div>
+
+<h2 id="thoughts-on-building-a-usb-device">Thoughts on building a USB device</h2>
+
+<p>If you are so inclined you might now wonder what kind of digital circuitry it
+would take to build a USB device. Common sense says this would be a rather
+significant undertaking so it seems wise to begin with some preparatory
+considerations.</p>
+
+<h3 id="ulx3s-setup">ULX3S setup</h3>
+
+<p>As usual the platform for my experiment will be the excellent
+<a href="https://radiona.org/ulx3s/">ULX3S</a>. The board has two USB micro female
+connectors where the second (designated US2) is wired directly to the ECP5
+FPGA.</p>
+
+<h4 id="schematics">Schematics</h4>
+
+<p>Full schematics are found
+<a href="https://github.com/emard/ulx3s/blob/master/doc/schematics.pdf">here</a> but for
+the sake of this discussion I have extracted the relevant parts.</p>
+
+<p><img src="/download/sigrok-usb/ulx3s-schematics-usb-1.png" alt="ULX3S US2" /></p>
+
+<p>What is interesting to note here is that the <em>USB_FPGA_D+</em> and <em>USB_FPGA_D-</em>
+pair is connected to the FPGA twice. One pair is connected to a differential
+IO cell and the second pair is connected to single ended IO cells. Reason is
+that USB requires us to both drive and sample differential as well as single
+ended. Still weird though as ECP5 docs kind of suggest that all of that could
+be done within one IO cell (pair).</p>
+
+<p><img src="/download/sigrok-usb/ulx3s-schematics-usb-2.png" alt="ULX3S US2" /></p>
+
+<p>The second interesting part is that the board has FPGA controllable pull-ups.
+This allows us to attach/detach from the USB without physically touching any
+cables. As well as choosing if we want to identify as a <em>full-speed</em> or
+<em>low-speed</em> device.</p>
+
+<h4 id="clocking">Clocking</h4>
+
+<p>USB <em>full-speed</em> is 12Mbit/s and USB <em>low-speed</em> is 1.5Mbit/s, the ULX3S board
+has a 25Mhz crystal oscillator.</p>
+
+<p>For <em>full-speed</em> if we were to sample at exactly the right spot a 12Mhz clock
+should suffice, but in reality this is not possible (without phase adjusting
+the clock). So instead one typically settles for oversampling with a factor of
+four (so a 48Mhz clock would be needed).</p>
+
+<p>Now a 25Mhz clock does not directly PLL into a 48Mhz clock (nor any other
+reasonable multiple of 12Mhz). It does however PLL it into a 15Mhz clock that
+can be used for <em>low-speed</em> (oversampling with a factor 10).</p>
+
+<p>Eventually though for <em>full-speed</em> we can use two PLLs in cascade configured as
+follows to reach exactly 48Mhz.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>markus@workstation:~$ ecppll -i 25 -o 60
+Pll parameters:
+Refclk divisor: 5
+Feedback divisor: 12
+clkout0 divisor: 10
+clkout0 frequency: 60 MHz
+VCO frequency: 600
+markus@workstation:~$ ecppll -i 60 -o 48
+Pll parameters:
+Refclk divisor: 5
+Feedback divisor: 4
+clkout0 divisor: 12
+clkout0 frequency: 48 MHz
+VCO frequency: 576
+</code></pre></div></div>
+
+<h4 id="connecting-the-logic-analyzer">Connecting the Logic Analyzer</h4>
+
+<p>A sturdy attachment point for the analyzer is desirable as it is rather
+annoying having test hook clips constantly falling off the board as soon as it
+is moved/touched only the slightest.</p>
+
+<p>Luckily since it is a FPGA we can route the <em>USB_FPGA_D+</em> and <em>USB_FPGA_D-</em>
+pair “out on the other side” to make it available on the pin header. This is
+mechanically stable and has the additional advantage of being isolated from the
+actual signals so there is no risk of interference from the analyzer probes.</p>
+
+<p><img src="/download/sigrok-usb/ulx3s-pin-header.jpg" alt="ULX3S US2" /></p>
+
+<h3 id="sigrok-support">Sigrok support</h3>
+
+<p>Having powerful tools such as the Sigrok suite and the Logic Analyzer will
+prove invaluable for the task ahead. In fact, as we shall soon see, they will be
+useful in not only the obvious way.</p>
+
+<p>Capture signaling/traffic between the USB host and FPGA would be the obvious
+application and while this will eventually be its main use we need to get quite
+a lot of things working to reach that point.</p>
+
+<p>In the meantime we can capture authentic host signaling and feed into RTL
+simulation. Doing so can be easily accomplished with</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sigrok-cli --input-file capture.sr -O csv | awk 'BEGIN{FS=","}{print $2$3}' - &gt; capture.vh
+</code></pre></div></div>
+<p>and initializing the Verilog array with <em>$readmemb</em>.</p>
+
+<p>However this presents an issue with mismatch in sampling rate. The closest the
+analyzer can come to 48Mhz is 50Mhz so this will be an issue for the USB
+device’s clock recovery.</p>
+
+<p>To avoid the sampling rate mismatch another option is to have sigrok run the
+low level <em>usb-signalling</em> decoder to reliably extract the <em>J</em>, <em>K</em>, <em>SE0</em> and
+<em>SE1</em> symbols for us. To do this we use the follow python snippet to translate</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#!/usr/bin/env python
+</span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="n">pattern_j</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="nb">compile</span><span class="p">(</span><span class="s">"^usb_signalling-1: J$"</span><span class="p">)</span>
+<span class="n">pattern_k</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="nb">compile</span><span class="p">(</span><span class="s">"^usb_signalling-1: K$"</span><span class="p">)</span>
+<span class="n">pattern_se0</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="nb">compile</span><span class="p">(</span><span class="s">"^usb_signalling-1: SE0$"</span><span class="p">)</span>
+<span class="n">pattern_se1</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="nb">compile</span><span class="p">(</span><span class="s">"^usb_signalling-1: SE1$"</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">:</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">pattern_j</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'01'</span><span class="p">)</span>
+  <span class="k">elif</span> <span class="p">(</span><span class="n">pattern_k</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'10'</span><span class="p">)</span>
+  <span class="k">elif</span> <span class="p">(</span><span class="n">pattern_se0</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'00'</span><span class="p">)</span>
+  <span class="k">elif</span> <span class="p">(</span><span class="n">pattern_se1</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'11'</span><span class="p">)</span>
+</code></pre></div></div>
+<p>and then run the entire chain</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sigrok-cli -i capture.sr -P usb_signalling:dp=1:dm=0 | ./usb_signalling2vh.py &gt; capture.vh
+</code></pre></div></div>
+
+<p>Once our RTL simulation generates USB signaling we can feed that into sigrok
+for decode and verification. It is just a matter of having simulation produce a
+  <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</a> file and then</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sigrok-cli -i capture.csv -I csv:samplerate=48000000 -o capture.sr
+</code></pre></div></div>
+<p>where the file <code class="highlighter-rouge">capture.sr</code> can be opened and graphically decoded in
+<em>PulseView</em>. Pretty awesome!</p>
+
+<h2 id="wrap-up">Wrap up</h2>
+
+<p>That concludes this post. Next time we will look closer at the design of our
+USB device, its simulation environment and traffic generator. Questions or
+feedback - leave a comment below!</p>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html';
+      this.page.identifier = 'https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2020/04/25/sigrok-usb-dev.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ZZZ-Consulting</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ZZZ-Consulting</li><li><a class="u-email" href="mailto:firstname.lastname@gmail.com">firstname.lastname@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/markus-zzz"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">markus-zzz</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
