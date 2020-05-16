@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Building a USB device part-2 | ZZZ-Consulting</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Building a USB device part-2" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="In this post we pick up where we left of last time and start looking at the design and implementation of the USB device that I have been working on. First things first though, the code for the entire project can be found in this github repository. The reader is advised to have that readily available." />
+<meta property="og:description" content="In this post we pick up where we left of last time and start looking at the design and implementation of the USB device that I have been working on. First things first though, the code for the entire project can be found in this github repository. The reader is advised to have that readily available." />
+<link rel="canonical" href="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html" />
+<meta property="og:url" content="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html" />
+<meta property="og:site_name" content="ZZZ-Consulting" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-05-16T00:00:00+02:00" />
+<script type="application/ld+json">
+{"description":"In this post we pick up where we left of last time and start looking at the design and implementation of the USB device that I have been working on. First things first though, the code for the entire project can be found in this github repository. The reader is advised to have that readily available.","@type":"BlogPosting","url":"https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html","headline":"Building a USB device part-2","dateModified":"2020-05-16T00:00:00+02:00","datePublished":"2020-05-16T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-122494618-1', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About me</a><a class="page-link" href="/links/">Links</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Building a USB device part-2</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2020-05-16T00:00:00+02:00" itemprop="datePublished">May 16, 2020
+      </time></p>
+  </header>
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+  
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.1.2/mermaid.min.js">
+</script>
+
+  
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>In this post we pick up where we left of last time and start looking at the
+design and implementation of the USB device that I have been working on. First
+things first though, the code for the entire project can be found in <a href="https://github.com/markus-zzz/usbdev/tree/dev">this
+github repository</a>. The reader
+is advised to have that readily available.</p>
+
+<p>The first major goal of this series will be to have the device play along
+during the USB enumeration process so that the host can set address and read
+relevant descriptors. This can be verified by making sure that the device shows
+up properly when issuing a  <code class="highlighter-rouge">lsusb</code> on my Linux workstation.</p>
+
+<h2 id="design-of-usbdev-and-soc">Design of usbdev (and SoC)</h2>
+
+<h3 id="clock-recovery">Clock recovery</h3>
+
+<p>The signaling in USB consists of the differential pair D+ and D-. For a <em>full
+speed (FS)</em> device the bit rate is 12Mbit/s so if we were able to sample at
+exactly the right spot a 12Mhz clock should suffice, in reality though this is
+the tricky bit. To aid in clock recovery USB employs both NRZI encoding and
+bit-stuffing to ensure that the differential pair will contain a level
+transition at least every seven bit times.</p>
+
+<p>With this in mind it would seem a reasonable approach to run the design at
+48Mhz and oversample the differential pair with a factor of four. More
+precisely by obtaining four equally spaced samples for each bit time we should
+be able to adjust the actual sampling position (in terms of 1/4 bit times) to be
+as far away for any level transition as possible (i.e. in the middle of the eye
+diagram).</p>
+
+<p>So running at a 48Mhz clock we have a 2-bit counter (<code class="highlighter-rouge">reg [1:0] cntr</code>)
+incrementing each cycle (except for when adjusting). When the counter equals
+zero we perform the real sample. For every 48Mhz cycle we also sample and shift
+the value into a four bit shift register (<code class="highlighter-rouge">reg [3:0] past</code>). Since we want any
+possible level transition to occur in the middle of this shift register we
+either advance or delay the counter with one increment depending on if a
+transition occurred early or late in the shift register.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  // A bit transition should ideally occur between past[2] and past[1]. If it
+  // occurs elsewhere we are either sampling too early or too late.
+  assign advance = past[3] ^ past[2];
+  assign delay   = past[1] ^ past[0];
+</code></pre></div></div>
+<p>If <code class="highlighter-rouge">advance</code> is active the counter increments by two and if <code class="highlighter-rouge">delay</code> is active
+there is no increment (for the given 48Mhz cycle).</p>
+
+<p>After seeing some transitions this should be able to adjust the sampling point
+to where the signal lines are stable.</p>
+
+<p>This is not the only option for clock recovery though but it is the simplest
+one to implement. However if the bit rate was significantly higher compared to
+the frequency our design is clocked at (e.g. USB <em>high-speed</em> at 480Mbit/s)
+other methods would have to be used. In such cases I would suspect that
+sampling at the exact bit rate and then phase adjusting the clock (with help of
+a PLL) until the synchronization pattern is reliably detected would be the
+method of choice. Of course simply phase adjusting until the synchronization
+pattern is detected would not be enough, you probably want a FSM to find the
+midpoint of highest and lowest phase adjustment that makes the pattern
+detectable.</p>
+
+<p>A variant of the previous approach would be to use adjustable delay lines on
+the inputs instead of phase adjusting the clock.</p>
+
+<h3 id="the-hwsw-interface">The HW/SW interface</h3>
+
+<p>To control the USB block some kind of hardware/software interface needs to be
+created. I have chosen the simplest possible design that came to mind.</p>
+
+<p>Each endpoint has a 8 byte buffer in RAM, starting at RAM address zero comes
+the 16 OUT endpoints immediately followed by the 16 IN endpoints. In total 256
+bytes of RAM are used for endpoint buffers.</p>
+
+<p>In addition the following registers are exposed to the CPU.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Register</th>
+      <th>Access</th>
+      <th>Address</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R_USB_ADDR</td>
+      <td>R/W</td>
+      <td>0x20000000</td>
+    </tr>
+    <tr>
+      <td>R_USB_ENDP_OWNER</td>
+      <td>R/W</td>
+      <td>0x20000004</td>
+    </tr>
+    <tr>
+      <td>R_USB_CTRL</td>
+      <td>W</td>
+      <td>0x20000008</td>
+    </tr>
+    <tr>
+      <td>R_USB_IN_SIZE_0_7</td>
+      <td>R/W</td>
+      <td>0x2000000C</td>
+    </tr>
+    <tr>
+      <td>R_USB_IN_SIZE_8_15</td>
+      <td>R/W</td>
+      <td>0x20000010</td>
+    </tr>
+    <tr>
+      <td>R_USB_DATA_TOGGLE</td>
+      <td>R/W</td>
+      <td>0x20000014</td>
+    </tr>
+    <tr>
+      <td>R_USB_OUT_SIZE_0_7</td>
+      <td>R</td>
+      <td>0x20000018</td>
+    </tr>
+    <tr>
+      <td>R_USB_OUT_SIZE_8_15</td>
+      <td>R</td>
+      <td>0x2000001C</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>I have not bothered documenting them in detail yet but essentially it is as follows.</p>
+
+<ul>
+  <li><em>R_USB_ADDR</em> - is the 7-bit device address.</li>
+  <li><em>R_USB_ENDP_OWNER</em> - The 16 low bits correspond to the 16 OUT endpoints and the 16 high bits correspond to the 16 IN endpoints. A set bit indicates that the corresponding endpoint buffer is handed over to the USB block. This means that the corresponding endpoint will accept one IN/OUT packet (with data) and ACK, after which the bit will be cleared and the buffer is handed over to the CPU. When the CPU owns a buffer the USB block will respond with NAK to all IN/OUT+DATA packets.</li>
+  <li><em>R_USB_CTRL</em> - Control pull-ups for attach.</li>
+  <li><em>R_USB_IN_SIZE_0_7</em> - 4-bits per endpoint indicate the number of bytes in the corresponding buffer.</li>
+  <li><em>R_USB_IN_SIZE_8_15</em> - 4-bits per endpoint indicate the number of bytes in the corresponding buffer.</li>
+  <li><em>R_USB_DATA_TOGGLE</em> - The 16 low bits select the data toggle (DATA0/DATA1) to be expected for the 16 OUT endpoints and the 16 high bits select the data toggle to be sent for the 16 IN endpoints.</li>
+  <li><em>R_USB_OUT_SIZE_0_7</em> - 4-bits per endpoint indicate the number of bytes in the corresponding buffer.</li>
+  <li><em>R_USB_OUT_SIZE_8_15</em> - 4-bits per endpoint indicate the number of bytes in the corresponding buffer.</li>
+</ul>
+
+<p>Of course a primitive interface like this requires a fair amount of CPU
+intervention and if one wants to offload the CPU and achieve higher performance
+a lot of this handling could be automated by the USB block itself.</p>
+
+<h3 id="soc">SoC</h3>
+
+<p>The resulting SoC consists of the USB device block, a PicoRV32 RISCV CPU, RAM
+and ROM. From the CPU’s side the memory map is as follows.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Base</th>
+      <th>Size</th>
+      <th>Memory</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0x00000000</td>
+      <td>16KB</td>
+      <td>ROM</td>
+    </tr>
+    <tr>
+      <td>0x10000000</td>
+      <td>4KB</td>
+      <td>RAM</td>
+    </tr>
+    <tr>
+      <td>0x20000000</td>
+      <td>32B</td>
+      <td>USB control &amp; status registers</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The USB device block’s endpoint buffers reside in RAM and the block has
+priority over the CPU when accessing. RAM is constructed of four 8-bit banks.
+The CPU is connected by a 32-bit bus while the USB block has a 8-bit bus. As
+mentioned USB has priority when accessing RAM but in practice this should
+result in minimal stall cycles for the CPU as its clock is significantly higher
+than the rate of which USB will read/write bytes.</p>
+
+<h2 id="simulation">Simulation</h2>
+
+<p>The simulation environment is based around Verilator and a set of C++ classes
+to build, manipulate and dissect USB packets.</p>
+
+<h3 id="usb-pack-gen">usb-pack-gen</h3>
+
+<p>The USB packet generation and manipulation code is found in
+<a href="https://github.com/markus-zzz/usbdev/blob/dev/sim/usb-pack-gen.h">sim/usb-pack-gen.h</a>
+and
+<a href="https://github.com/markus-zzz/usbdev/blob/dev/sim/usb-pack-gen.cpp">sim/usb-pack-gen.cpp</a>. It allows both encoding and decoding of USB packets. In essence it consists of three layers</p>
+
+<ul>
+  <li>UsbPacket - Base class for the various USB packet types (SETUP,IN,OUT,DATA0,DATA1,ACK,NAK) that allow easy high level manipulation. UsbPacket is derived into the various packet types.</li>
+  <li>USbBitVector - A sequence of USB bits.</li>
+  <li>UsbSymbolVector - A sequence of USB symbols (J,K,SE0,SE1).</li>
+</ul>
+
+<p>There are methods for translating in both directions performing the necessary
+steps such as CRC calculation, bit-stuffing and NRZI encoding.</p>
+
+<h3 id="test-suite">Test-suite</h3>
+
+<p>The test-suite is invoked by the <code class="highlighter-rouge">sim/runner.pl</code> script that will execute all
+tests found in <code class="highlighter-rouge">sim/tests</code> (or the ones given as argument). Each
+<code class="highlighter-rouge">sim/tests/test_XXX.c</code> consists of both firmware code to be compiled for the
+RISCV CPU as well as usb-pack-gen code compiled into the Verilator based
+simulation environment.</p>
+
+<p>To get a feel for what a test looks like I suggest studying
+<a href="https://github.com/markus-zzz/usbdev/blob/dev/sim/tests/test_003.c">sim/tests/test_003.c</a>.
+It is probably a good idea to start with running the test and looking at the
+decoded USB traffic.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./runner.pl tests/test_003.c
+sigrok-cli -i test_003.sim.sr -P usb_signalling:dp=0:dm=1,usb_packet | awk '/usb_packet-1: [^:]+$/{ print $0 }'
+</code></pre></div></div>
+<p>Should give us something like this (but without the host/device annotations I
+added manually).</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>host   : OUT ADDR 0 EP 0
+host   : DATA0 [ 23 64 54 AF CA FE ]
+device : ACK
+host   : IN ADDR 0 EP 1
+device : NAK
+host   : IN ADDR 0 EP 1
+device : DATA0 [ 24 65 55 B0 CB FF ]
+host   : ACK
+host   : IN ADDR 0 EP 1
+device : NAK
+</code></pre></div></div>
+<p>So the host sends six bytes of data to endpoint zero and the device
+acknowledges it. The host tries to read from endpoint one but the device is
+busy (the dummy loop reading the address register) so responds with a not
+acknowledge. The host tries to read again and this time the device responds
+with the byte array with each element incremented by one. The host acknowledges
+the received data. The host tries to read yet again but now the endpoint buffer
+has been handed back to the CPU so the USB block responds with not acknowledge.</p>
+
+<p>Now with this in mind it should be rather clear what is going on in the test
+case.</p>
+
+<h3 id="test-suite-artifacts">Test-suite artifacts</h3>
+
+<p>When run the test-suite outputs several useful artifacts. These are</p>
+
+<ul>
+  <li>test_XXX.comp.log - Any messages (errors and warnings) from the firmware compile.</li>
+  <li>test_XXX.sim.log - Log and debug printouts from the simulation.</li>
+  <li>test_XXX.sim.vcd - RTL simulation waveform in VCD format.</li>
+  <li>test_XXX.sim.sr - Captured USB signaling in sigrok’s format.</li>
+  <li>test_XXX.elf - Firmware code for the RISCV CPU.</li>
+  <li>test_XXX.so - Shared object with test-case code to be loaded into the simulator.</li>
+</ul>
+
+<h2 id="a-real-world-example">A real world example</h2>
+
+<p>I thought we finish this post by using some work-in-progress driver code
+(<a href="https://github.com/markus-zzz/usbdev/blob/dev/sw/usb-dev-driver.c">sw/usb-dev-driver.c</a>)
+to perform the first steps of the USB enumeration process with the ULX3S
+connected to my Linux workstation. The logic analyzer captured the following
+<a href="https://www.zzzconsulting.se/download/sigrok-usb/ulx3s-usbdev-1.sr">trace</a> (5M samples at 5Mhz
+but only 68KB file size with sigrok’s native format). The reader is urged to
+decode it by at least using</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sigrok-cli -i ulx3s-usbdev-1.sr -P usb_signalling:dp=1:dm=0,usb_packet | awk '/usb_packet-1: [^:]+$/{ print $0 }'
+</code></pre></div></div>
+<p>but preferably also in PulseView to better see reset signaling etc.</p>
+
+<p>In summary the following happens in the trace. The host resets the bus, the
+device descriptor is read, the host resets the bus, the host sets the device’s
+address to 23, the host reads the device descriptor once again, the host reads
+the configuration descriptor (first nine bytes only to figure out total size),
+the host reads the total size of the configuration descriptor (which includes
+interface and endpoint descriptors but in our case there are none so the size
+is still 9 bytes). Finally the host tries to set the configuration of the
+device but this is not yet implemented in the firmware and the device responds
+with NAK indefinitely.</p>
+
+<p>On my Linux workstation the <code class="highlighter-rouge">dmesg</code> log contained the following lines</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[ 2980.864737] usb 1-5: new low-speed USB device number 16 using xhci_hcd
+[ 2981.014361] usb 1-5: config 0 has no interfaces?
+[ 2981.014369] usb 1-5: New USB device found, idVendor=1234, idProduct=5678
+[ 2981.014372] usb 1-5: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[ 2981.014647] usb 1-5: config 0 descriptor??
+[ 2986.192817] usb 1-5: can't set config #0, error -110
+</code></pre></div></div>
+<p>and a <code class="highlighter-rouge">lsusb -v</code> contained</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Bus 001 Device 016: ID 1234:5678 Brain Actuated Technologies
+Couldn't open device, some information will be missing
+Device Descriptor:
+  bLength                18
+  bDescriptorType         1
+  bcdUSB               2.00
+  bDeviceClass          255 Vendor Specific Class
+  bDeviceSubClass       255 Vendor Specific Subclass
+  bDeviceProtocol       255 Vendor Specific Protocol
+  bMaxPacketSize0         8
+  idVendor           0x1234 Brain Actuated Technologies
+  idProduct          0x5678
+  bcdDevice            1.00
+  iManufacturer           0
+  iProduct                0
+  iSerial                 0
+  bNumConfigurations      1
+  Configuration Descriptor:
+    bLength                 9
+    bDescriptorType         2
+    wTotalLength            9
+    bNumInterfaces          0
+    bConfigurationValue     0
+    iConfiguration          0
+    bmAttributes         0x80
+      (Bus Powered)
+    MaxPower              100mA
+</code></pre></div></div>
+<p>As can be seen my made up <em>idVendor</em> actually corresponded to a registered vendor
+as can be confirmed in <a href="http://www.linux-usb.org/usb.ids">Linux usb.ids</a>.</p>
+
+<p>Slightly strange though is that <code class="highlighter-rouge">lsusb</code> claims that the device address is 16
+while the trace clearly contains a <em>SET_ADDRESS</em> and subsequent use of
+  address 23.</p>
+
+<h2 id="next-steps">Next steps</h2>
+
+<p>The logical next steps would be to continue working on the driver code until
+the enumeration process completes successfully supporting all required
+requests. Likely some RTL bugs will show up in the process but we will try to
+deal with them when they do.</p>
+
+<p>That is it for today. As always if you have questions or feedback - leave a
+comment below!</p>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html';
+      this.page.identifier = 'https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2020/05/16/usb-dev-part-2.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ZZZ-Consulting</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ZZZ-Consulting</li><li><a class="u-email" href="mailto:firstname.lastname@gmail.com">firstname.lastname@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/markus-zzz"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">markus-zzz</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,4 +1,333 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-05-16T20:08:56+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Sigrok and thoughts on building a USB device</title><link href="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html" rel="alternate" type="text/html" title="Sigrok and thoughts on building a USB device" /><published>2020-04-25T00:00:00+02:00</published><updated>2020-04-25T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html">&lt;p&gt;Last summer I bought a &lt;a href=&quot;https://www.dreamsourcelab.com/product/dslogic-plus/&quot;&gt;DSLogic
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-05-16T20:12:51+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Building a USB device part-2</title><link href="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html" rel="alternate" type="text/html" title="Building a USB device part-2" /><published>2020-05-16T00:00:00+02:00</published><updated>2020-05-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html">&lt;p&gt;In this post we pick up where we left of last time and start looking at the
+design and implementation of the USB device that I have been working on. First
+things first though, the code for the entire project can be found in &lt;a href=&quot;https://github.com/markus-zzz/usbdev/tree/dev&quot;&gt;this
+github repository&lt;/a&gt;. The reader
+is advised to have that readily available.&lt;/p&gt;
+
+&lt;p&gt;The first major goal of this series will be to have the device play along
+during the USB enumeration process so that the host can set address and read
+relevant descriptors. This can be verified by making sure that the device shows
+up properly when issuing a  &lt;code class=&quot;highlighter-rouge&quot;&gt;lsusb&lt;/code&gt; on my Linux workstation.&lt;/p&gt;
+
+&lt;h2 id=&quot;design-of-usbdev-and-soc&quot;&gt;Design of usbdev (and SoC)&lt;/h2&gt;
+
+&lt;h3 id=&quot;clock-recovery&quot;&gt;Clock recovery&lt;/h3&gt;
+
+&lt;p&gt;The signaling in USB consists of the differential pair D+ and D-. For a &lt;em&gt;full
+speed (FS)&lt;/em&gt; device the bit rate is 12Mbit/s so if we were able to sample at
+exactly the right spot a 12Mhz clock should suffice, in reality though this is
+the tricky bit. To aid in clock recovery USB employs both NRZI encoding and
+bit-stuffing to ensure that the differential pair will contain a level
+transition at least every seven bit times.&lt;/p&gt;
+
+&lt;p&gt;With this in mind it would seem a reasonable approach to run the design at
+48Mhz and oversample the differential pair with a factor of four. More
+precisely by obtaining four equally spaced samples for each bit time we should
+be able to adjust the actual sampling position (in terms of 1/4 bit times) to be
+as far away for any level transition as possible (i.e. in the middle of the eye
+diagram).&lt;/p&gt;
+
+&lt;p&gt;So running at a 48Mhz clock we have a 2-bit counter (&lt;code class=&quot;highlighter-rouge&quot;&gt;reg [1:0] cntr&lt;/code&gt;)
+incrementing each cycle (except for when adjusting). When the counter equals
+zero we perform the real sample. For every 48Mhz cycle we also sample and shift
+the value into a four bit shift register (&lt;code class=&quot;highlighter-rouge&quot;&gt;reg [3:0] past&lt;/code&gt;). Since we want any
+possible level transition to occur in the middle of this shift register we
+either advance or delay the counter with one increment depending on if a
+transition occurred early or late in the shift register.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  // A bit transition should ideally occur between past[2] and past[1]. If it
+  // occurs elsewhere we are either sampling too early or too late.
+  assign advance = past[3] ^ past[2];
+  assign delay   = past[1] ^ past[0];
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;If &lt;code class=&quot;highlighter-rouge&quot;&gt;advance&lt;/code&gt; is active the counter increments by two and if &lt;code class=&quot;highlighter-rouge&quot;&gt;delay&lt;/code&gt; is active
+there is no increment (for the given 48Mhz cycle).&lt;/p&gt;
+
+&lt;p&gt;After seeing some transitions this should be able to adjust the sampling point
+to where the signal lines are stable.&lt;/p&gt;
+
+&lt;p&gt;This is not the only option for clock recovery though but it is the simplest
+one to implement. However if the bit rate was significantly higher compared to
+the frequency our design is clocked at (e.g. USB &lt;em&gt;high-speed&lt;/em&gt; at 480Mbit/s)
+other methods would have to be used. In such cases I would suspect that
+sampling at the exact bit rate and then phase adjusting the clock (with help of
+a PLL) until the synchronization pattern is reliably detected would be the
+method of choice. Of course simply phase adjusting until the synchronization
+pattern is detected would not be enough, you probably want a FSM to find the
+midpoint of highest and lowest phase adjustment that makes the pattern
+detectable.&lt;/p&gt;
+
+&lt;p&gt;A variant of the previous approach would be to use adjustable delay lines on
+the inputs instead of phase adjusting the clock.&lt;/p&gt;
+
+&lt;h3 id=&quot;the-hwsw-interface&quot;&gt;The HW/SW interface&lt;/h3&gt;
+
+&lt;p&gt;To control the USB block some kind of hardware/software interface needs to be
+created. I have chosen the simplest possible design that came to mind.&lt;/p&gt;
+
+&lt;p&gt;Each endpoint has a 8 byte buffer in RAM, starting at RAM address zero comes
+the 16 OUT endpoints immediately followed by the 16 IN endpoints. In total 256
+bytes of RAM are used for endpoint buffers.&lt;/p&gt;
+
+&lt;p&gt;In addition the following registers are exposed to the CPU.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Register&lt;/th&gt;
+      &lt;th&gt;Access&lt;/th&gt;
+      &lt;th&gt;Address&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;R_USB_ADDR&lt;/td&gt;
+      &lt;td&gt;R/W&lt;/td&gt;
+      &lt;td&gt;0x20000000&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;R_USB_ENDP_OWNER&lt;/td&gt;
+      &lt;td&gt;R/W&lt;/td&gt;
+      &lt;td&gt;0x20000004&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;R_USB_CTRL&lt;/td&gt;
+      &lt;td&gt;W&lt;/td&gt;
+      &lt;td&gt;0x20000008&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;R_USB_IN_SIZE_0_7&lt;/td&gt;
+      &lt;td&gt;R/W&lt;/td&gt;
+      &lt;td&gt;0x2000000C&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;R_USB_IN_SIZE_8_15&lt;/td&gt;
+      &lt;td&gt;R/W&lt;/td&gt;
+      &lt;td&gt;0x20000010&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;R_USB_DATA_TOGGLE&lt;/td&gt;
+      &lt;td&gt;R/W&lt;/td&gt;
+      &lt;td&gt;0x20000014&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;R_USB_OUT_SIZE_0_7&lt;/td&gt;
+      &lt;td&gt;R&lt;/td&gt;
+      &lt;td&gt;0x20000018&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;R_USB_OUT_SIZE_8_15&lt;/td&gt;
+      &lt;td&gt;R&lt;/td&gt;
+      &lt;td&gt;0x2000001C&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;I have not bothered documenting them in detail yet but essentially it is as follows.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;em&gt;R_USB_ADDR&lt;/em&gt; - is the 7-bit device address.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;R_USB_ENDP_OWNER&lt;/em&gt; - The 16 low bits correspond to the 16 OUT endpoints and the 16 high bits correspond to the 16 IN endpoints. A set bit indicates that the corresponding endpoint buffer is handed over to the USB block. This means that the corresponding endpoint will accept one IN/OUT packet (with data) and ACK, after which the bit will be cleared and the buffer is handed over to the CPU. When the CPU owns a buffer the USB block will respond with NAK to all IN/OUT+DATA packets.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;R_USB_CTRL&lt;/em&gt; - Control pull-ups for attach.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;R_USB_IN_SIZE_0_7&lt;/em&gt; - 4-bits per endpoint indicate the number of bytes in the corresponding buffer.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;R_USB_IN_SIZE_8_15&lt;/em&gt; - 4-bits per endpoint indicate the number of bytes in the corresponding buffer.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;R_USB_DATA_TOGGLE&lt;/em&gt; - The 16 low bits select the data toggle (DATA0/DATA1) to be expected for the 16 OUT endpoints and the 16 high bits select the data toggle to be sent for the 16 IN endpoints.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;R_USB_OUT_SIZE_0_7&lt;/em&gt; - 4-bits per endpoint indicate the number of bytes in the corresponding buffer.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;R_USB_OUT_SIZE_8_15&lt;/em&gt; - 4-bits per endpoint indicate the number of bytes in the corresponding buffer.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Of course a primitive interface like this requires a fair amount of CPU
+intervention and if one wants to offload the CPU and achieve higher performance
+a lot of this handling could be automated by the USB block itself.&lt;/p&gt;
+
+&lt;h3 id=&quot;soc&quot;&gt;SoC&lt;/h3&gt;
+
+&lt;p&gt;The resulting SoC consists of the USB device block, a PicoRV32 RISCV CPU, RAM
+and ROM. From the CPU’s side the memory map is as follows.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Base&lt;/th&gt;
+      &lt;th&gt;Size&lt;/th&gt;
+      &lt;th&gt;Memory&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x00000000&lt;/td&gt;
+      &lt;td&gt;16KB&lt;/td&gt;
+      &lt;td&gt;ROM&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x10000000&lt;/td&gt;
+      &lt;td&gt;4KB&lt;/td&gt;
+      &lt;td&gt;RAM&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;0x20000000&lt;/td&gt;
+      &lt;td&gt;32B&lt;/td&gt;
+      &lt;td&gt;USB control &amp;amp; status registers&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;The USB device block’s endpoint buffers reside in RAM and the block has
+priority over the CPU when accessing. RAM is constructed of four 8-bit banks.
+The CPU is connected by a 32-bit bus while the USB block has a 8-bit bus. As
+mentioned USB has priority when accessing RAM but in practice this should
+result in minimal stall cycles for the CPU as its clock is significantly higher
+than the rate of which USB will read/write bytes.&lt;/p&gt;
+
+&lt;h2 id=&quot;simulation&quot;&gt;Simulation&lt;/h2&gt;
+
+&lt;p&gt;The simulation environment is based around Verilator and a set of C++ classes
+to build, manipulate and dissect USB packets.&lt;/p&gt;
+
+&lt;h3 id=&quot;usb-pack-gen&quot;&gt;usb-pack-gen&lt;/h3&gt;
+
+&lt;p&gt;The USB packet generation and manipulation code is found in
+&lt;a href=&quot;https://github.com/markus-zzz/usbdev/blob/dev/sim/usb-pack-gen.h&quot;&gt;sim/usb-pack-gen.h&lt;/a&gt;
+and
+&lt;a href=&quot;https://github.com/markus-zzz/usbdev/blob/dev/sim/usb-pack-gen.cpp&quot;&gt;sim/usb-pack-gen.cpp&lt;/a&gt;. It allows both encoding and decoding of USB packets. In essence it consists of three layers&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;UsbPacket - Base class for the various USB packet types (SETUP,IN,OUT,DATA0,DATA1,ACK,NAK) that allow easy high level manipulation. UsbPacket is derived into the various packet types.&lt;/li&gt;
+  &lt;li&gt;USbBitVector - A sequence of USB bits.&lt;/li&gt;
+  &lt;li&gt;UsbSymbolVector - A sequence of USB symbols (J,K,SE0,SE1).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;There are methods for translating in both directions performing the necessary
+steps such as CRC calculation, bit-stuffing and NRZI encoding.&lt;/p&gt;
+
+&lt;h3 id=&quot;test-suite&quot;&gt;Test-suite&lt;/h3&gt;
+
+&lt;p&gt;The test-suite is invoked by the &lt;code class=&quot;highlighter-rouge&quot;&gt;sim/runner.pl&lt;/code&gt; script that will execute all
+tests found in &lt;code class=&quot;highlighter-rouge&quot;&gt;sim/tests&lt;/code&gt; (or the ones given as argument). Each
+&lt;code class=&quot;highlighter-rouge&quot;&gt;sim/tests/test_XXX.c&lt;/code&gt; consists of both firmware code to be compiled for the
+RISCV CPU as well as usb-pack-gen code compiled into the Verilator based
+simulation environment.&lt;/p&gt;
+
+&lt;p&gt;To get a feel for what a test looks like I suggest studying
+&lt;a href=&quot;https://github.com/markus-zzz/usbdev/blob/dev/sim/tests/test_003.c&quot;&gt;sim/tests/test_003.c&lt;/a&gt;.
+It is probably a good idea to start with running the test and looking at the
+decoded USB traffic.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;./runner.pl tests/test_003.c
+sigrok-cli -i test_003.sim.sr -P usb_signalling:dp=0:dm=1,usb_packet | awk '/usb_packet-1: [^:]+$/{ print $0 }'
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Should give us something like this (but without the host/device annotations I
+added manually).&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;host   : OUT ADDR 0 EP 0
+host   : DATA0 [ 23 64 54 AF CA FE ]
+device : ACK
+host   : IN ADDR 0 EP 1
+device : NAK
+host   : IN ADDR 0 EP 1
+device : DATA0 [ 24 65 55 B0 CB FF ]
+host   : ACK
+host   : IN ADDR 0 EP 1
+device : NAK
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;So the host sends six bytes of data to endpoint zero and the device
+acknowledges it. The host tries to read from endpoint one but the device is
+busy (the dummy loop reading the address register) so responds with a not
+acknowledge. The host tries to read again and this time the device responds
+with the byte array with each element incremented by one. The host acknowledges
+the received data. The host tries to read yet again but now the endpoint buffer
+has been handed back to the CPU so the USB block responds with not acknowledge.&lt;/p&gt;
+
+&lt;p&gt;Now with this in mind it should be rather clear what is going on in the test
+case.&lt;/p&gt;
+
+&lt;h3 id=&quot;test-suite-artifacts&quot;&gt;Test-suite artifacts&lt;/h3&gt;
+
+&lt;p&gt;When run the test-suite outputs several useful artifacts. These are&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;test_XXX.comp.log - Any messages (errors and warnings) from the firmware compile.&lt;/li&gt;
+  &lt;li&gt;test_XXX.sim.log - Log and debug printouts from the simulation.&lt;/li&gt;
+  &lt;li&gt;test_XXX.sim.vcd - RTL simulation waveform in VCD format.&lt;/li&gt;
+  &lt;li&gt;test_XXX.sim.sr - Captured USB signaling in sigrok’s format.&lt;/li&gt;
+  &lt;li&gt;test_XXX.elf - Firmware code for the RISCV CPU.&lt;/li&gt;
+  &lt;li&gt;test_XXX.so - Shared object with test-case code to be loaded into the simulator.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;a-real-world-example&quot;&gt;A real world example&lt;/h2&gt;
+
+&lt;p&gt;I thought we finish this post by using some work-in-progress driver code
+(&lt;a href=&quot;https://github.com/markus-zzz/usbdev/blob/dev/sw/usb-dev-driver.c&quot;&gt;sw/usb-dev-driver.c&lt;/a&gt;)
+to perform the first steps of the USB enumeration process with the ULX3S
+connected to my Linux workstation. The logic analyzer captured the following
+&lt;a href=&quot;https://www.zzzconsulting.se/download/sigrok-usb/ulx3s-usbdev-1.sr&quot;&gt;trace&lt;/a&gt; (5M samples at 5Mhz
+but only 68KB file size with sigrok’s native format). The reader is urged to
+decode it by at least using&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sigrok-cli -i ulx3s-usbdev-1.sr -P usb_signalling:dp=1:dm=0,usb_packet | awk '/usb_packet-1: [^:]+$/{ print $0 }'
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;but preferably also in PulseView to better see reset signaling etc.&lt;/p&gt;
+
+&lt;p&gt;In summary the following happens in the trace. The host resets the bus, the
+device descriptor is read, the host resets the bus, the host sets the device’s
+address to 23, the host reads the device descriptor once again, the host reads
+the configuration descriptor (first nine bytes only to figure out total size),
+the host reads the total size of the configuration descriptor (which includes
+interface and endpoint descriptors but in our case there are none so the size
+is still 9 bytes). Finally the host tries to set the configuration of the
+device but this is not yet implemented in the firmware and the device responds
+with NAK indefinitely.&lt;/p&gt;
+
+&lt;p&gt;On my Linux workstation the &lt;code class=&quot;highlighter-rouge&quot;&gt;dmesg&lt;/code&gt; log contained the following lines&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[ 2980.864737] usb 1-5: new low-speed USB device number 16 using xhci_hcd
+[ 2981.014361] usb 1-5: config 0 has no interfaces?
+[ 2981.014369] usb 1-5: New USB device found, idVendor=1234, idProduct=5678
+[ 2981.014372] usb 1-5: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[ 2981.014647] usb 1-5: config 0 descriptor??
+[ 2986.192817] usb 1-5: can't set config #0, error -110
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;and a &lt;code class=&quot;highlighter-rouge&quot;&gt;lsusb -v&lt;/code&gt; contained&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Bus 001 Device 016: ID 1234:5678 Brain Actuated Technologies
+Couldn't open device, some information will be missing
+Device Descriptor:
+  bLength                18
+  bDescriptorType         1
+  bcdUSB               2.00
+  bDeviceClass          255 Vendor Specific Class
+  bDeviceSubClass       255 Vendor Specific Subclass
+  bDeviceProtocol       255 Vendor Specific Protocol
+  bMaxPacketSize0         8
+  idVendor           0x1234 Brain Actuated Technologies
+  idProduct          0x5678
+  bcdDevice            1.00
+  iManufacturer           0
+  iProduct                0
+  iSerial                 0
+  bNumConfigurations      1
+  Configuration Descriptor:
+    bLength                 9
+    bDescriptorType         2
+    wTotalLength            9
+    bNumInterfaces          0
+    bConfigurationValue     0
+    iConfiguration          0
+    bmAttributes         0x80
+      (Bus Powered)
+    MaxPower              100mA
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;As can be seen my made up &lt;em&gt;idVendor&lt;/em&gt; actually corresponded to a registered vendor
+as can be confirmed in &lt;a href=&quot;http://www.linux-usb.org/usb.ids&quot;&gt;Linux usb.ids&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Slightly strange though is that &lt;code class=&quot;highlighter-rouge&quot;&gt;lsusb&lt;/code&gt; claims that the device address is 16
+while the trace clearly contains a &lt;em&gt;SET_ADDRESS&lt;/em&gt; and subsequent use of
+  address 23.&lt;/p&gt;
+
+&lt;h2 id=&quot;next-steps&quot;&gt;Next steps&lt;/h2&gt;
+
+&lt;p&gt;The logical next steps would be to continue working on the driver code until
+the enumeration process completes successfully supporting all required
+requests. Likely some RTL bugs will show up in the process but we will try to
+deal with them when they do.&lt;/p&gt;
+
+&lt;p&gt;That is it for today. As always if you have questions or feedback - leave a
+comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we pick up where we left of last time and start looking at the design and implementation of the USB device that I have been working on. First things first though, the code for the entire project can be found in this github repository. The reader is advised to have that readily available.</summary></entry><entry><title type="html">Sigrok and thoughts on building a USB device</title><link href="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html" rel="alternate" type="text/html" title="Sigrok and thoughts on building a USB device" /><published>2020-04-25T00:00:00+02:00</published><updated>2020-04-25T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html">&lt;p&gt;Last summer I bought a &lt;a href=&quot;https://www.dreamsourcelab.com/product/dslogic-plus/&quot;&gt;DSLogic
 Plus&lt;/a&gt; USB-based Logic
 Analyzer, about 6 months ago I tried it for the first time and today I hope to
 finish this post describing the experience. The thing comes with its own
@@ -1416,210 +1745,4 @@ next post where we implement a proper device driver.&lt;/p&gt;
 &lt;p&gt;That concludes today’s post. As always the interesting details are in the code
 so be sure to check it out.&lt;/p&gt;
 
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we will integrate our I2C controller simulation with QEMU. If you didn’t already know QEMU is a free and open-source emulator that performs hardware virtualization. More specifically it will allow us to emulate an ARM system where we can connect our I2C controller as a memory mapped device. We are going to pick the ARM VersatileExpress development board, that is already emulated by QEMU, and modify it by adding our device.</summary></entry><entry><title type="html">A basic I2C controller - part 1</title><link href="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html" rel="alternate" type="text/html" title="A basic I2C controller - part 1" /><published>2018-07-17T00:00:00+02:00</published><updated>2018-07-17T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/17/i2c-controller-part-1.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-&lt;p&gt;I2C is this two wire bus protocol that is very common in the embedded sphere
-and the reader is most likely already familiar with it so the introduction here
-will be brief.  As the name suggests it is a protocol for communicating between
-ICs and the specification for the protocol can be found
-&lt;a href=&quot;http://cache.nxp.com/documents/user_manual/UM10204.pdf&quot;&gt;here&lt;/a&gt;.  The two wires
-consist of a clock (SCL) and a data (SDA), the master is responsible for
-initiating all transactions. Since it is a bit more complicated than just a
-shift-register there are special rules for when &lt;em&gt;SDA&lt;/em&gt; transitions may occur
-with respect to &lt;em&gt;SCL&lt;/em&gt; (i.e. not just data sampled at rising edge of clk
-end-of-story). For example:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;A SDA 1 -&amp;gt; 0 transition when SCL is high signals a START condition&lt;/li&gt;
-  &lt;li&gt;A SDA 0 -&amp;gt; 1 transition when SCL is high signals a STOP condition&lt;/li&gt;
-  &lt;li&gt;SDA transitions when SCL is low are used for normal data signaling&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Of course there are more details to it but you can read all about those in the
-spec above.&lt;/p&gt;
-
-&lt;p&gt;In this post we are going to outline the RTL (Verilog) implementation and
-simulation of a basic I2C controller that connects to a host as an AXI slave. In
-future posts we will connect the simulation with QEMU and finish it all up by
-writing a Linux device driver.&lt;/p&gt;
-
-&lt;h2 id=&quot;preparations&quot;&gt;Preparations&lt;/h2&gt;
-&lt;p&gt;To follow along the reader is urged to acquire the following packages (Verilog
-simulator and waveform viewer)&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo apt-get install iverilog gtkwave
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;As always with these things a lot of commands will be issued and a lot of paths
-will be used so in an attempt to keep the commands copy-pastable (without the
-reader having to manually modify the paths all the time) we are going to
-introduce the following environment variable and use that as much as possible
-through out the posts&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;export ZZZ_ROOT=some/path
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Now let us begin by checking out the Git repository
-&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller&quot;&gt;https://github.com/markus-zzz/i2c-controller&lt;/a&gt;.&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT
-git clone https://github.com/markus-zzz/i2c-controller
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;It should be noted that a single repository and single branch is used for the
-entire post series so some of the files may contain code that will first be
-relevant for the later posts.&lt;/p&gt;
-
-&lt;h2 id=&quot;implementation&quot;&gt;Implementation&lt;/h2&gt;
-&lt;p&gt;After some thinking I decided that the AXI interface of my simple I2C
-controller should expose these two registers&lt;/p&gt;
-
-&lt;h4 id=&quot;control-register&quot;&gt;Control register&lt;/h4&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;Field&lt;/th&gt;
-      &lt;th&gt;Bits&lt;/th&gt;
-      &lt;th&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;we&lt;/td&gt;
-      &lt;td&gt;1&lt;/td&gt;
-      &lt;td&gt;Write enable i.e. should we be driving the SDA during the transaction&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;start&lt;/td&gt;
-      &lt;td&gt;1&lt;/td&gt;
-      &lt;td&gt;Generate start condition before&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;stop&lt;/td&gt;
-      &lt;td&gt;1&lt;/td&gt;
-      &lt;td&gt;Generate stop condition after&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;byte&lt;/td&gt;
-      &lt;td&gt;8&lt;/td&gt;
-      &lt;td&gt;Data byte to write (could be address in which case the 8:th bit indicates read or write during following transaction)&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h4 id=&quot;status-and-read-register&quot;&gt;Status (and read) register&lt;/h4&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;Field&lt;/th&gt;
-      &lt;th&gt;Bits&lt;/th&gt;
-      &lt;th&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;busy&lt;/td&gt;
-      &lt;td&gt;1&lt;/td&gt;
-      &lt;td&gt;Controller busy with ongoing transaction&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;ack&lt;/td&gt;
-      &lt;td&gt;1&lt;/td&gt;
-      &lt;td&gt;Acknowledge status for last transaction&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;byte&lt;/td&gt;
-      &lt;td&gt;8&lt;/td&gt;
-      &lt;td&gt;Data byte read if last transaction was read (we always sample data even if we are driving SDA ourselves)&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;If one thinks a bit more about the signaling one realises that dividing the SCL
-into four phases might be a good idea so we use a clock enable scheme as
-follows:&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;// I2C clocking scheme
-//
-//        -+                             +-----------------------------+
-// SCL     |                             |                             |
-//         +-----------------------------+                             +-
-//
-//        -+            +-+            +-+            +-+            +-+
-// 4x_en   |            | |            | |            | |            | |
-//         +------------+ +------------+ +------------+ +------------+ +-
-//
-// phase      2'b00          2'b01          2'b10          2'b11
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;In other words we use the same clock domain as the AXI bus and ‘divide’ the clock
-locally by producing a clock enable signal with four pulses per &lt;em&gt;SCL&lt;/em&gt; period. For
-each pulse we increment the two bit phase counter that is used by the remainder
-of the design.&lt;/p&gt;
-
-&lt;p&gt;The implementation of the controller is in
-&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/i2c_controller.v&quot;&gt;i2c_controller.v&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Next thing we need to wrap an AXI slave interface around the controller and
-that can be seen in
-&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/i2c_axi_slave.v&quot;&gt;i2c_axi_slave.v&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;simulation&quot;&gt;Simulation&lt;/h2&gt;
-&lt;p&gt;For testing I found
-&lt;a href=&quot;https://github.com/olofk/i2c/blob/master/bench/verilog/i2c_slave_model.v&quot;&gt;this&lt;/a&gt;
-slave model of a I2C EPROM.&lt;/p&gt;
-
-&lt;p&gt;Now if you think about the amount of AXI signaling that would be required to
-write and read something from the EPROM model you quickly realise that it would
-be a pain to write all that in plain Verilog. In fact it would be much easier
-if we could write all this in a programming language like C and luckily thanks
-to VPI (Verilog Procedural Interface) this is a straight forward task.&lt;/p&gt;
-
-&lt;p&gt;Using VPI we connect a callback on value change events for the AXI clock signal
-and from there we can manipulate the remainder of the bus signals. We have a
-simple software driven state machine that, in its idle state, receives commands
-from a socket and, whether it was a read or a write, drives the bus signals
-accordingly.&lt;/p&gt;
-
-&lt;p&gt;Now performing AXI reads and writes in our simulation is a simple matter of
-sending the appropriate command packet over the socket and by so we have
-achieved a reasonable separation between our simulation environment and the bus
-interface to it.&lt;/p&gt;
-
-&lt;p&gt;The attentive reader might realise that the approach of having the RTL
-simulator block on a socket inside the value change callback for the AXI clock
-will effectively block the simulation unless it is constantly being fed with
-command packets over the socket. As a lucky coincidence this stream of socket
-commands is exactly what happens in the test suite used in this post as it
-constantly busy-waits on the status register after each write to the control
-register.&lt;/p&gt;
-
-&lt;p&gt;Later on though when we use QEMU and a proper interrupt driven device driver
-this will present a problem so we might as well try to solve it now. On the
-opposite side of blocking we could do the receive in non-blocking mode and
-effectively have the RTL simulation running at full speed all the time. While
-this would be functionally correct it is somewhat undesirable since it would be
-a huge wast of simulation cycles (and possibly producing some huge dump.vcd
-files).&lt;/p&gt;
-
-&lt;p&gt;A better approach is to do a bit of both with the concept of a clock request
-signal from the block (we can use the busy bit of the status register for this
-purpose). While the block is busy it needs a clock to finish (and become ready)
-and in this state we use a non-blocking receive. On the other hand when the
-block is ready it is safe to fall back on blocking receives as there is no work
-to do until we get a command from the AXI.&lt;/p&gt;
-
-&lt;p&gt;To try it all out simply do&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT/i2c-controller
-./build-all.sh
-./run-all.sh
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;If all went well this should have executed the test code in
-&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/axi_master_client.c&quot;&gt;axi_master_client.c&lt;/a&gt;
-writing patterns to the I2C connected memory and then reading back and
-verifying.&lt;/p&gt;
-
-&lt;p&gt;To really see what is going on this might be a good opertunity to bring up the
-waveform viewer and inspect the signals in &lt;em&gt;tb.dut&lt;/em&gt;&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;gtkwave dump.vcd
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;In the next post we try to integrate our socket based model with QEMU and later
-on in a third post we will attempt to write a Linux device driver for the
-EPROM.&lt;/p&gt;
-
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction I2C is this two wire bus protocol that is very common in the embedded sphere and the reader is most likely already familiar with it so the introduction here will be brief. As the name suggests it is a protocol for communicating between ICs and the specification for the protocol can be found here. The two wires consist of a clock (SCL) and a data (SDA), the master is responsible for initiating all transactions. Since it is a bit more complicated than just a shift-register there are special rules for when SDA transitions may occur with respect to SCL (i.e. not just data sampled at rising edge of clk end-of-story). For example:</summary></entry></feed>
+&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we will integrate our I2C controller simulation with QEMU. If you didn’t already know QEMU is a free and open-source emulator that performs hardware virtualization. More specifically it will allow us to emulate an ARM system where we can connect our I2C controller as a memory mapped device. We are going to pick the ARM VersatileExpress development board, that is already emulated by QEMU, and modify it by adding our device.</summary></entry></feed>
