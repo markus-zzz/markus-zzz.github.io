@@ -1,4 +1,173 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-05-16T20:12:51+02:00</updated><id>https://www.zzzconsulting.se/</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Building a USB device part-2</title><link href="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html" rel="alternate" type="text/html" title="Building a USB device part-2" /><published>2020-05-16T00:00:00+02:00</published><updated>2020-05-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html">&lt;p&gt;In this post we pick up where we left of last time and start looking at the
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-07-12T18:00:12+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Commodore 64 experiments part-1</title><link href="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-1" /><published>2020-07-12T00:00:00+02:00</published><updated>2020-07-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/07/12/c64-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html">&lt;p&gt;When I was a kid back in the 80s my parents bought our family’s first computer,
+a Commodore 64 with a datasette station. I still have fond memories of that
+marvelous little machine. At the time though I was only ten years old so my
+mental capacity (and likely also patience) was quite limited and I never
+managed to do much with it besides playing games and typing in the occasional
+BASIC listing from the Sunday newspaper (that almost never worked).&lt;/p&gt;
+
+&lt;p&gt;Now in recent times I often find myself watching retro computing episodes from
+the big YouTubers in the field such as &lt;a href=&quot;https://www.youtube.com/user/adric22&quot;&gt;The 8-Bit
+Guy&lt;/a&gt; and &lt;a href=&quot;https://www.youtube.com/channel/UC6gARF3ICgaLfs3o2znuqXA&quot;&gt;Retro
+Recipes&lt;/a&gt;. Needless to
+say they often feature the C64 and it is refreshing to be reminded of a simpler
+time when things were not complicated to absurdity just for the sake of it.&lt;/p&gt;
+
+&lt;p&gt;While I know that there are numerous C64 emulators available (mostly in
+software but also a few FPGA based) I always thought that would be a neat
+project to try on.&lt;/p&gt;
+
+&lt;p&gt;Some weeks ago I ran across the &lt;a href=&quot;http://c64onfpga.blogspot.com/&quot;&gt;C64 on an
+FPGA&lt;/a&gt; blog series by Johan Steenkamp, a blog
+series dating from 2017 to present detailing his journey in implementing an
+FPGA based C64 emulator. While I don’t agree with every design decision taken
+there the work put in to implementing and the effort spent documenting it is
+really impressive.&lt;/p&gt;
+
+&lt;p&gt;So inspired by this I thought I would try doing something similar or at least
+see how much work would be required to get a system that boots into BASIC.&lt;/p&gt;
+
+&lt;h2 id=&quot;preparations&quot;&gt;Preparations&lt;/h2&gt;
+
+&lt;p&gt;Before we can get started we need to gather some preliminary stuff.&lt;/p&gt;
+
+&lt;h3 id=&quot;documentation&quot;&gt;Documentation&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.c64-wiki.com/wiki/Commodore_64_Programmer%27s_Reference_Guide&quot;&gt;Commodore 64 Programmer’s Reference Guide&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://sta.c64.org/cbm64mem.html&quot;&gt;Commodore 64 memory map&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt&quot;&gt;The MOS 6567/6569 video controller (VIC-II) and its application in the Commodore 64 by Christian Bauer&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://www.6502.org/documents/datasheets/mos/mos_6526_cia_recreated.pdf&quot;&gt;6526 Complex Interface Adapter (CIA) - datasheet&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://www.6502.org/documents/datasheets/mos/mos_6582_sid.pdf&quot;&gt;6582 SOUND Interface Device (SID) - datasheet&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;cpu&quot;&gt;CPU&lt;/h3&gt;
+
+&lt;p&gt;A Verilog model of a 6502/6510 CPU by Arlet Ottens can be downloaded from
+&lt;a href=&quot;http://ladybug.xs4all.nl/arlet/fpga/6502/&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;roms&quot;&gt;ROMs&lt;/h3&gt;
+
+&lt;p&gt;Kernal, basic and character ROMs can be picked up from
+&lt;a href=&quot;http://www.zimmers.net/anonftp/pub/cbm/firmware/computers/c64/&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;considerations&quot;&gt;Considerations&lt;/h2&gt;
+
+&lt;p&gt;By today’s standards the C64 is a simply system. However when trying to
+reimplement it with modern technology (and methodology) inside a single FPGA
+there are a few things that need to be kept in mind.&lt;/p&gt;
+
+&lt;p&gt;The design is based around asynchronous RAM so for reading you expect the data
+to become available in the same cycle as the address is presented. This is
+different from the synchronous RAM blocks found inside FPGAs where an
+additional clock cycle must pass before the data is available.&lt;/p&gt;
+
+&lt;p&gt;There are no stall cycles or handshake signals in the bus protocol so every
+transaction is expected to complete immediately. Also if a chip is not
+connected to the bus the writes to that will simply be ignored and reads return
+a default value. When trying to bring up the system this is both good and bad.
+Good because you feel you make progress fast but bad since you will probably
+miss implementing functionality that turned out to be really important to avoid
+those hard to find bugs later on.&lt;/p&gt;
+
+&lt;p&gt;The CPU and VIC-II share the same bus by allowing the CPU to access during the
+first phase of the clock and the VIC-II during the second phase of the clock.
+This does not map really well to the single edge methodology used in most
+modern designs.&lt;/p&gt;
+
+&lt;p&gt;Also as the design is made up of discrete ICs they are connected with a classic
+tri-state bus. Tri-state buses inside the fabric is not supported by modern
+FPGAs so multiplexers need to be used instead. In a way though, it would be
+nice to be able to closely recreate the PCB interconnect inside the FPGA and
+have each IC correspond to a Verilog module with the exact same interface
+signals.&lt;/p&gt;
+
+&lt;p&gt;The VIC-II has a 8Mhz pixel clock but the remaining design is based around a
+1Mhz system clock where both phases (or edges) are used. This also complicates
+matters and it is always wise to avoid multiple clock domains unless absolutely
+necessary.&lt;/p&gt;
+
+&lt;h2 id=&quot;design&quot;&gt;Design&lt;/h2&gt;
+
+&lt;p&gt;So given the considerations in the previous section I have chosen to use a
+single clock domain of 8Mhz with enable signals corresponding to the positive
+and negative phase of a 1Mhz clock.&lt;/p&gt;
+
+&lt;p&gt;The single ported synchronous RAM modules are wrapped so that they act as
+asynchronous RAM that can be independently accessed with the two 1Mhz phases
+enable signals. See
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/spram.v&quot;&gt;rtl/spram.v&lt;/a&gt; and
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/sprom.v&quot;&gt;rtl/sprom.v&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;A implementation of a very basic VIC-II is started in
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/vic-ii.v&quot;&gt;rtl/vic-ii.v&lt;/a&gt;
+and likewise for the CIA in
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/cia.v&quot;&gt;rtl/cia.v&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Everything is wired up and connected to a fake keyboard matrix in
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/top.v&quot;&gt;rtl/top.v&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;results-so-far&quot;&gt;Results (so far)&lt;/h2&gt;
+
+&lt;p&gt;First of all the code for the MyC64 project can be found &lt;a href=&quot;https://github.com/markus-zzz/myc64&quot;&gt;here on
+github&lt;/a&gt; where the README contains a short
+intruction sequence to get started with the simulator for those interested.&lt;/p&gt;
+
+&lt;p&gt;Simulation is Verilator based and the driver program
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/sim/c64-sim.cpp&quot;&gt;myc64-sim&lt;/a&gt; is
+similar to the one used for &lt;a href=&quot;/2019/08/12/retro-gaming-hw-part-1.html&quot;&gt;my previous RetroCon project&lt;/a&gt; but with the addition of some nifty
+features to execute delayed commands at a certain frame (e.g. no point
+injecting a key press sequence until the system has finished booting).&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;markus@workstation:~/work/repos/myc64/sim$ ./myc64-sim -h
+Usage: ./myc64-sim [OPTIONS]
+
+  --scale=N             -- set pixel scaling
+  --frame-rate=N        -- try to produce a new frame every N ms
+  --save-frame-from=N   -- dump frames to .png starting from frame #N
+  --save-frame-to=N=N   -- dump frames to .png ending with frame #N
+  --save-frame-prefix=S -- prefix dump frame files with S
+  --exit-after-frame=N  -- exit after frame #N
+  --trace               -- create dump.vcd
+  --cmd-load-prg=&amp;lt;FRAME&amp;gt;:&amp;lt;PRG&amp;gt;           -- wait until &amp;lt;FRAME&amp;gt; then load &amp;lt;PRG&amp;gt;
+  --cmd-inject-keys=&amp;lt;FRAME&amp;gt;:&amp;lt;KEYS&amp;gt;       -- wait until &amp;lt;FRAME&amp;gt; then inject &amp;lt;KEYS&amp;gt;
+  --cmd-dump-ram=&amp;lt;FRAME&amp;gt;:&amp;lt;ADDR&amp;gt;:&amp;lt;LENGTH&amp;gt; -- wait until &amp;lt;FRAME&amp;gt; then dump &amp;lt;LENGTH&amp;gt; bytes of RAM starting at &amp;lt;ADDR&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;As an example consider the following command line that starts simulation and
+then waits until video frame #135 before injecting the key sequence for the
+classic one-line BASIC maze generator.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;./myc64-sim --cmd-inject-keys=135:&quot;10&amp;lt;SPACE&amp;gt;PRINT&amp;lt;SPACE&amp;gt;CHR&amp;lt;LSHIFT&amp;gt;4&amp;lt;LSHIFT&amp;gt;8205.5+RND&amp;lt;LSHIFT&amp;gt;81&amp;lt;LSHIFT&amp;gt;9&amp;lt;LSHIFT&amp;gt;9;:GOTO&amp;lt;SPACE&amp;gt;10&amp;lt;RETURN&amp;gt;RUN&amp;lt;RETURN&amp;gt;&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;&lt;img src=&quot;/download/c64/basic-maze.apng&quot; alt=&quot;C64 boot and one line BASIC maze&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It is also possible to inject an arbitrary &lt;code class=&quot;highlighter-rouge&quot;&gt;.prg&lt;/code&gt; file into memory and run
+that. E.g. here we take a trivial program that cycles the background color and
+assemble it into a &lt;code class=&quot;highlighter-rouge&quot;&gt;.prg&lt;/code&gt; file.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Start:
+loop:  inc $d021
+       jmp loop
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cl65 -o test_001.prg -t c64 -C c64-asm.cfg -u __EXEHDR__ testasm/test_001.s
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;It is interesting to note that the &lt;code class=&quot;highlighter-rouge&quot;&gt;cl65&lt;/code&gt; tool will also insert a small BASIC
+header containing the necessary &lt;code class=&quot;highlighter-rouge&quot;&gt;SYS &amp;lt;addr&amp;gt;&lt;/code&gt; command so that the assembled
+program can be started with a simple BASIC &lt;code class=&quot;highlighter-rouge&quot;&gt;RUN&lt;/code&gt; command.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;./myc64-sim --cmd-load-prg=130:test_001.prg --cmd-inject-keys=135:&quot;LIST&amp;lt;RETURN&amp;gt;RUN&amp;lt;RETURN&amp;gt;&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;&lt;img src=&quot;/download/c64/cycle-bgcolor.apng&quot; alt=&quot;C64 cycle bgcolor&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;next-steps&quot;&gt;Next steps&lt;/h2&gt;
+
+&lt;p&gt;I am reasonably happy with the result so far given the limited effort put in,
+but of course it does not have to end here, this could evolve in any number of
+different directions. Here are some ideas that come to mind&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Continue making the implementation more complete and exact, e.g. take a game such as &lt;a href=&quot;https://www.c64-wiki.com/wiki/Bubble_Bobble&quot;&gt;Bubble Bobble&lt;/a&gt; and try to make it play.&lt;/li&gt;
+  &lt;li&gt;Get it running on the ULX3S. This would require putting the video frame in SDRAM so that HDMI/DVI can read it at the correct refresh rate for 640x480@60Hz. Also here we could find real use for &lt;a href=&quot;/2020/05/16/usb-dev-part-2.html&quot;&gt;the usbdev project&lt;/a&gt; to allow key and &lt;code class=&quot;highlighter-rouge&quot;&gt;.prg&lt;/code&gt; injection from a host PC.&lt;/li&gt;
+  &lt;li&gt;Start looking at a SID implementation.&lt;/li&gt;
+  &lt;li&gt;Rewrite in &lt;a href=&quot;https://github.com/m-labs/nmigen&quot;&gt;nMigen&lt;/a&gt;. For quite some time now I have been wanting to try out nMigen on a project and this might be a good opportunity.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;That is it for this post. If you have questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited and I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper (that almost never worked).</summary></entry><entry><title type="html">Building a USB device part-2</title><link href="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html" rel="alternate" type="text/html" title="Building a USB device part-2" /><published>2020-05-16T00:00:00+02:00</published><updated>2020-05-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html">&lt;p&gt;In this post we pick up where we left of last time and start looking at the
 design and implementation of the USB device that I have been working on. First
 things first though, the code for the entire project can be found in &lt;a href=&quot;https://github.com/markus-zzz/usbdev/tree/dev&quot;&gt;this
 github repository&lt;/a&gt;. The reader
@@ -533,19 +702,19 @@ low level &lt;em&gt;usb-signalling&lt;/em&gt; decoder to reliably extract the &l
 &lt;/span&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;sys&lt;/span&gt;
 &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;re&lt;/span&gt;
 
-&lt;span class=&quot;n&quot;&gt;pattern_j&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: J$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;pattern_k&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: K$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;pattern_se0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: SE0$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;pattern_se1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: SE1$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pattern_j&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: J$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pattern_k&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: K$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pattern_se0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: SE0$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pattern_se1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;^usb_signalling-1: SE1$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
 
-&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;line&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stdin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_j&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;line&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stdin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_j&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
     &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'01'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_k&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
     &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'10'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_se0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_se0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
     &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'00'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_se1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern_se1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)):&lt;/span&gt;
     &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'11'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;p&gt;and then run the entire chain&lt;/p&gt;
@@ -1622,127 +1791,4 @@ that it does not use any pesky proprietary software or vendor branches.&lt;/p&gt
 &lt;p&gt;In the next post we will be looking at the interrupt mapping and improving the
 device driver.&lt;/p&gt;
 
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In today’s post we will start writing a Linux device driver for our simulated I2C EPROM. It will be a simple character device that shows up as /dev/zzz-i2c-eprom and allows data to be read and written as in</summary></entry><entry><title type="html">A basic I2C controller - part 2</title><link href="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html" rel="alternate" type="text/html" title="A basic I2C controller - part 2" /><published>2018-07-18T00:00:00+02:00</published><updated>2018-07-18T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/18/i2c-controller-part-2.html">&lt;p&gt;In this post we will integrate our I2C controller simulation with QEMU. If
-you didn’t already know &lt;a href=&quot;https://en.wikipedia.org/wiki/QEMU&quot;&gt;QEMU&lt;/a&gt; is a free and
-open-source emulator that performs hardware virtualization. More specifically
-it will allow us to emulate an ARM system where we can connect our I2C
-controller as a memory mapped device. We are going to pick the ARM
-VersatileExpress development board, that is already emulated by QEMU, and
-modify it by adding our device.&lt;/p&gt;
-
-&lt;h2 id=&quot;get-modify-and-build-qemu&quot;&gt;Get, modify and build QEMU&lt;/h2&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT
-wget https://download.qemu.org/qemu-2.12.0.tar.xz
-tar xf qemu-2.12.0.tar.xz
-mkdir qemu-build
-cd $ZZZ_ROOT/qemu-build
-../qemu-2.12.0/configure --prefix=$ZZZ_ROOT/qemu-install
-make install -j8
-export PATH=$ZZZ_ROOT/qemu-install/bin:$PATH
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;To register our device we need to add the following line to the
-&lt;em&gt;a9_daughterboard_init&lt;/em&gt; function of &lt;em&gt;qemu-2.12.0/hw/arm/vexpress.c&lt;/em&gt;&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sysbus_create_simple(&quot;axi_master_client_device&quot;, 0x1e00b000, NULL);
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;For the actual implementation of our device
-(&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/qemu/axi_master_client_device.c&quot;&gt;qemu/axi_master_client_device.c&lt;/a&gt;)
-I simply sym-linked to it, and remembered to update the &lt;em&gt;hw/arm/Makefile.objs&lt;/em&gt;
-so that it gets built. As can be seen adding a memory mapped device to an ARM
-based QEMU system turned out to be rather straight forward and all we really
-needed to do was to implement one hook for memory reads and one hook for memory
-writes to our region.&lt;/p&gt;
-
-&lt;h2 id=&quot;prepare-the-linux-system&quot;&gt;Prepare the Linux system&lt;/h2&gt;
-&lt;p&gt;Second we are going to go ahead and build a complete little Linux system
-(kernel and busybox file system). While it is strictly not needed for what we
-are trying to achieve in this post it will be convenient to have for testing as
-you will see shortly.&lt;/p&gt;
-
-&lt;p&gt;Before we do anything we need to make sure that we have a usable cross compiler
-for our intended target. I grabbed a pre-built one from
-&lt;a href=&quot;https://releases.linaro.org/components/toolchain/binaries/latest-6/arm-linux-gnueabihf/&quot;&gt;here&lt;/a&gt;.
-Then we need to acquire and build the kernel sources&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT
-wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.17.8.tar.xz
-tar xf linux-4.17.8.tar.xz
-ln -s linux-4.17.8 linux
-cd $ZZZ_ROOT/linux
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm vexpress_defconfig
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm -j8
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;After that BusyBox&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT
-wget http://busybox.net/downloads/busybox-1.29.1.tar.bz2
-tar xf busybox-1.29.1.tar.bz2
-ln -s busybox-1.29.1 busybox
-cd $ZZZ_ROOT/busybox
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm defconfig
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm menuconfig (enable static link option)
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm -j8 install
-cd _install
-mkdir proc sys dev etc etc/init.d
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;put the following lines in etc/init.d/rcS&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
-mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; proc none /proc
-mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; sysfs none /sys
-mount &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; debugfs none /sys/kernel/debug/
-&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; /sbin/mdev &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; /proc/sys/kernel/hotplug
-/sbin/mdev &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;and make it executable&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;chmod +x etc/init.d/rcS
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;now finally create the file system image&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;pushd $ZZZ_ROOT/busybox/_install
-find . -print0 | cpio --null -ov --format=newc | gzip -9 &amp;gt; $ZZZ_ROOT/initramfs.cpio.gz
-popd
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;testing&quot;&gt;Testing&lt;/h2&gt;
-
-&lt;h3 id=&quot;linux-boot&quot;&gt;Linux boot&lt;/h3&gt;
-&lt;p&gt;First let us boot up the Linux system&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;qemu-system-arm -M vexpress-a9 -kernel $ZZZ_ROOT/linux/arch/arm/boot/zImage -dtb $ZZZ_ROOT/linux/arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -initrd $ZZZ_ROOT/initramfs.cpio.gz -append &quot;console=ttyAMA0 ignore_loglevel log_buf_len=10M print_fatal_signals=1 LOGLEVEL=8 earlyprintk=vga,keep sched_debug root=/dev/ram rdinit=/sbin/init&quot;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;QEMU has a monitor that can be entered by issuing &lt;strong&gt;ctrl-a c&lt;/strong&gt;. There is also a
-shorthand for the very useful quit command by pressing &lt;strong&gt;ctrl-a x&lt;/strong&gt;.&lt;/p&gt;
-
-&lt;p&gt;At this point just verify that the Linux system boots up and that you can enter
-the BusyBox shell.&lt;/p&gt;
-
-&lt;h3 id=&quot;the-qemu-and-axi-part&quot;&gt;The QEMU and AXI part&lt;/h3&gt;
-&lt;p&gt;BusyBox has a very convenient utility command called &lt;em&gt;devmem&lt;/em&gt; that allows us to
-access physical memory addresses without the hassle of having to write a kernel
-module at this point, or having to write a custom user space program to fiddle
-with &lt;em&gt;/dev/mem&lt;/em&gt; for that matter (since that is exactly what &lt;em&gt;devmem&lt;/em&gt; does).&lt;/p&gt;
-
-&lt;p&gt;The AXI slave of our I2C controller implements a few dummy registers (they can
-be written and read but serve no other purpose) that we can use to verify our
-system. The three registers are mapped at 0x1e00b000, 0x1e00b004 and
-0x1e00b008.&lt;/p&gt;
-
-&lt;p&gt;First start the RTL simulation with AXI master server&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;vvp -M. -mvpi_axi_master i2c.vvp
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Then start the QEMU system (as described above) and use &lt;em&gt;devmem&lt;/em&gt; to fire away a
-few writes and verify that the values read back are as expected.&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;devmem 0x1e00b000 w 0x11112222
-devmem 0x1e00b004 w 0x33334444
-devmem 0x1e00b008 w 0x55556666
-
-devmem 0x1e00b004
-devmem 0x1e00b000
-devmem 0x1e00b008
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Note that we already verified that the I2C controller was working reasonably
-well in the previous post so we can delay further testing of that until the
-next post where we implement a proper device driver.&lt;/p&gt;
-
-&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
-&lt;p&gt;That concludes today’s post. As always the interesting details are in the code
-so be sure to check it out.&lt;/p&gt;
-
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we will integrate our I2C controller simulation with QEMU. If you didn’t already know QEMU is a free and open-source emulator that performs hardware virtualization. More specifically it will allow us to emulate an ARM system where we can connect our I2C controller as a memory mapped device. We are going to pick the ARM VersatileExpress development board, that is already emulated by QEMU, and modify it by adding our device.</summary></entry></feed>
+&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In today’s post we will start writing a Linux device driver for our simulated I2C EPROM. It will be a simple character device that shows up as /dev/zzz-i2c-eprom and allows data to be read and written as in</summary></entry></feed>
