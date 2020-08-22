@@ -1,4 +1,82 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-07-12T18:00:12+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Commodore 64 experiments part-1</title><link href="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-1" /><published>2020-07-12T00:00:00+02:00</published><updated>2020-07-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/07/12/c64-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html">&lt;p&gt;When I was a kid back in the 80s my parents bought our family’s first computer,
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-08-22T11:57:43+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Commodore 64 experiments part-2 (SID)</title><link href="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-2 (SID)" /><published>2020-08-22T00:00:00+02:00</published><updated>2020-08-22T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/08/22/c64-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html">&lt;p&gt;&lt;strong&gt;NOTE: I wrote the majority of this post (and the implementation) about a month
+ago but never got around to publish it until now.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;After the last post’s progress of getting the system to boot and being able to
+run small test programs I felt motivated to carry on. While perhaps it would
+have been wiser focus on the core system I instead turned my attention to the
+SID chip.&lt;/p&gt;
+
+&lt;p&gt;Again, since I did not really do much with my C64 back in the day, and have had
+no reason to study it afterwards, my pre-existing knowledge about the SID was
+pretty limited. I basically only knew “it was the chip that made the sounds”.&lt;/p&gt;
+
+&lt;p&gt;To get an idea what the SID sounds like the most convenient solution is proably
+to head over to the online player at &lt;a href=&quot;https://deepsid.chordian.net/&quot;&gt;DeepSID&lt;/a&gt;
+where there is a huge collection of C64 music from games and demos that will
+play right in your browser.&lt;/p&gt;
+
+&lt;p&gt;So the SID player plays SID files, but what exactly is a &lt;code class=&quot;highlighter-rouge&quot;&gt;.sid&lt;/code&gt; file? Well
+unlike modern audio formats it does not contain PCM samples (e.g. WAV or
+compressed formats like MP3) nor does it contain the tones/or notes like a MIDI
+file does. Instead it actually contains 6502 machine code that writes values
+into SID registers to produce the desired sound. As such a SID player is
+essentially a scaled down C64 emulator. For a complete description of the SID
+file format see &lt;a href=&quot;https://www.hvsc.c64.org/download/C64Music/DOCUMENTS/SID_file_format.txt&quot;&gt;this
+link&lt;/a&gt;
+but for our purposes it suffices to say that it contain two entry points. One
+entry point for an initialization routine that will prepare to play a given
+song (SID files contain many) and a second entry point for the play routine
+that is to be called repeatedly (usually at 60Hz).&lt;/p&gt;
+
+&lt;p&gt;Now while this format plays directly in a SID player it requires some
+scaffolding and relocation to play on actual C64 hardware. This is where
+&lt;a href=&quot;http://psid64.sourceforge.net/&quot;&gt;PSID64&lt;/a&gt; utility comes in, it will provide this
+scaffolding and relocation and basically converts a &lt;code class=&quot;highlighter-rouge&quot;&gt;.sid&lt;/code&gt; file to a &lt;code class=&quot;highlighter-rouge&quot;&gt;.prg&lt;/code&gt;
+that can be loaded and run on a C64.&lt;/p&gt;
+
+&lt;p&gt;A huge collection of SID files can be found at the &lt;a href=&quot;https://www.hvsc.c64.org/&quot;&gt;High Voltage SID Collection
+(HVSC)&lt;/a&gt; and convinently their downloads page also
+provide &lt;a href=&quot;https://boswme.home.xs4all.nl/HVSC/HVSC73_PSID64_packed.7z&quot;&gt;an archive of the HVSC collection converted to PSID64
+format&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Getting the PSID64 &lt;code class=&quot;highlighter-rouge&quot;&gt;.prg&lt;/code&gt; to run on MyC64 required some work but it mostly
+boiled down to finally implementing bank switching.&lt;/p&gt;
+
+&lt;p&gt;Let’s try and fire up the good old Bubble Bobble tune&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;./myc64-sim --cmd-load-prg=130:./MUSICIANS/C/Clarke_Peter/Bubble_Bobble.prg --cmd-inject-keys=135:&quot;LIST&amp;lt;RETURN&amp;gt;RUN&amp;lt;RETURN&amp;gt;&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;&lt;img src=&quot;/download/c64/psid64-bubble-bobble.apng&quot; alt=&quot;PSID64 playing Bubble Bobble&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;So now that we have something to test the SID with we can move our focus to try
+and emulate the actual chip.&lt;/p&gt;
+
+&lt;p&gt;For those like me who don’t know anything about music synthesis the following
+videos (&amp;lt; 10min in total) proved helpful to intorduce the basic concepts&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://youtu.be/qV10Gb-Dvao&quot;&gt;What’s Synthesis and Sound Design? Part 1: Oscillators &amp;amp; Waveforms (Music Theory)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://youtu.be/In23B9qZhI8&quot;&gt;What’s Synthesis and Sound Design? Part 2: Subtractive Synthesis &amp;amp; Filters (Music Theory)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://youtu.be/n-k0NQ5lcSA&quot;&gt;What’s Synthesis and Sound Design? Part 3: Envelopes &amp;amp; ADSR (Music Theory)&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;After that I suggest the following souces for details about the SID&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;http://www.6502.org/documents/datasheets/mos/mos_6582_sid.pdf&quot;&gt;6582 SOUND Interface Device (SID) - datasheet&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://sid.kubarth.com/articles/interview_bob_yannes.html&quot;&gt;Interview with Bob Yannes&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;A very basic implementation based on that was started in
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/sid.v&quot;&gt;rtl/sid.v&lt;/a&gt;. As
+usual it is far from complete but it is able to produce some basic tunes.
+Modifying &lt;code class=&quot;highlighter-rouge&quot;&gt;myc64-sim&lt;/code&gt; to store the generated audio signal into a &lt;code class=&quot;highlighter-rouge&quot;&gt;.wav&lt;/code&gt; file
+allowed us to capture &lt;a href=&quot;/download/c64/Bubble_Bobble-MyC64-sim.wav&quot;&gt;Bubble Bobble - MyC64
+SID&lt;/a&gt;. This admittedly sounds quite a
+bit off (especially in frequency) compared to &lt;a href=&quot;/download/c64/Bubble_Bobble-VICE-8580-ReSID.wav&quot;&gt;Bubble Bobble - VICE 8580
+ReSID&lt;/a&gt; generated by the well
+known &lt;a href=&quot;https://vice-emu.sourceforge.io/&quot;&gt;VICE&lt;/a&gt; emulator. Still it is good
+enough as a first approximation and allows us to move on an focus on other
+areas. That concludes this post. As always if you have questions or feedback -
+leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">NOTE: I wrote the majority of this post (and the implementation) about a month ago but never got around to publish it until now.</summary></entry><entry><title type="html">Commodore 64 experiments part-1</title><link href="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-1" /><published>2020-07-12T00:00:00+02:00</published><updated>2020-07-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/07/12/c64-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html">&lt;p&gt;When I was a kid back in the 80s my parents bought our family’s first computer,
 a Commodore 64 with a datasette station. I still have fond memories of that
 marvelous little machine. At the time though I was only ten years old so my
 mental capacity (and likely also patience) was quite limited and I never
@@ -1711,84 +1789,4 @@ driver for this device feels a bit contrived and I would rather revisit this
 topic with a more realistic device (e.g. some sort of communications device
 with ring buffers for rx and tx).&lt;/p&gt;
 
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Now we are going to revisit the device driver from part 3 of this series and redo it properly.</summary></entry><entry><title type="html">A basic I2C controller - part 3</title><link href="https://www.zzzconsulting.se/2018/07/19/i2c-controller-part-3.html" rel="alternate" type="text/html" title="A basic I2C controller - part 3" /><published>2018-07-19T00:00:00+02:00</published><updated>2018-07-19T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/19/i2c-controller-part-3</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/19/i2c-controller-part-3.html">&lt;p&gt;In today’s post we will start writing a Linux device driver for our simulated
-I2C EPROM. It will be a simple character device that shows up as &lt;em&gt;/dev/zzz-i2c-eprom&lt;/em&gt;
-and allows data to be read and written as in&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;echo &quot;Hello EPROM!&quot; &amp;gt; /dev/zzz-i2c-eprom
-cat /dev/zzz-i2c-eprom
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;h2 id=&quot;interrupts&quot;&gt;Interrupts&lt;/h2&gt;
-&lt;p&gt;Since I2C is slow and we do not want to busy-wait on the status register inside
-the driver (we actually could if we kept calling &lt;em&gt;schedule()&lt;/em&gt; but lets try to
-do it properly) we need to generate a interrupt from the block once the busy
-status de-asserts.&lt;/p&gt;
-
-&lt;p&gt;Generating asynchronous signals from the block poses a problem for our current
-socket based simulation system as it is totally synchronous and everything is
-initiated from the QEMU side.&lt;/p&gt;
-
-&lt;p&gt;To deal with the asynchronous nature of interrupts we are going to introduce a
-second socket on which the VPI code can post interrupt requests. In our QEMU
-device we will create a thread that blocks on a receive on this socket and once
-a IRQ arrives it will acquire the &lt;em&gt;Big QEMU Lock&lt;/em&gt; and pass the IRQ on to the
-QEMU internals.&lt;/p&gt;
-
-&lt;h2 id=&quot;problems&quot;&gt;Problems&lt;/h2&gt;
-&lt;p&gt;Unfortunately it turns out that getting an interrupt mapped through Linux in
-modern days is a bit more difficult than I expected. Seemingly to get this
-machinery to play along nicely with us we will have to do it the real proper
-way using the &lt;em&gt;platform device&lt;/em&gt; framework and adding &lt;em&gt;device tree (DTS)&lt;/em&gt;
-entries. Doing so will quite frankly require a bit of read up from my side so
-we will postpone that to the next post in this series. For now let’s just do it
-the busy-wait way and verify that everything works.&lt;/p&gt;
-
-&lt;h2 id=&quot;implementation&quot;&gt;Implementation&lt;/h2&gt;
-&lt;p&gt;Now that we got that out of the way let’s get started with our device driver.
-We are going to implement it as an out-of-tree kernel module as it simplifies
-building.&lt;/p&gt;
-
-&lt;p&gt;The code for the non-interrupt driven device driver can be found in
-&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/linux/i2c-eprom-driver.c&quot;&gt;linux/i2c-eprom-driver.c&lt;/a&gt;.
-Notice that we are reusing a lot of code from
-&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/axi_master_client.c&quot;&gt;axi_master_client.c&lt;/a&gt;
-from the first post.&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT/i2c-controller/linux
-make CROSS_COMPILE=arm-linux-gnueabihf- ARCH=arm -C $ZZZ_ROOT/linux M=${PWD} modules
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;After building the driver be sure to remember to copy the resulting
-&lt;em&gt;i2c-eprom-driver.ko&lt;/em&gt; to the BusyBox file system and rebuild the image&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cp $ZZZ_ROOT/i2c-controller/linux/i2c-eprom-driver.ko $ZZZ_ROOT/busybox/_install/
-pushd $ZZZ_ROOT/busybox/_install
-find . -print0 | cpio --null -ov --format=newc | gzip -9 &amp;gt; $ZZZ_ROOT/initramfs.cpio.gz
-popd
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;testing&quot;&gt;Testing&lt;/h2&gt;
-&lt;p&gt;Once built and moved to the BusyBox filesystem the module installs as follows
-into our running Linux system&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;insmod i2c-eprom-driver.ko
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Since we already setup the BusyBox hotplug daemon &lt;em&gt;mdev&lt;/em&gt; in the previous post
-the device file &lt;em&gt;/dev/zzz-i2c-eprom&lt;/em&gt; should automatically appear in the file
-system once the module is installed.&lt;/p&gt;
-
-&lt;p&gt;Now we can finally try out the full system! Let’s start by clearing the memory
-with zeros, then write some string into it and verify that it reads back.&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;dd if=/dev/zero of=/dev/zzz-i2c-eprom count=16 bs=1
-echo &quot;Hello world!!!&quot; &amp;gt; /dev/zzz-i2c-eprom
-cat /dev/zzz-i2c-eprom
-echo -n &quot;J&quot; &amp;gt; /dev/zzz-i2c-eprom
-cat /dev/zzz-i2c-eprom
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
-&lt;p&gt;And there we have it, a complete simulation chain from custom RTL to a Linux
-device driver. In my opinion this is pretty cool and the best thing of all is
-that it does not use any pesky proprietary software or vendor branches.&lt;/p&gt;
-
-&lt;p&gt;In the next post we will be looking at the interrupt mapping and improving the
-device driver.&lt;/p&gt;
-
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In today’s post we will start writing a Linux device driver for our simulated I2C EPROM. It will be a simple character device that shows up as /dev/zzz-i2c-eprom and allows data to be read and written as in</summary></entry></feed>
+&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Now we are going to revisit the device driver from part 3 of this series and redo it properly.</summary></entry></feed>
