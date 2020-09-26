@@ -1,4 +1,229 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-08-22T11:57:43+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Commodore 64 experiments part-2 (SID)</title><link href="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-2 (SID)" /><published>2020-08-22T00:00:00+02:00</published><updated>2020-08-22T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/08/22/c64-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html">&lt;p&gt;&lt;strong&gt;NOTE: I wrote the majority of this post (and the implementation) about a month
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-09-26T09:24:36+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Commodore 64 experiments part-3 (FPGA)</title><link href="https://www.zzzconsulting.se/2020/09/26/c64-part-3.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-3 (FPGA)" /><published>2020-09-26T00:00:00+02:00</published><updated>2020-09-26T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/09/26/c64-part-3</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/09/26/c64-part-3.html">&lt;p&gt;I figured the natural next step of our MyC64 journey would be to get the
+emulator running on a FPGA, or more specifically the ULX3S board. Doing so
+requires a few support systems such as keyboard input and visual output to be
+in place so let us use this post to look at how that can be accomplished.&lt;/p&gt;
+
+&lt;h2 id=&quot;keyboard-input-and-control&quot;&gt;Keyboard input and control&lt;/h2&gt;
+
+&lt;p&gt;As we already know the real C64 keyboard is a 8x8 matrix connected directly to
+the CIA1 and scanned by the KERNAL code. Any modern keyboard we might find is
+based on scan-codes so some conversion layer (much like what we already do in
+&lt;code class=&quot;highlighter-rouge&quot;&gt;myc64-sim&lt;/code&gt;) will be necessary.&lt;/p&gt;
+
+&lt;p&gt;In addition to keyboard input &lt;code class=&quot;highlighter-rouge&quot;&gt;.prg&lt;/code&gt; injection also needs to be handled.&lt;/p&gt;
+
+&lt;p&gt;A straight forward way to deal with these requirements is to treat the emulator
+as a USB device and develop some kind of software on the host workstation that
+performs the keyboard forwarding and program injection. Additional control
+signaling such as reset/reboot could also be handled this way.&lt;/p&gt;
+
+&lt;p&gt;Following this approach would put good use to my &lt;a href=&quot;https://github.com/markus-zzz/usbdev/tree/dev&quot;&gt;USB
+device&lt;/a&gt; implementation detailed
+in previous posts as well as serving as motivation for thoroughly finalizing it
+and working out remaining bugs.&lt;/p&gt;
+
+&lt;p&gt;So let’s do that! We simply grab the entire USB device subsystem
+&lt;a href=&quot;https://github.com/markus-zzz/usbdev/tree/dev&quot;&gt;from github&lt;/a&gt; including controlling
+RISC-V CPU with ROM and RAM.&lt;/p&gt;
+
+&lt;p&gt;On the workstation software side we need to develop a program that communicates
+with the USB device while maintaining a workable GUI. For the USB communication
+we use &lt;a href=&quot;https://libusb.info/&quot;&gt;libusb&lt;/a&gt; and for GUI we relay on
+&lt;a href=&quot;https://www.gtk.org/&quot;&gt;GTK&lt;/a&gt;. Combining these two essentially boils down to
+using the asynchronous API of libusb and plugging it in to the single event
+loop handled by GTK.&lt;/p&gt;
+
+&lt;p&gt;To be more precise libusb is queried for its (Unix) event file descriptors and
+the GTK event loop is setup to watch these (presumably using the select system
+call internally). Details are found in
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/sw/myc64-keyb.cpp&quot;&gt;sw/myc64-keyb.cpp&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;video-output&quot;&gt;Video output&lt;/h2&gt;
+
+&lt;p&gt;Displaying C64 video output in a reasonable way is rather tricky as we need to
+comply with both the internal timing of the VIC-II (to avoid compatibility
+issues with existing software) as well as the timing of the chosen video format for
+a modern display.&lt;/p&gt;
+
+&lt;p&gt;Apparently this is not impossible as the &lt;a href=&quot;https://ultimate64.com/Ultimate-64&quot;&gt;Ultimate
+64&lt;/a&gt; manages to tweak the video timing of
+576p50 to match its VIC-II output (described
+&lt;a href=&quot;https://1541u-documentation.readthedocs.io/en/latest/hardware/hdmi.html&quot;&gt;here&lt;/a&gt;).
+Details on the 576p50 video mode can be found
+&lt;a href=&quot;https://ez.analog.com/video/f/q-a/109341/timing-details-of-720x576-progressive-video&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;For this project we choose to go a different route and store intermediate
+VIC-II video frames in external SDRAM and display them in 640x480@60Hz over
+DVI/HDMI.&lt;/p&gt;
+
+&lt;h2 id=&quot;audio-output&quot;&gt;Audio output&lt;/h2&gt;
+
+&lt;p&gt;Not much to say about this. The ULX3S features a 4-bit resistor ladder for DAC
+and we simply connect the SID’s mono output to it. Actually depending on the
+content 4-bit resolution does not sounds as bad as one would think. Just listen
+to &lt;a href=&quot;https://www.youtube.com/watch?v=nODn5HJGtAY&quot;&gt;this comparison video&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-myc64-soc&quot;&gt;The MyC64 SoC&lt;/h2&gt;
+
+&lt;p&gt;Combining these systems in a SoC turns out as follows&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/c64/myc64-soc.svg&quot; alt=&quot;MyC64 SoC&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As can be seen this involves interaction between several clock domains.
+Especially the visual path, which is rather intense in terms of pixel
+shoveling, uses asynchronous FIFOs when crossing in and out of the SDRAM’s
+125MHz clock domain.&lt;/p&gt;
+
+&lt;p&gt;The ECP5-12F only has two PLLs so we are limited in the number of clock
+frequencies that we can synthesize. Two blocks have strict requirements on the
+clock frequency. The USB block needs a clock that is a multiple of 1.5MHz and
+the DVI/HDMI controller needs a 125MHz clock (and a derived 25MHz pixel clock).
+The MyC64 block needs a clock in the neighborhood of 8MHz but it does not have
+to be exact (especially now that it is decoupled from the display).&lt;/p&gt;
+
+&lt;p&gt;So given these constraints we end up with the three clock domains 15MHz, 25MHz
+and 125MHz seen in the diagram. The MyC64 block uses an internal clock enable
+to “divide” the 15MHz clock by two.&lt;/p&gt;
+
+&lt;p&gt;For the SDRAM the 125MHz clock appears to be a bit too tight, both on the PCB
+as well as inside the FPGA (builds often fail timing constraints). So with
+additional clocking resources it would be preferable if this clock could be
+lowered to say 100MHz.&lt;/p&gt;
+
+&lt;p&gt;Since the async FIFOs don’t provide &lt;em&gt;almost full&lt;/em&gt; and &lt;em&gt;almost empty&lt;/em&gt; signaling
+it seemed difficult to operate the SDRAM in burst mode (i.e. as the burst is
+pipelined so we need to stop it before the FIFO is full to avoid overrun).
+Adding &lt;em&gt;almost full&lt;/em&gt; and &lt;em&gt;almost empty&lt;/em&gt; signaling to the FIFO was deemed out of
+scope since asynchronous FIFOs are already notoriously complicated in that
+area.&lt;/p&gt;
+
+&lt;p&gt;One option could have been to add a normal synchronous FIFO in series to get
+the &lt;em&gt;almost full&lt;/em&gt; and  &lt;em&gt;almost empty&lt;/em&gt; signaling from that FIFO. Another option
+could have been to adjust the SDRAM address pointers when an overrun or
+underrun occurs (but since timing is already tight in the SDRAM clock domain
+this kind of additional logic could make things worse).&lt;/p&gt;
+
+&lt;p&gt;While those suggestions seem possible in theory we instead chose a simpler
+approach of operating the SDRAM in single access mode. Since the C64 only
+generates 16 colors we can store these in SDRAM instead of the full RGB value.
+Doing so means that we get four pixels per 16-bit memory access which appears
+to fall well within the time budget when operating the SDRAM at 125MHz.&lt;/p&gt;
+
+&lt;p&gt;The components used are gathered from various places&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;SDRAM controller - Slightly modified version of the one from &lt;a href=&quot;https://www.fpga4fun.com/SDRAM.html&quot;&gt;fpga4fun.com&lt;/a&gt;.&lt;/li&gt;
+  &lt;li&gt;DVI/HDMI controller - From &lt;a href=&quot;https://github.com/daveshah1/prjtrellis-dvi&quot;&gt;Project Trellis DVI&lt;/a&gt;.&lt;/li&gt;
+  &lt;li&gt;Asynchronous FIFO - From &lt;a href=&quot;https://github.com/ZipCPU/website/blob/master/examples/afifo.v&quot;&gt;here&lt;/a&gt;. This is a variant of Cliff Cummings design formally verified by Dan Gisselquist. In fact it is the subject of a &lt;a href=&quot;https://zipcpu.com/blog/2018/07/06/afifo.html&quot;&gt;Crossing clock domains with an Asynchronous FIFO&lt;/a&gt; article by Dan.&lt;/li&gt;
+  &lt;li&gt;MyC64-SubSys - That is what we are working on here.&lt;/li&gt;
+  &lt;li&gt;UsbDev-SubSys - That is what I was working on before this project.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;verilator-simulation-for-the-soc&quot;&gt;Verilator simulation for the SoC&lt;/h3&gt;
+
+&lt;p&gt;The simulator needed to be extended a bit to handle all the different components
+with their associated clock domains. Regrettably I dragged my feet on this and
+as a result wasted valuable time trying to diagnose what turned out to be
+rather trivial problems while running on the FPGA.&lt;/p&gt;
+
+&lt;p&gt;Mostly it is about handling of multiple clock domains in Verilator. Turns out
+that Dan Gisselquist has an excellent article titled &lt;a href=&quot;https://zipcpu.com/blog/2018/09/06/tbclock.html&quot;&gt;Handling multiple clocks
+with Verilator &lt;/a&gt; so I went
+ahead and did something similar.&lt;/p&gt;
+
+&lt;p&gt;To avoid breaking the video chain we also need to simulate the external SDRAM
+so I added a very basic SDRAM model to
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/myc64-soc/myc64-soc-top.v&quot;&gt;rtl/myc64-soc/myc64-soc-top.v&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;With all this additional stuff in place simulation with &lt;code class=&quot;highlighter-rouge&quot;&gt;myc64-soc-sim&lt;/code&gt; is a
+much slower than with our previous &lt;code class=&quot;highlighter-rouge&quot;&gt;myc64-sim&lt;/code&gt;. So much slower that interactive
+input and display does not make sense any more. Instead the SoC simulator
+stores each video frame directly to the file system in PNG format.&lt;/p&gt;
+
+&lt;p&gt;We store video frames directly after the VIC-II output as well as the
+intermediate VGA frames that are being fed into the DVI controller. That is we
+store output both before and after the error prone SDRAM part.&lt;/p&gt;
+
+&lt;p&gt;The SoC simulator &lt;code class=&quot;highlighter-rouge&quot;&gt;myc64-soc-sim&lt;/code&gt; is implemented in
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/sim/myc64-soc-sim.cpp&quot;&gt;sim/myc64-soc-sim.cpp&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;synthesis&quot;&gt;Synthesis&lt;/h3&gt;
+
+&lt;p&gt;Synthesis for my ULX3S’s ECP5-12F FPGA yields the following utilization which I
+find rather low given the amount of stuff we have put in. Of course we have
+used up all the PLLs and almost all of the block RAM but in terms of logic
+slices it is not that high.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Info: Device utilisation:
+Info:          TRELLIS_SLICE:  6136/12144    50%
+Info:             TRELLIS_IO:   128/  197    64%
+Info:                   DCCA:     4/   56     7%
+Info:                 DP16KD:    49/   56    87%
+Info:             MULT18X18D:     3/   28    10%
+Info:                 ALU54B:     0/   14     0%
+Info:                EHXPLLL:     2/    2   100%
+Info:                EXTREFB:     0/    1     0%
+Info:                   DCUA:     0/    1     0%
+Info:              PCSCLKDIV:     0/    2     0%
+Info:                IOLOGIC:     0/  128     0%
+Info:               SIOLOGIC:     8/   69    11%
+Info:                    GSR:     0/    1     0%
+Info:                  JTAGG:     0/    1     0%
+Info:                   OSCG:     0/    1     0%
+Info:                  SEDGA:     0/    1     0%
+Info:                    DTR:     0/    1     0%
+Info:                USRMCLK:     0/    1     0%
+Info:                CLKDIVF:     0/    4     0%
+Info:              ECLKSYNCB:     0/   10     0%
+Info:                DLLDELD:     0/    8     0%
+Info:                 DDRDLL:     0/    4     0%
+Info:                DQSBUFM:     0/    8     0%
+Info:        TRELLIS_ECLKBUF:     0/    8     0%
+Info:           ECLKBRIDGECS:     0/    2     0%
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;As earlier mentioned, the 125MHz clock domain appears to be operating at its
+limits as we often get timing constraint violations after small (even
+unrelated) modifications to the design.&lt;/p&gt;
+
+&lt;h2 id=&quot;demonstration&quot;&gt;Demonstration&lt;/h2&gt;
+
+&lt;p&gt;After loading the design on the ULX3S board and plugging in the secondary USB
+connector we should expect to see the following in &lt;code class=&quot;highlighter-rouge&quot;&gt;dmesg&lt;/code&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;usb 1-5: new low-speed USB device number 6 using xhci_hcd
+usb 1-5: New USB device found, idVendor=abc0, idProduct=0064, bcdDevice= 1.00
+usb 1-5: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+usb 1-5: Product: MyC64 - FPGA based Commodore 64 emulator as a USB device
+usb 1-5: Manufacturer: Markus Lavin (https://www.zzzconsulting.se/)
+usb 1-5: SerialNumber: 0123456789abcdef
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;At this point the device should be generating DVI/HDMI output and it is
+advisable to connect a screen to verify. If all looks good we can go ahead and
+connect with &lt;code class=&quot;highlighter-rouge&quot;&gt;myc64-keyb&lt;/code&gt; and start typing in some BASIC commands. Any key
+press (and release) that goes into the application window will be forwarded to
+the USB connected MyC64 emulator.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code class=&quot;highlighter-rouge&quot;&gt;myc64-keyb&lt;/code&gt; program takes an optional argument that specifies a &lt;code class=&quot;highlighter-rouge&quot;&gt;.prg&lt;/code&gt;
+file to inject into emulator memory.&lt;/p&gt;
+
+&lt;p&gt;An interesting program to try out is the machine language monitor SuperMon by
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Jim_Butterfield&quot;&gt;Jim Butterfield&lt;/a&gt;. SuperMon is
+the monitor used in Jim’s classic book &lt;a href=&quot;https://archive.org/details/Machine_Language_for_the_Commodore_Revised_and_Expanded_Edition&quot;&gt;Machine Language for the
+Commodore&lt;/a&gt;.
+To get hold of SuperMon itself in modern times simply go to &lt;a href=&quot;https://github.com/jblang/supermon64&quot;&gt;Supermon+64
+V1.2&lt;/a&gt;. There one can also find a
+&lt;a href=&quot;https://www.youtube.com/watch?v=MEjnMt_3wkU&quot;&gt;video&lt;/a&gt; demonstrating its
+capabilities.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/c64/myc64-ulx3s.jpg&quot; alt=&quot;MyC64 on ULX3S&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;known-issues--bugs&quot;&gt;Known issues / Bugs&lt;/h2&gt;
+&lt;ul&gt;
+  &lt;li&gt;USB device loses sync (and host aborts after tree packets with no response) so longer transfers often fail. Works with retry though.&lt;/li&gt;
+  &lt;li&gt;“Static noise” moves past the screen occasionally (seems to be dependent on when reset is released). Believed to be limitations of SDRAM (traces on PCB) operating at 125MHz.&lt;/li&gt;
+  &lt;li&gt;Sometimes the &lt;code class=&quot;highlighter-rouge&quot;&gt;.prg&lt;/code&gt; appears to get corrupted when loaded over USB.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><summary type="html">I figured the natural next step of our MyC64 journey would be to get the emulator running on a FPGA, or more specifically the ULX3S board. Doing so requires a few support systems such as keyboard input and visual output to be in place so let us use this post to look at how that can be accomplished.</summary></entry><entry><title type="html">Commodore 64 experiments part-2 (SID)</title><link href="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-2 (SID)" /><published>2020-08-22T00:00:00+02:00</published><updated>2020-08-22T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/08/22/c64-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html">&lt;p&gt;&lt;strong&gt;NOTE: I wrote the majority of this post (and the implementation) about a month
 ago but never got around to publish it until now.&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;After the last post’s progress of getting the system to boot and being able to
@@ -66,8 +291,8 @@ videos (&amp;lt; 10min in total) proved helpful to intorduce the basic concepts&
 &lt;/ul&gt;
 
 &lt;p&gt;A very basic implementation based on that was started in
-&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/sid.v&quot;&gt;rtl/sid.v&lt;/a&gt;. As
-usual it is far from complete but it is able to produce some basic tunes.
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/sid.v&quot;&gt;rtl/myc64/sid.v&lt;/a&gt;.
+As usual it is far from complete but it is able to produce some basic tunes.
 Modifying &lt;code class=&quot;highlighter-rouge&quot;&gt;myc64-sim&lt;/code&gt; to store the generated audio signal into a &lt;code class=&quot;highlighter-rouge&quot;&gt;.wav&lt;/code&gt; file
 allowed us to capture &lt;a href=&quot;/download/c64/Bubble_Bobble-MyC64-sim.wav&quot;&gt;Bubble Bobble - MyC64
 SID&lt;/a&gt;. This admittedly sounds quite a
@@ -79,16 +304,17 @@ areas. That concludes this post. As always if you have questions or feedback -
 leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">NOTE: I wrote the majority of this post (and the implementation) about a month ago but never got around to publish it until now.</summary></entry><entry><title type="html">Commodore 64 experiments part-1</title><link href="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-1" /><published>2020-07-12T00:00:00+02:00</published><updated>2020-07-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/07/12/c64-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html">&lt;p&gt;When I was a kid back in the 80s my parents bought our family’s first computer,
 a Commodore 64 with a datasette station. I still have fond memories of that
 marvelous little machine. At the time though I was only ten years old so my
-mental capacity (and likely also patience) was quite limited and I never
-managed to do much with it besides playing games and typing in the occasional
-BASIC listing from the Sunday newspaper (that almost never worked).&lt;/p&gt;
+mental capacity (and likely also patience) was quite limited. I never managed
+to do much with it besides playing games and typing in the occasional BASIC
+listing from the Sunday newspaper. But that almost never worked anyway.&lt;/p&gt;
 
 &lt;p&gt;Now in recent times I often find myself watching retro computing episodes from
 the big YouTubers in the field such as &lt;a href=&quot;https://www.youtube.com/user/adric22&quot;&gt;The 8-Bit
 Guy&lt;/a&gt; and &lt;a href=&quot;https://www.youtube.com/channel/UC6gARF3ICgaLfs3o2znuqXA&quot;&gt;Retro
 Recipes&lt;/a&gt;. Needless to
 say they often feature the C64 and it is refreshing to be reminded of a simpler
-time when things were not complicated to absurdity just for the sake of it.&lt;/p&gt;
+time. A time when things were not complicated to absurdity, sometimes
+seemingly, just for the sake of it.&lt;/p&gt;
 
 &lt;p&gt;While I know that there are numerous C64 emulators available (mostly in
 software but also a few FPGA based) I always thought that would be a neat
@@ -106,7 +332,7 @@ see how much work would be required to get a system that boots into BASIC.&lt;/p
 
 &lt;h2 id=&quot;preparations&quot;&gt;Preparations&lt;/h2&gt;
 
-&lt;p&gt;Before we can get started we need to gather some preliminary stuff.&lt;/p&gt;
+&lt;p&gt;Before we get started it is useful to gather some preliminary materials.&lt;/p&gt;
 
 &lt;h3 id=&quot;documentation&quot;&gt;Documentation&lt;/h3&gt;
 
@@ -173,16 +399,16 @@ and negative phase of a 1Mhz clock.&lt;/p&gt;
 &lt;p&gt;The single ported synchronous RAM modules are wrapped so that they act as
 asynchronous RAM that can be independently accessed with the two 1Mhz phases
 enable signals. See
-&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/spram.v&quot;&gt;rtl/spram.v&lt;/a&gt; and
-&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/sprom.v&quot;&gt;rtl/sprom.v&lt;/a&gt;.&lt;/p&gt;
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/spram.v&quot;&gt;rtl/spram.v&lt;/a&gt; and
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/sprom.v&quot;&gt;rtl/sprom.v&lt;/a&gt;.&lt;/p&gt;
 
 &lt;p&gt;A implementation of a very basic VIC-II is started in
-&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/vic-ii.v&quot;&gt;rtl/vic-ii.v&lt;/a&gt;
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/vic-ii.v&quot;&gt;rtl/vic-ii.v&lt;/a&gt;
 and likewise for the CIA in
-&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/cia.v&quot;&gt;rtl/cia.v&lt;/a&gt;.&lt;/p&gt;
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/cia.v&quot;&gt;rtl/cia.v&lt;/a&gt;.&lt;/p&gt;
 
 &lt;p&gt;Everything is wired up and connected to a fake keyboard matrix in
-&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/top.v&quot;&gt;rtl/top.v&lt;/a&gt;.&lt;/p&gt;
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/myc64-top.v&quot;&gt;rtl/myc64-top.v&lt;/a&gt;.&lt;/p&gt;
 
 &lt;h2 id=&quot;results-so-far&quot;&gt;Results (so far)&lt;/h2&gt;
 
@@ -191,7 +417,7 @@ github&lt;/a&gt; where the README contains a short
 intruction sequence to get started with the simulator for those interested.&lt;/p&gt;
 
 &lt;p&gt;Simulation is Verilator based and the driver program
-&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/sim/c64-sim.cpp&quot;&gt;myc64-sim&lt;/a&gt; is
+&lt;a href=&quot;https://github.com/markus-zzz/myc64/blob/master/sim/myc64-sim.cpp&quot;&gt;myc64-sim&lt;/a&gt; is
 similar to the one used for &lt;a href=&quot;/2019/08/12/retro-gaming-hw-part-1.html&quot;&gt;my previous RetroCon project&lt;/a&gt; but with the addition of some nifty
 features to execute delayed commands at a certain frame (e.g. no point
 injecting a key press sequence until the system has finished booting).&lt;/p&gt;
@@ -245,7 +471,7 @@ different directions. Here are some ideas that come to mind&lt;/p&gt;
   &lt;li&gt;Rewrite in &lt;a href=&quot;https://github.com/m-labs/nmigen&quot;&gt;nMigen&lt;/a&gt;. For quite some time now I have been wanting to try out nMigen on a project and this might be a good opportunity.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;That is it for this post. If you have questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited and I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper (that almost never worked).</summary></entry><entry><title type="html">Building a USB device part-2</title><link href="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html" rel="alternate" type="text/html" title="Building a USB device part-2" /><published>2020-05-16T00:00:00+02:00</published><updated>2020-05-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html">&lt;p&gt;In this post we pick up where we left of last time and start looking at the
+&lt;p&gt;That is it for this post. If you have questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited. I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper. But that almost never worked anyway.</summary></entry><entry><title type="html">Building a USB device part-2</title><link href="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html" rel="alternate" type="text/html" title="Building a USB device part-2" /><published>2020-05-16T00:00:00+02:00</published><updated>2020-05-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html">&lt;p&gt;In this post we pick up where we left of last time and start looking at the
 design and implementation of the USB device that I have been working on. First
 things first though, the code for the entire project can be found in &lt;a href=&quot;https://github.com/markus-zzz/usbdev/tree/dev&quot;&gt;this
 github repository&lt;/a&gt;. The reader
@@ -1646,147 +1872,4 @@ shoveling machinery.&lt;/p&gt;
 details of implementing the ‘byte shoveling machinery’.&lt;/p&gt;
 
 &lt;p&gt;Until then, as usual, if there are questions or feedback - leave a comment
-below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction This is the first post of a new series where we are going to attempt the build a simple modem. In other words we will try to build a digital communications link where the sender modulates a communication message, a stream of bytes, to make it suitable for transmission over a given media and the receiver demodulates to recover the original message.</summary></entry><entry><title type="html">A basic I2C controller - part 4</title><link href="https://www.zzzconsulting.se/2018/07/27/i2c-controller-part-4.html" rel="alternate" type="text/html" title="A basic I2C controller - part 4" /><published>2018-07-27T00:00:00+02:00</published><updated>2018-07-27T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/07/27/i2c-controller-part-4</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/07/27/i2c-controller-part-4.html">&lt;p&gt;Now we are going to revisit the device driver from part 3 of this series and
-redo it properly.&lt;/p&gt;
-
-&lt;p&gt;Modern Linux uses something called a &lt;em&gt;device tree&lt;/em&gt; to describe the
-configuration of a SoC and as the name suggests this data structure describes
-what devices are connected to a system. Among the properties described the
-following interest us at this point&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;identifier for a compatible device driver&lt;/li&gt;
-  &lt;li&gt;where is this device mapped in memory&lt;/li&gt;
-  &lt;li&gt;what interrupt line is this device connected to&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;preparations&quot;&gt;Preparations&lt;/h2&gt;
-&lt;p&gt;Since we have chosen to use the ARM VersatileExpress platform for our
-experiments we are going to have to modify its &lt;em&gt;device tree&lt;/em&gt; description which
-is contained in the files &lt;em&gt;arch/arm/boot/dts/vexpress-v2p-ca9.dts&lt;/em&gt; and
-&lt;em&gt;arch/arm/boot/dts/vexpress-v2m.dtsi&lt;/em&gt; (where the former includes the latter).
-In fact the former describes the CPU and the latter describes the &lt;em&gt;motherboard&lt;/em&gt;
-i.e. the board that contains all the peripherals.&lt;/p&gt;
-
-&lt;p&gt;Since I do not poses a detailed knowledge about this system, for matter such as
-what memory regions are available or what interrupt lines are available, the
-easiest way forward is going to be to hijack an existing device and reuse its
-resources (memory range and interrupt line). Luckily the motherboard has four
-UARTs and for our purposes only the first one is needed, so we can safely
-borrow the resources from the last one.&lt;/p&gt;
-
-&lt;p&gt;In practise that means that we need to make the following modifications&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gh&quot;&gt;diff --git a/arch/arm/boot/dts/vexpress-v2m.dtsi b/arch/arm/boot/dts/vexpress-v2m.dtsi
-index b0021a8..f651956 100644
-&lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2m.dtsi
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2m.dtsi
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -179,8 +179,8 @@&lt;/span&gt;
-                                clock-names = &quot;uartclk&quot;, &quot;apb_pclk&quot;;
-                        };
-
--                       v2m_serial3: uart@c000 {
-&lt;span class=&quot;gd&quot;&gt;-                               compatible = &quot;arm,pl011&quot;, &quot;arm,primecell&quot;;
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+                       zzz_i2c_eprom: zzz_i2c_eprom@c000 {
-+                               compatible = &quot;zzz-i2c-eprom&quot;;
-&lt;/span&gt;                                reg = &amp;lt;0x0c000 0x1000&amp;gt;;
-                                interrupts = &amp;lt;8&amp;gt;;
-                                clocks = &amp;lt;&amp;amp;v2m_oscclk2&amp;gt;, &amp;lt;&amp;amp;smbclk&amp;gt;;
-&lt;span class=&quot;gh&quot;&gt;diff --git a/arch/arm/boot/dts/vexpress-v2p-ca9.dts b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-index 5814460..98206c0 100644
-&lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -25,7 +25,6 @@&lt;/span&gt;
-                serial0 = &amp;amp;v2m_serial0;
-                serial1 = &amp;amp;v2m_serial1;
-                serial2 = &amp;amp;v2m_serial2;
-&lt;span class=&quot;gd&quot;&gt;-               serial3 = &amp;amp;v2m_serial3;
-&lt;/span&gt;                i2c0 = &amp;amp;v2m_i2c_dvi;
-                i2c1 = &amp;amp;v2m_i2c_pcie;
-        };
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;At this point we can (and should) build Linux and boot to note that it finds
-one serial port less. Next let’s turn our attention to QEMU where we apply the
-following change&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gh&quot;&gt;diff --git a/hw/arm/vexpress.c b/hw/arm/vexpress.c
-index 9fad791..c1f7550 100644
-&lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/hw/arm/vexpress.c
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/hw/arm/vexpress.c
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -625,7 +625,11 @@&lt;/span&gt; static void vexpress_common_init(MachineState *machine)
-     pl011_create(map[VE_UART0], pic[5], serial_hds[0]);
-     pl011_create(map[VE_UART1], pic[6], serial_hds[1]);
-     pl011_create(map[VE_UART2], pic[7], serial_hds[2]);
-&lt;span class=&quot;gi&quot;&gt;+#if 0
-&lt;/span&gt;     pl011_create(map[VE_UART3], pic[8], serial_hds[3]);
-&lt;span class=&quot;gi&quot;&gt;+#else
-&lt;/span&gt;     sysbus_create_simple(&quot;axi_master_client_device&quot;, map[VE_UART3], pic[8]);
-&lt;span class=&quot;gi&quot;&gt;+#endif
-&lt;/span&gt;
-     sysbus_create_simple(&quot;sp804&quot;, map[VE_TIMER01], pic[2]);
-     sysbus_create_simple(&quot;sp804&quot;, map[VE_TIMER23], pic[3]);
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;i.e. we map our device to the same address and interrupt as where the fourth
-UART used to be.&lt;/p&gt;
-
-&lt;h2 id=&quot;implementation&quot;&gt;Implementation&lt;/h2&gt;
-&lt;p&gt;In RTL the I2C controller has been extended with an IRQ line that asserts
-whenever the controller state machine goes from a non-idle state to idle (i.e.
-it has just finished work). An AXI mapped register has also been added that,
-when written to, de-asserts the IRQ line.&lt;/p&gt;
-
-&lt;p&gt;Since our RTL simulation is not that tightly tied into QEMU (and there is some
-delay between a de-assert write and the de-asserted IRQ line finds its way back
-into QEMU) we are going to use the IRQ line as &lt;em&gt;edge triggered&lt;/em&gt; to avoid
-problems with the ISR falsely triggering.&lt;/p&gt;
-
-&lt;p&gt;After rebuilding QEMU and Linux (as described in previous posts) we can now
-focus our attention on the actual device driver
-&lt;a href=&quot;https://github.com/markus-zzz/i2c-controller/blob/master/linux/i2c-eprom-driver-irq.c&quot;&gt;linux/i2c-eprom-driver-irq.c&lt;/a&gt;.
-I would say that it differs from the previous attempt in the following ways&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Registers as a &lt;em&gt;platform driver&lt;/em&gt; and as such only gets called for &lt;em&gt;device
-tree&lt;/em&gt; entries that match the given compatibility string&lt;/li&gt;
-  &lt;li&gt;Gets the interrupt number and mapped memory range from the &lt;em&gt;device tree&lt;/em&gt; (see
-probe function)&lt;/li&gt;
-  &lt;li&gt;State machine inside interrupt handler&lt;/li&gt;
-  &lt;li&gt;Wait queues to block user process while waiting for a file operation to
-finish&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;During operation the &lt;em&gt;dev_read&lt;/em&gt;/&lt;em&gt;dev_write&lt;/em&gt; function does the first register
-write to the I2C controller and then puts itself on a wait queue. The state
-machine in the ISR will do the remaining register writes to the controller one
-at a time. When the last operation has finished the ISR wakes up the sleeping
-process.&lt;/p&gt;
-
-&lt;p&gt;The wait queue handling deserves some further explanation as to why we cannot
-use the more convenient &lt;em&gt;wait_event_interruptible&lt;/em&gt; and instead have to expanded
-the sequence as follows.&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;prepare_to_wait(&amp;amp;wq, &amp;amp;wait, TASK_INTERRUPTIBLE);
-/* I2C address device for write mode */
-state = S_WRITE_1;
-axi_master_write(i2c_ctrl_addr, i2c_ctrl_we_bit | i2c_ctrl_start_bit | I2C_ADDR &amp;lt;&amp;lt; 1 | 0 &amp;lt;&amp;lt; 0);
-schedule();
-finish_wait(&amp;amp;wq, &amp;amp;wait);
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;The reason for this is that we need to write the controller command (that will
-eventually generate the interrupt so that our ISR wakes us up) before we go to
-sleep. However if we for some reason got delayed at the point after the
-controller write but before entering our sleep we could have a situation where
-the ISR signals us to wake up before we have gone to sleep and then, when we
-actually do go to sleep, there will be no ISR to wake us up.&lt;/p&gt;
-
-&lt;p&gt;To deal with this situation it is a common pattern to mark ourselves as
-sleeping with the &lt;em&gt;prepare_to_wait&lt;/em&gt; call, then do the controller write and
-finally yield with a call to &lt;em&gt;schedule&lt;/em&gt;. This way there is no harm if the ISR
-wakes us up before yielding.&lt;/p&gt;
-
-&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
-&lt;p&gt;Now there are certainly more improvements that could be made to the driver and
-especially in the area of concurrent access to the device but I think that we
-are going to be happy with the current state for this post. To be honest the
-driver for this device feels a bit contrived and I would rather revisit this
-topic with a more realistic device (e.g. some sort of communications device
-with ring buffers for rx and tx).&lt;/p&gt;
-
-&lt;p&gt;Did you like this post? Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Now we are going to revisit the device driver from part 3 of this series and redo it properly.</summary></entry></feed>
+below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction This is the first post of a new series where we are going to attempt the build a simple modem. In other words we will try to build a digital communications link where the sender modulates a communication message, a stream of bytes, to make it suitable for transmission over a given media and the receiver demodulates to recover the original message.</summary></entry></feed>

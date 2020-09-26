@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Commodore 64 experiments part-3 (FPGA) | ZZZ-Consulting</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="Commodore 64 experiments part-3 (FPGA)" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="I figured the natural next step of our MyC64 journey would be to get the emulator running on a FPGA, or more specifically the ULX3S board. Doing so requires a few support systems such as keyboard input and visual output to be in place so let us use this post to look at how that can be accomplished." />
+<meta property="og:description" content="I figured the natural next step of our MyC64 journey would be to get the emulator running on a FPGA, or more specifically the ULX3S board. Doing so requires a few support systems such as keyboard input and visual output to be in place so let us use this post to look at how that can be accomplished." />
+<link rel="canonical" href="https://www.zzzconsulting.se/2020/09/26/c64-part-3.html" />
+<meta property="og:url" content="https://www.zzzconsulting.se/2020/09/26/c64-part-3.html" />
+<meta property="og:site_name" content="ZZZ-Consulting" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-09-26T00:00:00+02:00" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","headline":"Commodore 64 experiments part-3 (FPGA)","dateModified":"2020-09-26T00:00:00+02:00","datePublished":"2020-09-26T00:00:00+02:00","url":"https://www.zzzconsulting.se/2020/09/26/c64-part-3.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2020/09/26/c64-part-3.html"},"description":"I figured the natural next step of our MyC64 journey would be to get the emulator running on a FPGA, or more specifically the ULX3S board. Doing so requires a few support systems such as keyboard input and visual output to be in place so let us use this post to look at how that can be accomplished.","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-122494618-1', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About me</a><a class="page-link" href="/links/">Links</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Commodore 64 experiments part-3 (FPGA)</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2020-09-26T00:00:00+02:00" itemprop="datePublished">Sep 26, 2020
+      </time></p>
+  </header>
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+  
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.1.2/mermaid.min.js">
+</script>
+
+  
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>I figured the natural next step of our MyC64 journey would be to get the
+emulator running on a FPGA, or more specifically the ULX3S board. Doing so
+requires a few support systems such as keyboard input and visual output to be
+in place so let us use this post to look at how that can be accomplished.</p>
+
+<h2 id="keyboard-input-and-control">Keyboard input and control</h2>
+
+<p>As we already know the real C64 keyboard is a 8x8 matrix connected directly to
+the CIA1 and scanned by the KERNAL code. Any modern keyboard we might find is
+based on scan-codes so some conversion layer (much like what we already do in
+<code class="highlighter-rouge">myc64-sim</code>) will be necessary.</p>
+
+<p>In addition to keyboard input <code class="highlighter-rouge">.prg</code> injection also needs to be handled.</p>
+
+<p>A straight forward way to deal with these requirements is to treat the emulator
+as a USB device and develop some kind of software on the host workstation that
+performs the keyboard forwarding and program injection. Additional control
+signaling such as reset/reboot could also be handled this way.</p>
+
+<p>Following this approach would put good use to my <a href="https://github.com/markus-zzz/usbdev/tree/dev">USB
+device</a> implementation detailed
+in previous posts as well as serving as motivation for thoroughly finalizing it
+and working out remaining bugs.</p>
+
+<p>So let’s do that! We simply grab the entire USB device subsystem
+<a href="https://github.com/markus-zzz/usbdev/tree/dev">from github</a> including controlling
+RISC-V CPU with ROM and RAM.</p>
+
+<p>On the workstation software side we need to develop a program that communicates
+with the USB device while maintaining a workable GUI. For the USB communication
+we use <a href="https://libusb.info/">libusb</a> and for GUI we relay on
+<a href="https://www.gtk.org/">GTK</a>. Combining these two essentially boils down to
+using the asynchronous API of libusb and plugging it in to the single event
+loop handled by GTK.</p>
+
+<p>To be more precise libusb is queried for its (Unix) event file descriptors and
+the GTK event loop is setup to watch these (presumably using the select system
+call internally). Details are found in
+<a href="https://github.com/markus-zzz/myc64/blob/master/sw/myc64-keyb.cpp">sw/myc64-keyb.cpp</a>.</p>
+
+<h2 id="video-output">Video output</h2>
+
+<p>Displaying C64 video output in a reasonable way is rather tricky as we need to
+comply with both the internal timing of the VIC-II (to avoid compatibility
+issues with existing software) as well as the timing of the chosen video format for
+a modern display.</p>
+
+<p>Apparently this is not impossible as the <a href="https://ultimate64.com/Ultimate-64">Ultimate
+64</a> manages to tweak the video timing of
+576p50 to match its VIC-II output (described
+<a href="https://1541u-documentation.readthedocs.io/en/latest/hardware/hdmi.html">here</a>).
+Details on the 576p50 video mode can be found
+<a href="https://ez.analog.com/video/f/q-a/109341/timing-details-of-720x576-progressive-video">here</a>.</p>
+
+<p>For this project we choose to go a different route and store intermediate
+VIC-II video frames in external SDRAM and display them in 640x480@60Hz over
+DVI/HDMI.</p>
+
+<h2 id="audio-output">Audio output</h2>
+
+<p>Not much to say about this. The ULX3S features a 4-bit resistor ladder for DAC
+and we simply connect the SID’s mono output to it. Actually depending on the
+content 4-bit resolution does not sounds as bad as one would think. Just listen
+to <a href="https://www.youtube.com/watch?v=nODn5HJGtAY">this comparison video</a>.</p>
+
+<h2 id="the-myc64-soc">The MyC64 SoC</h2>
+
+<p>Combining these systems in a SoC turns out as follows</p>
+
+<p><img src="/download/c64/myc64-soc.svg" alt="MyC64 SoC" /></p>
+
+<p>As can be seen this involves interaction between several clock domains.
+Especially the visual path, which is rather intense in terms of pixel
+shoveling, uses asynchronous FIFOs when crossing in and out of the SDRAM’s
+125MHz clock domain.</p>
+
+<p>The ECP5-12F only has two PLLs so we are limited in the number of clock
+frequencies that we can synthesize. Two blocks have strict requirements on the
+clock frequency. The USB block needs a clock that is a multiple of 1.5MHz and
+the DVI/HDMI controller needs a 125MHz clock (and a derived 25MHz pixel clock).
+The MyC64 block needs a clock in the neighborhood of 8MHz but it does not have
+to be exact (especially now that it is decoupled from the display).</p>
+
+<p>So given these constraints we end up with the three clock domains 15MHz, 25MHz
+and 125MHz seen in the diagram. The MyC64 block uses an internal clock enable
+to “divide” the 15MHz clock by two.</p>
+
+<p>For the SDRAM the 125MHz clock appears to be a bit too tight, both on the PCB
+as well as inside the FPGA (builds often fail timing constraints). So with
+additional clocking resources it would be preferable if this clock could be
+lowered to say 100MHz.</p>
+
+<p>Since the async FIFOs don’t provide <em>almost full</em> and <em>almost empty</em> signaling
+it seemed difficult to operate the SDRAM in burst mode (i.e. as the burst is
+pipelined so we need to stop it before the FIFO is full to avoid overrun).
+Adding <em>almost full</em> and <em>almost empty</em> signaling to the FIFO was deemed out of
+scope since asynchronous FIFOs are already notoriously complicated in that
+area.</p>
+
+<p>One option could have been to add a normal synchronous FIFO in series to get
+the <em>almost full</em> and  <em>almost empty</em> signaling from that FIFO. Another option
+could have been to adjust the SDRAM address pointers when an overrun or
+underrun occurs (but since timing is already tight in the SDRAM clock domain
+this kind of additional logic could make things worse).</p>
+
+<p>While those suggestions seem possible in theory we instead chose a simpler
+approach of operating the SDRAM in single access mode. Since the C64 only
+generates 16 colors we can store these in SDRAM instead of the full RGB value.
+Doing so means that we get four pixels per 16-bit memory access which appears
+to fall well within the time budget when operating the SDRAM at 125MHz.</p>
+
+<p>The components used are gathered from various places</p>
+
+<ul>
+  <li>SDRAM controller - Slightly modified version of the one from <a href="https://www.fpga4fun.com/SDRAM.html">fpga4fun.com</a>.</li>
+  <li>DVI/HDMI controller - From <a href="https://github.com/daveshah1/prjtrellis-dvi">Project Trellis DVI</a>.</li>
+  <li>Asynchronous FIFO - From <a href="https://github.com/ZipCPU/website/blob/master/examples/afifo.v">here</a>. This is a variant of Cliff Cummings design formally verified by Dan Gisselquist. In fact it is the subject of a <a href="https://zipcpu.com/blog/2018/07/06/afifo.html">Crossing clock domains with an Asynchronous FIFO</a> article by Dan.</li>
+  <li>MyC64-SubSys - That is what we are working on here.</li>
+  <li>UsbDev-SubSys - That is what I was working on before this project.</li>
+</ul>
+
+<h3 id="verilator-simulation-for-the-soc">Verilator simulation for the SoC</h3>
+
+<p>The simulator needed to be extended a bit to handle all the different components
+with their associated clock domains. Regrettably I dragged my feet on this and
+as a result wasted valuable time trying to diagnose what turned out to be
+rather trivial problems while running on the FPGA.</p>
+
+<p>Mostly it is about handling of multiple clock domains in Verilator. Turns out
+that Dan Gisselquist has an excellent article titled <a href="https://zipcpu.com/blog/2018/09/06/tbclock.html">Handling multiple clocks
+with Verilator </a> so I went
+ahead and did something similar.</p>
+
+<p>To avoid breaking the video chain we also need to simulate the external SDRAM
+so I added a very basic SDRAM model to
+<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/myc64-soc/myc64-soc-top.v">rtl/myc64-soc/myc64-soc-top.v</a>.</p>
+
+<p>With all this additional stuff in place simulation with <code class="highlighter-rouge">myc64-soc-sim</code> is a
+much slower than with our previous <code class="highlighter-rouge">myc64-sim</code>. So much slower that interactive
+input and display does not make sense any more. Instead the SoC simulator
+stores each video frame directly to the file system in PNG format.</p>
+
+<p>We store video frames directly after the VIC-II output as well as the
+intermediate VGA frames that are being fed into the DVI controller. That is we
+store output both before and after the error prone SDRAM part.</p>
+
+<p>The SoC simulator <code class="highlighter-rouge">myc64-soc-sim</code> is implemented in
+<a href="https://github.com/markus-zzz/myc64/blob/master/sim/myc64-soc-sim.cpp">sim/myc64-soc-sim.cpp</a>.</p>
+
+<h3 id="synthesis">Synthesis</h3>
+
+<p>Synthesis for my ULX3S’s ECP5-12F FPGA yields the following utilization which I
+find rather low given the amount of stuff we have put in. Of course we have
+used up all the PLLs and almost all of the block RAM but in terms of logic
+slices it is not that high.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Info: Device utilisation:
+Info:          TRELLIS_SLICE:  6136/12144    50%
+Info:             TRELLIS_IO:   128/  197    64%
+Info:                   DCCA:     4/   56     7%
+Info:                 DP16KD:    49/   56    87%
+Info:             MULT18X18D:     3/   28    10%
+Info:                 ALU54B:     0/   14     0%
+Info:                EHXPLLL:     2/    2   100%
+Info:                EXTREFB:     0/    1     0%
+Info:                   DCUA:     0/    1     0%
+Info:              PCSCLKDIV:     0/    2     0%
+Info:                IOLOGIC:     0/  128     0%
+Info:               SIOLOGIC:     8/   69    11%
+Info:                    GSR:     0/    1     0%
+Info:                  JTAGG:     0/    1     0%
+Info:                   OSCG:     0/    1     0%
+Info:                  SEDGA:     0/    1     0%
+Info:                    DTR:     0/    1     0%
+Info:                USRMCLK:     0/    1     0%
+Info:                CLKDIVF:     0/    4     0%
+Info:              ECLKSYNCB:     0/   10     0%
+Info:                DLLDELD:     0/    8     0%
+Info:                 DDRDLL:     0/    4     0%
+Info:                DQSBUFM:     0/    8     0%
+Info:        TRELLIS_ECLKBUF:     0/    8     0%
+Info:           ECLKBRIDGECS:     0/    2     0%
+</code></pre></div></div>
+
+<p>As earlier mentioned, the 125MHz clock domain appears to be operating at its
+limits as we often get timing constraint violations after small (even
+unrelated) modifications to the design.</p>
+
+<h2 id="demonstration">Demonstration</h2>
+
+<p>After loading the design on the ULX3S board and plugging in the secondary USB
+connector we should expect to see the following in <code class="highlighter-rouge">dmesg</code></p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>usb 1-5: new low-speed USB device number 6 using xhci_hcd
+usb 1-5: New USB device found, idVendor=abc0, idProduct=0064, bcdDevice= 1.00
+usb 1-5: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+usb 1-5: Product: MyC64 - FPGA based Commodore 64 emulator as a USB device
+usb 1-5: Manufacturer: Markus Lavin (https://www.zzzconsulting.se/)
+usb 1-5: SerialNumber: 0123456789abcdef
+</code></pre></div></div>
+<p>At this point the device should be generating DVI/HDMI output and it is
+advisable to connect a screen to verify. If all looks good we can go ahead and
+connect with <code class="highlighter-rouge">myc64-keyb</code> and start typing in some BASIC commands. Any key
+press (and release) that goes into the application window will be forwarded to
+the USB connected MyC64 emulator.</p>
+
+<p>The <code class="highlighter-rouge">myc64-keyb</code> program takes an optional argument that specifies a <code class="highlighter-rouge">.prg</code>
+file to inject into emulator memory.</p>
+
+<p>An interesting program to try out is the machine language monitor SuperMon by
+<a href="https://en.wikipedia.org/wiki/Jim_Butterfield">Jim Butterfield</a>. SuperMon is
+the monitor used in Jim’s classic book <a href="https://archive.org/details/Machine_Language_for_the_Commodore_Revised_and_Expanded_Edition">Machine Language for the
+Commodore</a>.
+To get hold of SuperMon itself in modern times simply go to <a href="https://github.com/jblang/supermon64">Supermon+64
+V1.2</a>. There one can also find a
+<a href="https://www.youtube.com/watch?v=MEjnMt_3wkU">video</a> demonstrating its
+capabilities.</p>
+
+<p><img src="/download/c64/myc64-ulx3s.jpg" alt="MyC64 on ULX3S" /></p>
+
+<h2 id="known-issues--bugs">Known issues / Bugs</h2>
+<ul>
+  <li>USB device loses sync (and host aborts after tree packets with no response) so longer transfers often fail. Works with retry though.</li>
+  <li>“Static noise” moves past the screen occasionally (seems to be dependent on when reset is released). Believed to be limitations of SDRAM (traces on PCB) operating at 125MHz.</li>
+  <li>Sometimes the <code class="highlighter-rouge">.prg</code> appears to get corrupted when loaded over USB.</li>
+</ul>
+
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://www.zzzconsulting.se/2020/09/26/c64-part-3.html';
+      this.page.identifier = 'https://www.zzzconsulting.se/2020/09/26/c64-part-3.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2020/09/26/c64-part-3.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ZZZ-Consulting</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ZZZ-Consulting</li><li><a class="u-email" href="mailto:firstname.lastname@gmail.com">firstname.lastname@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/markus-zzz"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">markus-zzz</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

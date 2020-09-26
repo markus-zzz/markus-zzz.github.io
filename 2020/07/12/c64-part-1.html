@@ -7,15 +7,15 @@
 <meta name="generator" content="Jekyll v3.8.7" />
 <meta property="og:title" content="Commodore 64 experiments part-1" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited and I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper (that almost never worked)." />
-<meta property="og:description" content="When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited and I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper (that almost never worked)." />
+<meta name="description" content="When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited. I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper. But that almost never worked anyway." />
+<meta property="og:description" content="When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited. I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper. But that almost never worked anyway." />
 <link rel="canonical" href="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html" />
 <meta property="og:url" content="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html" />
 <meta property="og:site_name" content="ZZZ-Consulting" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2020-07-12T00:00:00+02:00" />
 <script type="application/ld+json">
-{"@type":"BlogPosting","headline":"Commodore 64 experiments part-1","dateModified":"2020-07-12T00:00:00+02:00","datePublished":"2020-07-12T00:00:00+02:00","url":"https://www.zzzconsulting.se/2020/07/12/c64-part-1.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2020/07/12/c64-part-1.html"},"description":"When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited and I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper (that almost never worked).","@context":"https://schema.org"}</script>
+{"@type":"BlogPosting","headline":"Commodore 64 experiments part-1","dateModified":"2020-07-12T00:00:00+02:00","datePublished":"2020-07-12T00:00:00+02:00","url":"https://www.zzzconsulting.se/2020/07/12/c64-part-1.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2020/07/12/c64-part-1.html"},"description":"When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited. I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper. But that almost never worked anyway.","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
 if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
@@ -75,16 +75,17 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
     <p>When I was a kid back in the 80s my parents bought our family’s first computer,
 a Commodore 64 with a datasette station. I still have fond memories of that
 marvelous little machine. At the time though I was only ten years old so my
-mental capacity (and likely also patience) was quite limited and I never
-managed to do much with it besides playing games and typing in the occasional
-BASIC listing from the Sunday newspaper (that almost never worked).</p>
+mental capacity (and likely also patience) was quite limited. I never managed
+to do much with it besides playing games and typing in the occasional BASIC
+listing from the Sunday newspaper. But that almost never worked anyway.</p>
 
 <p>Now in recent times I often find myself watching retro computing episodes from
 the big YouTubers in the field such as <a href="https://www.youtube.com/user/adric22">The 8-Bit
 Guy</a> and <a href="https://www.youtube.com/channel/UC6gARF3ICgaLfs3o2znuqXA">Retro
 Recipes</a>. Needless to
 say they often feature the C64 and it is refreshing to be reminded of a simpler
-time when things were not complicated to absurdity just for the sake of it.</p>
+time. A time when things were not complicated to absurdity, sometimes
+seemingly, just for the sake of it.</p>
 
 <p>While I know that there are numerous C64 emulators available (mostly in
 software but also a few FPGA based) I always thought that would be a neat
@@ -102,7 +103,7 @@ see how much work would be required to get a system that boots into BASIC.</p>
 
 <h2 id="preparations">Preparations</h2>
 
-<p>Before we can get started we need to gather some preliminary stuff.</p>
+<p>Before we get started it is useful to gather some preliminary materials.</p>
 
 <h3 id="documentation">Documentation</h3>
 
@@ -169,16 +170,16 @@ and negative phase of a 1Mhz clock.</p>
 <p>The single ported synchronous RAM modules are wrapped so that they act as
 asynchronous RAM that can be independently accessed with the two 1Mhz phases
 enable signals. See
-<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/spram.v">rtl/spram.v</a> and
-<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/sprom.v">rtl/sprom.v</a>.</p>
+<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/spram.v">rtl/spram.v</a> and
+<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/sprom.v">rtl/sprom.v</a>.</p>
 
 <p>A implementation of a very basic VIC-II is started in
-<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/vic-ii.v">rtl/vic-ii.v</a>
+<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/vic-ii.v">rtl/vic-ii.v</a>
 and likewise for the CIA in
-<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/cia.v">rtl/cia.v</a>.</p>
+<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/cia.v">rtl/cia.v</a>.</p>
 
 <p>Everything is wired up and connected to a fake keyboard matrix in
-<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/top.v">rtl/top.v</a>.</p>
+<a href="https://github.com/markus-zzz/myc64/blob/master/rtl/myc64/myc64-top.v">rtl/myc64-top.v</a>.</p>
 
 <h2 id="results-so-far">Results (so far)</h2>
 
@@ -187,7 +188,7 @@ github</a> where the README contains a short
 intruction sequence to get started with the simulator for those interested.</p>
 
 <p>Simulation is Verilator based and the driver program
-<a href="https://github.com/markus-zzz/myc64/blob/master/sim/c64-sim.cpp">myc64-sim</a> is
+<a href="https://github.com/markus-zzz/myc64/blob/master/sim/myc64-sim.cpp">myc64-sim</a> is
 similar to the one used for <a href="/2019/08/12/retro-gaming-hw-part-1.html">my previous RetroCon project</a> but with the addition of some nifty
 features to execute delayed commands at a certain frame (e.g. no point
 injecting a key press sequence until the system has finished booting).</p>
