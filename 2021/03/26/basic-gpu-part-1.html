@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>[DRAFT] A most basic GPU - part 1 | ZZZ-Consulting</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="[DRAFT] A most basic GPU - part 1" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="NOTE: This post is not finished yet but instead of keeping it as a hidden draft I have decided to publish it anyway. Right now I am not working on this project but if/when I return I will try to update the post with the progress." />
+<meta property="og:description" content="NOTE: This post is not finished yet but instead of keeping it as a hidden draft I have decided to publish it anyway. Right now I am not working on this project but if/when I return I will try to update the post with the progress." />
+<link rel="canonical" href="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html" />
+<meta property="og:url" content="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html" />
+<meta property="og:site_name" content="ZZZ-Consulting" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-03-26T00:00:00+01:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="[DRAFT] A most basic GPU - part 1" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","datePublished":"2021-03-26T00:00:00+01:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html"},"headline":"[DRAFT] A most basic GPU - part 1","url":"https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html","description":"NOTE: This post is not finished yet but instead of keeping it as a hidden draft I have decided to publish it anyway. Right now I am not working on this project but if/when I return I will try to update the post with the progress.","dateModified":"2021-03-26T00:00:00+01:00","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-122494618-1', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About me</a><a class="page-link" href="/links/">Links</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">[DRAFT] A most basic GPU - part 1</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2021-03-26T00:00:00+01:00" itemprop="datePublished">Mar 26, 2021
+      </time></p>
+  </header>
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+  
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.1.2/mermaid.min.js">
+</script>
+
+  
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p><strong>NOTE: This post is not finished yet but instead of keeping it as a hidden
+draft I have decided to publish it anyway. Right now I am not working on this
+project but if/when I return I will try to update the post with the progress.</strong></p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Putting the MyC64 project on hold for a while.</p>
+
+<p>Recently I have seen updates on the new PS1 FPGA core by
+<a href="https://twitter.com/laxer3a">@Laxer3A</a>, which I of course can’t help to find
+interesting. I have never owned a PS1 and honestly never cared much about it
+until now.  It turns out that graphics wise it had have some rather interesting
+design choices. More preciecely the graphics pipeline is based around fixed
+point integer representation so there are no floating point numbers involved at
+all.  Further more there is no z-buffer. In fact Modern Vintage Gamer has put
+together a short video describing these limitations that is well worth a watch
+<a href="https://www.youtube.com/watch?v=x8TO-nrUtSI">Why PlayStation 1 Graphics Warped and Wobbled so much |
+MVG</a>.</p>
+
+<p>So apparently it was possible to reach commercial success with a system like
+this some 25 years ago. Nowadays probably not so much but it is still
+interesting to see that one can get away with these limitations and still get
+reasonable results.</p>
+
+<p>For me this suggests a very basic GPU may actually be within reach as a fun
+FPGA project.</p>
+
+<p>The rasterization algorithm is very well described in <a href="https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation">Rasterization: a
+Practical
+Implementation</a>
+over at <a href="https://www.scratchapixel.com/">Scratch Pixel</a>. What follows below
+will be some thoughts that I had while reading that and thinking about a simple
+design that could be put inside a FPGA.</p>
+
+<h2 id="project-scope">Project scope</h2>
+
+<ul>
+  <li>Fixed pipeline (duh, not likely to implement programmable shaders any time soon)</li>
+  <li>Fixed point integers only (no floating point)</li>
+  <li>Flat shading only (triangles filled with solid color)</li>
+  <li>No z-buffer (geometry has to be sorted before sent down the pipeline)</li>
+</ul>
+
+<h2 id="rasterization-stage">Rasterization stage</h2>
+
+<p><em>Rasterization is the process of finding pixel coverage for a given triangle</em></p>
+
+<p>This stage is about finding out, for a given triangle, what screen pixels are
+covered by that triangle. Since well behaved triangles contain significantly
+more pixels than vertices (three) this step is likely to be the main bottle
+neck of the system.</p>
+
+<p>Determining if a pixel is inside a triangle is done by checking if it falls on
+the <em>right</em> side of all three edges.</p>
+
+<p>Intuitively it seems that the cross product could be used to determine if a
+point is on the left-side or right-side of an edge. Now screen space is 2d and
+the cross product is a 3d only concept but one can of course limit the vectors
+to be contained in the plane <script type="math/tex">z=0</script>. In that case the well known cross
+product</p>
+
+<script type="math/tex; mode=display">a \times b = (a_2b_3-a_3b_2, a_3b_1-a_1b_3, a_1b_2-a_2b_1)</script>
+
+<p>simply becomes</p>
+
+<script type="math/tex; mode=display">a_1b_2-a_2b_1</script>
+
+<p>which in rasterization is known as an <em>edge function</em>. It is worth noting that
+the <em>edge function</em> is in fact the magnitude of the cross product of the two vectors
+in the <script type="math/tex">z=0</script> plane (so it has something to do with area).</p>
+
+<p>So the <em>edge function</em> for edge <script type="math/tex">u \to v</script> and arbitrary point <script type="math/tex">p</script> is</p>
+
+<script type="math/tex; mode=display">E_{u \to v}(p) =  (v_x - u_x)(p_y - u_y) - (v_y - u_y)(p_x - u_x)</script>
+
+<p>now condsider what happens if an offset <script type="math/tex">o</script> is applied</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{eqnarray}
+E_{u \to v}(p+o) &=& (v_x - u_x)(p_y + o_y - u_y) - (v_y - u_y)(p_x + o_x - u_x) \\
+                 &=& E_{u \to v}(p) + (v_x - u_x)o_y - (v_y - u_y)o_x
+\end{eqnarray} %]]></script>
+
+<p>in other words once we have computed <script type="math/tex">E_{u \to v}(p)</script> we can explore
+neighbouring pixels by simply adding and subtracting <script type="math/tex">(v_x - u_x)</script> and <script type="math/tex">(v_y - u_y)</script> both of which we have already computed for <script type="math/tex">E_{u \to v}(p)</script>.</p>
+
+<p>This is a significant improvement as it allows us to replace two
+multiplications and five additions with a single addition.</p>
+
+<p>Naively every pixel of the screen need to be checked against each triangle for
+coverage but obviously one often do much better by simply checking the bounding
+box of the triangle. Either way the amount of pixels is significant so this
+last result is really important as it will allow us to check multiple pixels
+each cycle at a reasonable cost in hardware.</p>
+
+<p>The idea is to consider quads of 2x2 pixels. Begin by computing the <script type="math/tex">E_{u \to
+v}(p)</script> for the pixel in the upper left corner of the bounding box. After that
+add/subtract as described above to get the remaining three pixels of the quad.
+This should preferably be done in sequence not to wast too much resources. Once
+the first quad is done the neighbouring quad in <script type="math/tex">x</script> direction is obtained
+by simple addition of the precomputed <script type="math/tex">2(v_y - u_y)</script> (keeping in mind that
+we get the shift by one for free in hardware by simply hard-wiring in a zero at
+the lsb). So we begin with sequential computations for the first quad but after
+that we reach a steady state where we evaluate an entire quad each cycle.</p>
+
+<p>Still though every triangle has three edges so evaluating a quad every cycle
+means that 12 adders need to be instantiated. If that results in too high
+resource utilization we may need to cut down a bit.</p>
+
+<h2 id="first-milestone">First milestone</h2>
+
+<p>Rasterize fixed triangle over DVI/HDMI. Use block RAMs for frame buffer.
+Suitable resolution 320x240. Try quad rastierizer and check resource
+utilization in FPGA. If it works then great otherwise scale down.</p>
+
+<h2 id="geometry-processing">Geometry processing</h2>
+
+<p>Eventually we could try floating point format for the geometry processing.
+Since geometry processing is not expected to be a bottleneck compared to pixel
+rasterization one can probably afford a completely sequential implementation
+and hence floating point is within reach. Also the dynamic range of floating
+point makes more sense when it comes to vertices compared to pixel coordinates
+in raster space (which are inherently integer).</p>
+
+<p><a href="https://www.cs.ucf.edu/~dcm/Teaching/CDA5106-Fall2015/Appendices/appendix_j.pdf">Computer aritmetic appendix from Computer Architecture: A Quantitative Approach</a></p>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html';
+      this.page.identifier = 'https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2021/03/26/basic-gpu-part-1.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ZZZ-Consulting</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ZZZ-Consulting</li><li><a class="u-email" href="mailto:firstname.lastname@gmail.com">firstname.lastname@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/markus-zzz"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">markus-zzz</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

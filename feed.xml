@@ -1,4 +1,334 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2020-09-26T09:24:36+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">Commodore 64 experiments part-3 (FPGA)</title><link href="https://www.zzzconsulting.se/2020/09/26/c64-part-3.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-3 (FPGA)" /><published>2020-09-26T00:00:00+02:00</published><updated>2020-09-26T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/09/26/c64-part-3</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/09/26/c64-part-3.html">&lt;p&gt;I figured the natural next step of our MyC64 journey would be to get the
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2021-08-02T20:20:30+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">[DRAFT] Making some PCBs - part 1</title><link href="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html" rel="alternate" type="text/html" title="[DRAFT] Making some PCBs - part 1" /><published>2021-06-08T00:00:00+02:00</published><updated>2021-06-08T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2021/06/08/making-pcbs</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
+draft I have decided to publish it anyway - mostly to serve as a notebook
+to myself while I work on the project.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;For a while now I have had a desire to make a custom PCB for the MyC64 project,
+a board with suitable display interface and perhaps some tiny keyboard.
+Something that could be used in a handheld. A handheld FPGA based C64 emulator
+now that would be pretty cool.&lt;/p&gt;
+
+&lt;p&gt;Back in 2019 I did play a bit with &lt;a href=&quot;https://www.kicad.org/&quot;&gt;KiCad&lt;/a&gt; making a
+very simple (through hole) PCB for &lt;a href=&quot;https://github.com/markus-zzz/myvgapmod&quot;&gt;PMOD like VGA
+interface&lt;/a&gt; but wrt complexity that is
+light years away from what I need to do now.&lt;/p&gt;
+
+&lt;p&gt;A board for the MyC64 will need to include the ECP5 FPGA with its, at least,
+256 ball BGA packaging as well as HyperRAM 24 ball BGA and multiple other fine
+pitch surface mount components.&lt;/p&gt;
+
+&lt;p&gt;While I certainly need to learn a lot about board design and KiCad that bit
+does not scare me half as much as doing the actual assembly for those parts.&lt;/p&gt;
+
+&lt;p&gt;As a side not I spent some time during summer vacation to build a workbench for
+my lab corner where I can put all my equipment. This is how it turned out.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/pcb/workbench.jpg&quot; alt=&quot;Workbench&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;the-plan&quot;&gt;The Plan&lt;/h2&gt;
+
+&lt;p&gt;So to get started I thought I could begin with making a few rather simple PMOD
+boards for some of the components that I intend to use on the final board. This
+time actually following &lt;a href=&quot;https://www.digilentinc.com/Pmods/Digilent-Pmod_%20Interface_Specification.pdf&quot;&gt;the Pmod
+specification&lt;/a&gt;.
+This way I get a chance to improve my limited KiCad and assembly skills along
+the way as well as trying out interfacing the components with the FPGA on the
+trusted ULX3S board. That seems like a sound plan.&lt;/p&gt;
+
+&lt;h3 id=&quot;stage-1---hyperram&quot;&gt;Stage 1 - HyperRAM&lt;/h3&gt;
+&lt;p&gt;2-layer board.&lt;/p&gt;
+
+&lt;p&gt;I have 10 of these
+&lt;a href=&quot;https://www.mouser.se/ProductDetail/cypress-semiconductor/s27kl0641dabhi020/?qs=74EMXstkWMUC1hAb%252bS%2F79g==&amp;amp;countrycode=DE&amp;amp;currencycode=EUR&quot;&gt;S27KL0641DABHI020&lt;/a&gt;
+laying around.&lt;/p&gt;
+
+&lt;p&gt;5x5 BGA means that the two outermost rings can be routed in the same layer
+(only one ball remaining in the middle but that can also escape in the same
+layer as one corner is missing a ball).&lt;/p&gt;
+
+&lt;p&gt;I finally had a go at this and put together quick and dirty PCB in KiCAD and
+had &lt;a href=&quot;https://aisler.net/&quot;&gt;https://aisler.net/&lt;/a&gt; manufacture it for me. By quick and dirty I mean that
+the layout is ugly and the traces are not length matched so I would not expect
+to get any performance out of it. The board should be functionally correct
+though but this has not yet been verified.&lt;/p&gt;
+
+&lt;p&gt;Two different soldering methods were evaluated and I tried capturing the chip
+profile with a cheap cell-phone camera through a binocular microscope.&lt;/p&gt;
+
+&lt;p&gt;On the left only tacky flux was applied and then using hot air from above
+(station set to 300C at 50l/min) the chip was soldered in place. After a while
+the chip noticeably sunk into place and I tried to nudge it several times with
+a pair of tweezers after which it immediately bounced back. This was a quick
+method but the end result is that the chip sits flush with the board and visual
+inspection is not really possible.&lt;/p&gt;
+
+&lt;p&gt;On the right no flux was used but instead solder paste was applied through a
+stencil. The board was placed on a hot-plate that slowly rose to a temperature
+set to 220C after which hot air was applied from above (with station set to
+300C at 40l/min). It was not as noticeable when the chip sunk into place and I
+did not dare to nudge it (as it was still on the hot-plate). The end result
+looks much nicer though with the solder balls clearly visible and one can
+clearly see that there is no bridging.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/pcb/hyperram-bga-pcb.jpg&quot; alt=&quot;HyperRAM BGA&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Eventually I will try to verify the boards with one of the controllers from the
+list below and report the results.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/blackmesalabs/hyperram&quot;&gt;https://github.com/blackmesalabs/hyperram&lt;/a&gt; - slow but portable controller&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/gregdavill/litex-hyperram&quot;&gt;https://github.com/gregdavill/litex-hyperram&lt;/a&gt; - full performance controller for ECP5 in Migen&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://1bitsquared.com/products/pmod-hyperram&quot;&gt;https://1bitsquared.com/products/pmod-hyperram&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.youtube.com/watch?v=dThZDl-QG5s&quot;&gt;https://www.youtube.com/watch?v=dThZDl-QG5s&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;stage-2---max9850&quot;&gt;Stage 2 - MAX9850&lt;/h3&gt;
+&lt;p&gt;2-layer board.&lt;/p&gt;
+
+&lt;p&gt;Still have not decided if I will do an audio board but this seems like a nice
+DAC.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.maximintegrated.com/en/products/analog/audio/MAX9850.html&quot;&gt;https://www.maximintegrated.com/en/products/analog/audio/MAX9850.html&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;stage-3---ecp5&quot;&gt;Stage 3 - ECP5&lt;/h3&gt;
+&lt;p&gt;4-layer board (signal, power, gnd, signal).&lt;/p&gt;
+
+&lt;p&gt;Study these designs:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/mattvenn/basic-ecp5-pcb&quot;&gt;https://github.com/mattvenn/basic-ecp5-pcb&lt;/a&gt; - most basic ECP5 design, highly interesting.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/emard/ulx3s&quot;&gt;https://github.com/emard/ulx3s&lt;/a&gt; - ULX3S design&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The
+&lt;a href=&quot;https://www.mouser.se/ProductDetail/Lattice/LFE5U-12F-6BG256C?qs=w%2Fv1CP2dgqpgiPWLwc1Bzg==&quot;&gt;LFE5U-12F-6BG256C&lt;/a&gt;
+does indeed seem like the most suitable model and package.&lt;/p&gt;
+
+&lt;p&gt;Although routing a 256 pin BGA does seem intimidating one has to keep in mind
+that a large number of these balls will be &lt;em&gt;no-connect&lt;/em&gt;. Since this is a custom
+board for a given application we only need to route what we use. This situation
+is substantially different compared to doing a generic development board where
+you really want to expose as many pins and interfaces as possible.&lt;/p&gt;
+
+&lt;p&gt;Another simplifying matter is that this is a FPGA so it has very few fixed
+function pins and interfaces (expect the fixed function ones like JTAG and
+flash SPI) can generally be brought out in way that will cause no trace
+crossing on the PCB.&lt;/p&gt;
+
+&lt;p&gt;So besides power and ground how many signal do we need expose from the FPGA?&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Interface&lt;/th&gt;
+      &lt;th&gt;Pins&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;HyperRAM&lt;/td&gt;
+      &lt;td&gt;12&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;HDMI&lt;/td&gt;
+      &lt;td&gt;10&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;JTAG&lt;/td&gt;
+      &lt;td&gt;5&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Flash&lt;/td&gt;
+      &lt;td&gt;5&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;MAX9850&lt;/td&gt;
+      &lt;td&gt;5&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;USB&lt;/td&gt;
+      &lt;td&gt;4&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Okay so it is quite a few but still much less than the 197 I/Os that are
+available in the given package.&lt;/p&gt;
+
+&lt;h4 id=&quot;configuration&quot;&gt;Configuration&lt;/h4&gt;
+
+&lt;p&gt;When first looking into how the device is to be configured while on the PCB the
+options and tools involved seem quite a bit overwhelming. However after doing
+some googling and reading up a bit I think the following answers most of my
+worries (mostly by confirming that this process does indeed depend on well
+established and standardized techniques and not so much proprietary magic).&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Use JTAG (TCK,TMS,TDI and TDO) as main means of configuration. Either driving
+it with external JTAG-cable, an integrated FTDI chip or onboard MCU. Timing is
+not critical, bit-banging is fine, the TCK may stop etc.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;For non-volatile bitstream storage use SPI connected flash. ECP5 acts as SPI
+master. The FPGAs JTAG interface allows direct programming of the SPI connected
+flash memory.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The Symbiflow tools support generating both .bit files and .svf files. The
+former contains the configuration bitstream only while the latter contains JTAG
+commands to setup programming and the entire contents of the bitstream. This
+allows for programming with a JTAG tool that does not know anything about the
+actual device (i.e. all instructions are in the .svf file).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;There are several tools for programming the ECP5. ujprog, fleajtag, OpenOCD and
+even one in python &lt;a href=&quot;https://github.com/emard/esp32ecp5&quot;&gt;https://github.com/emard/esp32ecp5&lt;/a&gt;. The last one does
+bit-banging from a MCU while the first three relay on a USB connected FTDI chip
+for JTAG. OpenOCD only support programming with .svf files while ujprog and
+fleajtag can do .bit directly. That is they contain code to write the
+appropriate JTAG registers to initiate the programming. Actually IEEE 1532
+defines a standardized JTAG based interface for programming that the ECP5
+follows. So ujprog has code to interface the FTDI chip as well as code to issue
+the relevant IEEE 1532 commands over the JTAG interface.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Probably don’t need to care much about the PROGN, INIT and DONE signals.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The interface between the ECP5 and FTDI need only be the 4 wire JTAG signals.
+Often the FTDI also provides usb-serial port services but this is not strictly
+needed. Actually the FTDI chips are really expensive (same cost as the ECP5
+12F) so while it may be useful for the development version of the board it will
+not go on any production variant.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">NOTE: This post is not finished yet but instead of keeping it as a hidden draft I have decided to publish it anyway - mostly to serve as a notebook to myself while I work on the project.</summary></entry><entry><title type="html">[DRAFT] A most basic GPU - part 1</title><link href="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html" rel="alternate" type="text/html" title="[DRAFT] A most basic GPU - part 1" /><published>2021-03-26T00:00:00+01:00</published><updated>2021-03-26T00:00:00+01:00</updated><id>https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
+draft I have decided to publish it anyway. Right now I am not working on this
+project but if/when I return I will try to update the post with the progress.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;Putting the MyC64 project on hold for a while.&lt;/p&gt;
+
+&lt;p&gt;Recently I have seen updates on the new PS1 FPGA core by
+&lt;a href=&quot;https://twitter.com/laxer3a&quot;&gt;@Laxer3A&lt;/a&gt;, which I of course can’t help to find
+interesting. I have never owned a PS1 and honestly never cared much about it
+until now.  It turns out that graphics wise it had have some rather interesting
+design choices. More preciecely the graphics pipeline is based around fixed
+point integer representation so there are no floating point numbers involved at
+all.  Further more there is no z-buffer. In fact Modern Vintage Gamer has put
+together a short video describing these limitations that is well worth a watch
+&lt;a href=&quot;https://www.youtube.com/watch?v=x8TO-nrUtSI&quot;&gt;Why PlayStation 1 Graphics Warped and Wobbled so much |
+MVG&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;So apparently it was possible to reach commercial success with a system like
+this some 25 years ago. Nowadays probably not so much but it is still
+interesting to see that one can get away with these limitations and still get
+reasonable results.&lt;/p&gt;
+
+&lt;p&gt;For me this suggests a very basic GPU may actually be within reach as a fun
+FPGA project.&lt;/p&gt;
+
+&lt;p&gt;The rasterization algorithm is very well described in &lt;a href=&quot;https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation&quot;&gt;Rasterization: a
+Practical
+Implementation&lt;/a&gt;
+over at &lt;a href=&quot;https://www.scratchapixel.com/&quot;&gt;Scratch Pixel&lt;/a&gt;. What follows below
+will be some thoughts that I had while reading that and thinking about a simple
+design that could be put inside a FPGA.&lt;/p&gt;
+
+&lt;h2 id=&quot;project-scope&quot;&gt;Project scope&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Fixed pipeline (duh, not likely to implement programmable shaders any time soon)&lt;/li&gt;
+  &lt;li&gt;Fixed point integers only (no floating point)&lt;/li&gt;
+  &lt;li&gt;Flat shading only (triangles filled with solid color)&lt;/li&gt;
+  &lt;li&gt;No z-buffer (geometry has to be sorted before sent down the pipeline)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;rasterization-stage&quot;&gt;Rasterization stage&lt;/h2&gt;
+
+&lt;p&gt;&lt;em&gt;Rasterization is the process of finding pixel coverage for a given triangle&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;This stage is about finding out, for a given triangle, what screen pixels are
+covered by that triangle. Since well behaved triangles contain significantly
+more pixels than vertices (three) this step is likely to be the main bottle
+neck of the system.&lt;/p&gt;
+
+&lt;p&gt;Determining if a pixel is inside a triangle is done by checking if it falls on
+the &lt;em&gt;right&lt;/em&gt; side of all three edges.&lt;/p&gt;
+
+&lt;p&gt;Intuitively it seems that the cross product could be used to determine if a
+point is on the left-side or right-side of an edge. Now screen space is 2d and
+the cross product is a 3d only concept but one can of course limit the vectors
+to be contained in the plane &lt;script type=&quot;math/tex&quot;&gt;z=0&lt;/script&gt;. In that case the well known cross
+product&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;a \times b = (a_2b_3-a_3b_2, a_3b_1-a_1b_3, a_1b_2-a_2b_1)&lt;/script&gt;
+
+&lt;p&gt;simply becomes&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;a_1b_2-a_2b_1&lt;/script&gt;
+
+&lt;p&gt;which in rasterization is known as an &lt;em&gt;edge function&lt;/em&gt;. It is worth noting that
+the &lt;em&gt;edge function&lt;/em&gt; is in fact the magnitude of the cross product of the two vectors
+in the &lt;script type=&quot;math/tex&quot;&gt;z=0&lt;/script&gt; plane (so it has something to do with area).&lt;/p&gt;
+
+&lt;p&gt;So the &lt;em&gt;edge function&lt;/em&gt; for edge &lt;script type=&quot;math/tex&quot;&gt;u \to v&lt;/script&gt; and arbitrary point &lt;script type=&quot;math/tex&quot;&gt;p&lt;/script&gt; is&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;E_{u \to v}(p) =  (v_x - u_x)(p_y - u_y) - (v_y - u_y)(p_x - u_x)&lt;/script&gt;
+
+&lt;p&gt;now condsider what happens if an offset &lt;script type=&quot;math/tex&quot;&gt;o&lt;/script&gt; is applied&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{eqnarray}
+E_{u \to v}(p+o) &amp;=&amp; (v_x - u_x)(p_y + o_y - u_y) - (v_y - u_y)(p_x + o_x - u_x) \\
+                 &amp;=&amp; E_{u \to v}(p) + (v_x - u_x)o_y - (v_y - u_y)o_x
+\end{eqnarray} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;in other words once we have computed &lt;script type=&quot;math/tex&quot;&gt;E_{u \to v}(p)&lt;/script&gt; we can explore
+neighbouring pixels by simply adding and subtracting &lt;script type=&quot;math/tex&quot;&gt;(v_x - u_x)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;(v_y - u_y)&lt;/script&gt; both of which we have already computed for &lt;script type=&quot;math/tex&quot;&gt;E_{u \to v}(p)&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;This is a significant improvement as it allows us to replace two
+multiplications and five additions with a single addition.&lt;/p&gt;
+
+&lt;p&gt;Naively every pixel of the screen need to be checked against each triangle for
+coverage but obviously one often do much better by simply checking the bounding
+box of the triangle. Either way the amount of pixels is significant so this
+last result is really important as it will allow us to check multiple pixels
+each cycle at a reasonable cost in hardware.&lt;/p&gt;
+
+&lt;p&gt;The idea is to consider quads of 2x2 pixels. Begin by computing the &lt;script type=&quot;math/tex&quot;&gt;E_{u \to
+v}(p)&lt;/script&gt; for the pixel in the upper left corner of the bounding box. After that
+add/subtract as described above to get the remaining three pixels of the quad.
+This should preferably be done in sequence not to wast too much resources. Once
+the first quad is done the neighbouring quad in &lt;script type=&quot;math/tex&quot;&gt;x&lt;/script&gt; direction is obtained
+by simple addition of the precomputed &lt;script type=&quot;math/tex&quot;&gt;2(v_y - u_y)&lt;/script&gt; (keeping in mind that
+we get the shift by one for free in hardware by simply hard-wiring in a zero at
+the lsb). So we begin with sequential computations for the first quad but after
+that we reach a steady state where we evaluate an entire quad each cycle.&lt;/p&gt;
+
+&lt;p&gt;Still though every triangle has three edges so evaluating a quad every cycle
+means that 12 adders need to be instantiated. If that results in too high
+resource utilization we may need to cut down a bit.&lt;/p&gt;
+
+&lt;h2 id=&quot;first-milestone&quot;&gt;First milestone&lt;/h2&gt;
+
+&lt;p&gt;Rasterize fixed triangle over DVI/HDMI. Use block RAMs for frame buffer.
+Suitable resolution 320x240. Try quad rastierizer and check resource
+utilization in FPGA. If it works then great otherwise scale down.&lt;/p&gt;
+
+&lt;h2 id=&quot;geometry-processing&quot;&gt;Geometry processing&lt;/h2&gt;
+
+&lt;p&gt;Eventually we could try floating point format for the geometry processing.
+Since geometry processing is not expected to be a bottleneck compared to pixel
+rasterization one can probably afford a completely sequential implementation
+and hence floating point is within reach. Also the dynamic range of floating
+point makes more sense when it comes to vertices compared to pixel coordinates
+in raster space (which are inherently integer).&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.cs.ucf.edu/~dcm/Teaching/CDA5106-Fall2015/Appendices/appendix_j.pdf&quot;&gt;Computer aritmetic appendix from Computer Architecture: A Quantitative Approach&lt;/a&gt;&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><category term="rtl" /><category term="verilog" /><category term="gpu" /><summary type="html">NOTE: This post is not finished yet but instead of keeping it as a hidden draft I have decided to publish it anyway. Right now I am not working on this project but if/when I return I will try to update the post with the progress.</summary></entry><entry><title type="html">Commodore 64 experiments part-3 (FPGA)</title><link href="https://www.zzzconsulting.se/2020/09/26/c64-part-3.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-3 (FPGA)" /><published>2020-09-26T00:00:00+02:00</published><updated>2020-09-26T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/09/26/c64-part-3</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/09/26/c64-part-3.html">&lt;p&gt;I figured the natural next step of our MyC64 journey would be to get the
 emulator running on a FPGA, or more specifically the ULX3S board. Doing so
 requires a few support systems such as keyboard input and visual output to be
 in place so let us use this post to look at how that can be accomplished.&lt;/p&gt;
@@ -223,7 +553,7 @@ capabilities.&lt;/p&gt;
   &lt;li&gt;USB device loses sync (and host aborts after tree packets with no response) so longer transfers often fail. Works with retry though.&lt;/li&gt;
   &lt;li&gt;“Static noise” moves past the screen occasionally (seems to be dependent on when reset is released). Believed to be limitations of SDRAM (traces on PCB) operating at 125MHz.&lt;/li&gt;
   &lt;li&gt;Sometimes the &lt;code class=&quot;highlighter-rouge&quot;&gt;.prg&lt;/code&gt; appears to get corrupted when loaded over USB.&lt;/li&gt;
-&lt;/ul&gt;</content><author><name></name></author><summary type="html">I figured the natural next step of our MyC64 journey would be to get the emulator running on a FPGA, or more specifically the ULX3S board. Doing so requires a few support systems such as keyboard input and visual output to be in place so let us use this post to look at how that can be accomplished.</summary></entry><entry><title type="html">Commodore 64 experiments part-2 (SID)</title><link href="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-2 (SID)" /><published>2020-08-22T00:00:00+02:00</published><updated>2020-08-22T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/08/22/c64-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html">&lt;p&gt;&lt;strong&gt;NOTE: I wrote the majority of this post (and the implementation) about a month
+&lt;/ul&gt;</content><author><name></name></author><category term="hardware" /><category term="c64" /><summary type="html">I figured the natural next step of our MyC64 journey would be to get the emulator running on a FPGA, or more specifically the ULX3S board. Doing so requires a few support systems such as keyboard input and visual output to be in place so let us use this post to look at how that can be accomplished.</summary></entry><entry><title type="html">Commodore 64 experiments part-2 (SID)</title><link href="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-2 (SID)" /><published>2020-08-22T00:00:00+02:00</published><updated>2020-08-22T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/08/22/c64-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/08/22/c64-part-2.html">&lt;p&gt;&lt;strong&gt;NOTE: I wrote the majority of this post (and the implementation) about a month
 ago but never got around to publish it until now.&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;After the last post’s progress of getting the system to boot and being able to
@@ -301,7 +631,7 @@ ReSID&lt;/a&gt; generated by the well
 known &lt;a href=&quot;https://vice-emu.sourceforge.io/&quot;&gt;VICE&lt;/a&gt; emulator. Still it is good
 enough as a first approximation and allows us to move on an focus on other
 areas. That concludes this post. As always if you have questions or feedback -
-leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">NOTE: I wrote the majority of this post (and the implementation) about a month ago but never got around to publish it until now.</summary></entry><entry><title type="html">Commodore 64 experiments part-1</title><link href="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-1" /><published>2020-07-12T00:00:00+02:00</published><updated>2020-07-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/07/12/c64-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html">&lt;p&gt;When I was a kid back in the 80s my parents bought our family’s first computer,
+leave a comment below!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><category term="c64" /><summary type="html">NOTE: I wrote the majority of this post (and the implementation) about a month ago but never got around to publish it until now.</summary></entry><entry><title type="html">Commodore 64 experiments part-1</title><link href="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html" rel="alternate" type="text/html" title="Commodore 64 experiments part-1" /><published>2020-07-12T00:00:00+02:00</published><updated>2020-07-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/07/12/c64-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/07/12/c64-part-1.html">&lt;p&gt;When I was a kid back in the 80s my parents bought our family’s first computer,
 a Commodore 64 with a datasette station. I still have fond memories of that
 marvelous little machine. At the time though I was only ten years old so my
 mental capacity (and likely also patience) was quite limited. I never managed
@@ -471,7 +801,7 @@ different directions. Here are some ideas that come to mind&lt;/p&gt;
   &lt;li&gt;Rewrite in &lt;a href=&quot;https://github.com/m-labs/nmigen&quot;&gt;nMigen&lt;/a&gt;. For quite some time now I have been wanting to try out nMigen on a project and this might be a good opportunity.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;That is it for this post. If you have questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited. I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper. But that almost never worked anyway.</summary></entry><entry><title type="html">Building a USB device part-2</title><link href="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html" rel="alternate" type="text/html" title="Building a USB device part-2" /><published>2020-05-16T00:00:00+02:00</published><updated>2020-05-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html">&lt;p&gt;In this post we pick up where we left of last time and start looking at the
+&lt;p&gt;That is it for this post. If you have questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><category term="c64" /><summary type="html">When I was a kid back in the 80s my parents bought our family’s first computer, a Commodore 64 with a datasette station. I still have fond memories of that marvelous little machine. At the time though I was only ten years old so my mental capacity (and likely also patience) was quite limited. I never managed to do much with it besides playing games and typing in the occasional BASIC listing from the Sunday newspaper. But that almost never worked anyway.</summary></entry><entry><title type="html">Building a USB device part-2</title><link href="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html" rel="alternate" type="text/html" title="Building a USB device part-2" /><published>2020-05-16T00:00:00+02:00</published><updated>2020-05-16T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/05/16/usb-dev-part-2.html">&lt;p&gt;In this post we pick up where we left of last time and start looking at the
 design and implementation of the USB device that I have been working on. First
 things first though, the code for the entire project can be found in &lt;a href=&quot;https://github.com/markus-zzz/usbdev/tree/dev&quot;&gt;this
 github repository&lt;/a&gt;. The reader
@@ -800,7 +1130,7 @@ requests. Likely some RTL bugs will show up in the process but we will try to
 deal with them when they do.&lt;/p&gt;
 
 &lt;p&gt;That is it for today. As always if you have questions or feedback - leave a
-comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we pick up where we left of last time and start looking at the design and implementation of the USB device that I have been working on. First things first though, the code for the entire project can be found in this github repository. The reader is advised to have that readily available.</summary></entry><entry><title type="html">Sigrok and thoughts on building a USB device</title><link href="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html" rel="alternate" type="text/html" title="Sigrok and thoughts on building a USB device" /><published>2020-04-25T00:00:00+02:00</published><updated>2020-04-25T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html">&lt;p&gt;Last summer I bought a &lt;a href=&quot;https://www.dreamsourcelab.com/product/dslogic-plus/&quot;&gt;DSLogic
+comment below!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">In this post we pick up where we left of last time and start looking at the design and implementation of the USB device that I have been working on. First things first though, the code for the entire project can be found in this github repository. The reader is advised to have that readily available.</summary></entry><entry><title type="html">Sigrok and thoughts on building a USB device</title><link href="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html" rel="alternate" type="text/html" title="Sigrok and thoughts on building a USB device" /><published>2020-04-25T00:00:00+02:00</published><updated>2020-04-25T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev</id><content type="html" xml:base="https://www.zzzconsulting.se/2020/04/25/sigrok-usb-dev.html">&lt;p&gt;Last summer I bought a &lt;a href=&quot;https://www.dreamsourcelab.com/product/dslogic-plus/&quot;&gt;DSLogic
 Plus&lt;/a&gt; USB-based Logic
 Analyzer, about 6 months ago I tried it for the first time and today I hope to
 finish this post describing the experience. The thing comes with its own
@@ -1037,7 +1367,7 @@ for decode and verification. It is just a matter of having simulation produce a
 
 &lt;p&gt;That concludes this post. Next time we will look closer at the design of our
 USB device, its simulation environment and traffic generator. Questions or
-feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Last summer I bought a DSLogic Plus USB-based Logic Analyzer, about 6 months ago I tried it for the first time and today I hope to finish this post describing the experience. The thing comes with its own analyzer software running on the PC called DSView, but I never bothered trying that and instead went with the better known sigrok (of which DSView is a derivative).</summary></entry><entry><title type="html">Designing retro gaming hardware - part 1</title><link href="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html" rel="alternate" type="text/html" title="Designing retro gaming hardware - part 1" /><published>2019-08-12T00:00:00+02:00</published><updated>2019-08-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html">&lt;p&gt;In this post we visit my latest pet project - that is building a custom 80’s
+feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">Last summer I bought a DSLogic Plus USB-based Logic Analyzer, about 6 months ago I tried it for the first time and today I hope to finish this post describing the experience. The thing comes with its own analyzer software running on the PC called DSView, but I never bothered trying that and instead went with the better known sigrok (of which DSView is a derivative).</summary></entry><entry><title type="html">Designing retro gaming hardware - part 1</title><link href="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html" rel="alternate" type="text/html" title="Designing retro gaming hardware - part 1" /><published>2019-08-12T00:00:00+02:00</published><updated>2019-08-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html">&lt;p&gt;In this post we visit my latest pet project - that is building a custom 80’s
 style game console. Much fun ahead :)&lt;/p&gt;
 
 &lt;h2 id=&quot;background&quot;&gt;Background&lt;/h2&gt;
@@ -1326,7 +1656,7 @@ development cycle).&lt;/li&gt;
   &lt;li&gt;Fix a million bugs :)&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;That is it for now. Hopefully I will make some more progress soon!&lt;/p&gt;</content><author><name></name></author><summary type="html">In this post we visit my latest pet project - that is building a custom 80’s style game console. Much fun ahead :)</summary></entry><entry><title type="html">A look at retro gaming hardware</title><link href="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html" rel="alternate" type="text/html" title="A look at retro gaming hardware" /><published>2019-06-26T00:00:00+02:00</published><updated>2019-06-26T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html">&lt;p&gt;Back when I was a kid in the late 80’s and early 90’s I had a &lt;a href=&quot;https://en.wikipedia.org/wiki/Commodore_64&quot;&gt;Commodore
+&lt;p&gt;That is it for now. Hopefully I will make some more progress soon!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><category term="rtl" /><category term="verilog" /><category term="game" /><category term="retro" /><summary type="html">In this post we visit my latest pet project - that is building a custom 80’s style game console. Much fun ahead :)</summary></entry><entry><title type="html">A look at retro gaming hardware</title><link href="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html" rel="alternate" type="text/html" title="A look at retro gaming hardware" /><published>2019-06-26T00:00:00+02:00</published><updated>2019-06-26T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html">&lt;p&gt;Back when I was a kid in the late 80’s and early 90’s I had a &lt;a href=&quot;https://en.wikipedia.org/wiki/Commodore_64&quot;&gt;Commodore
 64&lt;/a&gt;, a &lt;a href=&quot;https://en.wikipedia.org/wiki/Amiga_500&quot;&gt;Amiga
 500&lt;/a&gt; and eventually a &lt;a href=&quot;https://en.wikipedia.org/wiki/Amiga_1200&quot;&gt;Amiga
 1200&lt;/a&gt;. Now besides playing games and
@@ -1405,7 +1735,7 @@ extracting VGA signals from the model, storing to a JS frame buffer for display
 on the web page.&lt;/p&gt;
 
 &lt;p&gt;That concludes this post. Hopefully it will mark the start of a new series
-diving into the details of designing some old school video game hardware.&lt;/p&gt;</content><author><name></name></author><summary type="html">Back when I was a kid in the late 80’s and early 90’s I had a Commodore 64, a Amiga 500 and eventually a Amiga 1200. Now besides playing games and calling BBSs I never got around to do any programming on these devices. Something that I quite regret now in grown age when I realize how beautiful, and in a way simple, these machines were. Well to be honest I did play around a bit with BASIC but as BASIC is well BASIC I never really got a hang of anything and didn’t understand much either. It wasn’t until years later when I finally learned C that things started to make sense.</summary></entry><entry><title type="html">Building a modem - part 2</title><link href="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html" rel="alternate" type="text/html" title="Building a modem - part 2" /><published>2018-08-11T00:00:00+02:00</published><updated>2018-08-11T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+diving into the details of designing some old school video game hardware.&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><category term="rtl" /><category term="verilog" /><category term="game" /><category term="retro" /><summary type="html">Back when I was a kid in the late 80’s and early 90’s I had a Commodore 64, a Amiga 500 and eventually a Amiga 1200. Now besides playing games and calling BBSs I never got around to do any programming on these devices. Something that I quite regret now in grown age when I realize how beautiful, and in a way simple, these machines were. Well to be honest I did play around a bit with BASIC but as BASIC is well BASIC I never really got a hang of anything and didn’t understand much either. It wasn’t until years later when I finally learned C that things started to make sense.</summary></entry><entry><title type="html">Building a modem - part 2</title><link href="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html" rel="alternate" type="text/html" title="Building a modem - part 2" /><published>2018-08-11T00:00:00+02:00</published><updated>2018-08-11T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;In this post we return to our modem building project to checkup on the
 progress.&lt;/p&gt;
 
@@ -1606,270 +1936,4 @@ added.&lt;/p&gt;
   &lt;li&gt;Finally, a physical audio loop-back wire on the ZedBoard&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;That is it for this post. Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction In this post we return to our modem building project to checkup on the progress.</summary></entry><entry><title type="html">MyCC - an introduction</title><link href="https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html" rel="alternate" type="text/html" title="MyCC - an introduction" /><published>2018-08-04T00:00:00+02:00</published><updated>2018-08-04T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/04/mycc-an-introduction.html">&lt;p&gt;Today we will be looking at a prototype toy C compiler that I have been working
-on every now and then for a while. Of course it is nowhere near complete nor
-even useful for any particular purpose at all besides perhaps my own amusement
-and possibly that of others.&lt;/p&gt;
-
-&lt;p&gt;Still I think that it serves as a meaningful exercise to start from a clean
-slate every now and then and do things the way that you feel are right (which
-may be the simplest or most naive way possible) and not being burdened by any
-particular framework.&lt;/p&gt;
-
-&lt;p&gt;Say for instance that you read this really interesting article about
-implementing a SSA based register allocator and now you want to try it out. So
-you turn to a well established compiler framework like LLVM or GCC. Okay, so
-the code base is huge and the compiler build time is insane and you just wanted
-to play around a bit. Clearly that situation is not ideal and at these times a
-much much simpler and smaller framework would be useful. Preferably one that
-still preserves some of the good ideas from the larger ones.&lt;/p&gt;
-
-&lt;p&gt;Now I do not want to bash on big compiler frameworks (looking your way LLVM)
-but the fact remains that these huge frameworks are not suitable for every
-possible purpose and depending on what your intended purpose is they may in
-fact make things a lot more complicated than they need to be.&lt;/p&gt;
-
-&lt;h2 id=&quot;mycc&quot;&gt;MyCC&lt;/h2&gt;
-
-&lt;p&gt;The design of MyCC borrows heavily from LLVM. One of the best things about LLVM
-is the use of a very well defined intermediate representation in the middle
-end. This LLVM IR is linearised and resembles assembly language so much that
-they in fact call it &lt;a href=&quot;https://llvm.org/docs/LangRef.html&quot;&gt;the LLVM Assembly
-Language&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;As stated in that document one of the design criteria for the LLVM IR was to
-represents well both in graph form in compiler memory as well as in human
-readable textual form in dump files. The importance of the latter cannot be
-overstated.&lt;/p&gt;
-
-&lt;p&gt;While a well defined IR allows us to import and export the entire compilation
-state between passes it also allows us to create a virtual machine that can
-execute this IR. Together these two provide for the development of some very
-powerful testing tool.&lt;/p&gt;
-
-&lt;h2 id=&quot;preparations&quot;&gt;Preparations&lt;/h2&gt;
-&lt;p&gt;To acquire the code base and build the compiler follow these steps. Note that
-the compiler build time for a full debug build is just a second or two (which
-is hardly surprising since there is so little code and it is not C++).&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;export ZZZ_ROOT=some/path
-cd $ZZZ_ROOT
-git clone https://github.com/markus-zzz/mycc.git
-mkdir $ZZZ_ROOT/mycc/build
-cd $ZZZ_ROOT/mycc/build
-make -f $ZZZ_ROOT/mycc/src/Makefile -j8
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Next we run the test suite by executing the following commands.&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd $ZZZ_ROOT/mycc/test
-./runner.pl
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Now what just happened here is actually quite interesting so let’s look into
-that. If we enforce the convention that each of our tests shall return a 32 bit
-integer as its result (and preferably not just &lt;em&gt;true&lt;/em&gt;/&lt;em&gt;false&lt;/em&gt; as that would
-increase the risk of falsely indicating that a test passes due to a miscompile)
-we can do the following.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Use a reference compiler (e.g. gcc) to produce a known good value&lt;/li&gt;
-  &lt;li&gt;Use the IR simulator to verify that the IR simulates to the same good value
-after each pass&lt;/li&gt;
-  &lt;li&gt;Verify that the final executable produces the good value&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Of course this testing is not immune to all kind of problems but I would argue
-that it provides a pretty good coverage for rather little effort once you have
-the basic machinery in place. To add a new test, simply add a well defined C
-code snippet that produces an integer as result.&lt;/p&gt;
-
-&lt;h2 id=&quot;a-tour-down-the-compilation-pipeline&quot;&gt;A tour down the compilation pipeline&lt;/h2&gt;
-&lt;p&gt;Let us take a look at a simple example and see how the code gets transformed as
-we move further down the compilation pipeline. Consider something simple such
-as &lt;em&gt;dot.c&lt;/em&gt; given below&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;int dot(int *a, int *b, int len)
-{
-	int i;
-	int sum = 0;
-	for (i = 0; i &amp;lt; len; i = i + 1) {
-		sum = sum + a[i] * b[i];
-	}
-
-	return sum;
-}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Begin by invoking the compiler driver as in&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;./build/driver --dump-all dot.c
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;doing so should produce a set of dump files where the intermediate
-representation at the given stage is dumped. These files are very important for
-debugging since they often times allow you to pinpoint at what stage things go
-wrong&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.zzzconsulting.se/download/mycc-an-introduction/ast_00_pristine.txt&quot;&gt;ast_00_pristine.txt&lt;/a&gt; -
-When the front end parses the input code it produces an Abstract Syntax Tree
-(AST). This representation is extremely verbose and essentially contains an AST
-node for each grammar rule applied.&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.zzzconsulting.se/download/mycc-an-introduction/ir_00_pristine.txt&quot;&gt;ir_00_pristine.txt&lt;/a&gt; -
-Middle end Intermediate Representation (what we simply call IR) immediately
-after being translated from AST.&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.zzzconsulting.se/download/mycc-an-introduction/ir_01_mem2reg.txt&quot;&gt;ir_01_mem2reg.txt&lt;/a&gt; -
-IR after applying the &lt;em&gt;mem2reg&lt;/em&gt; optimization pass.&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.zzzconsulting.se/download/mycc-an-introduction/cg_00_iselect.txt&quot;&gt;cg_00_iselect.txt&lt;/a&gt; -
-Code Generator intermediate representation after selecting machine instructions
-for the middle end IR. Note that this IR is using virtual registers and is
-still in SSA form.&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.zzzconsulting.se/download/mycc-an-introduction/cg_01_regalloc.txt&quot;&gt;cg_01_regalloc.txt&lt;/a&gt; -
-Machine instructions after allocating physical registers.&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.zzzconsulting.se/download/mycc-an-introduction/cg_02_branch_predication.txt&quot;&gt;cg_02_branch_predication.txt&lt;/a&gt; -
-Machine instructions after performing branch predication optimization pass.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
-&lt;p&gt;That is it for this post. When we return to MyCC in a later post I intend to
-write about the implementation of its SSA based register allocator.&lt;/p&gt;</content><author><name></name></author><summary type="html">Today we will be looking at a prototype toy C compiler that I have been working on every now and then for a while. Of course it is nowhere near complete nor even useful for any particular purpose at all besides perhaps my own amusement and possibly that of others.</summary></entry><entry><title type="html">Building a modem - part 1</title><link href="https://www.zzzconsulting.se/2018/08/03/build-a-modem-part-1.html" rel="alternate" type="text/html" title="Building a modem - part 1" /><published>2018-08-03T00:00:00+02:00</published><updated>2018-08-03T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/03/build-a-modem-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/03/build-a-modem-part-1.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-&lt;p&gt;This is the first post of a new series where we are going to attempt the build
-a simple modem. In other words we will try to build a digital communications
-link where the sender modulates a communication message, a stream of bytes, to
-make it suitable for transmission over a given media and the receiver
-demodulates to recover the original message.&lt;/p&gt;
-
-&lt;p&gt;Since your author is no expert (to put it mildly) in the fields of
-&lt;em&gt;communications theory&lt;/em&gt; or &lt;em&gt;signal processing&lt;/em&gt; this post series will not focus
-on the theoretical details of that but instead refer to the excellent
-presentation of those matters over at &lt;a href=&quot;http://dspillustrations.com&quot;&gt;DSP
-Illustrations&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;I envision the complete system to run on a &lt;a href=&quot;http://zedboard.org/&quot;&gt;ZedBoard&lt;/a&gt; (or
-actually two to make it more interesting) and use the onboard audio codec (i.e.
-sound waves in the range 20Hz-20kHz) as the transmission media. However the
-actual hardware is not really important to follow along as we will rely
-extensively on a QEMU / RTL simulation environment.&lt;/p&gt;
-
-&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
-&lt;p&gt;Let’s begin by presenting an overview.&lt;/p&gt;
-
-&lt;h3 id=&quot;linux-device-driver&quot;&gt;Linux device driver&lt;/h3&gt;
-&lt;p&gt;A Linux device driver presents the device node &lt;em&gt;/dev/zzzmodem&lt;/em&gt;&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;&lt;em&gt;write&lt;/em&gt; - queues a message for transmission. A single call to &lt;em&gt;write&lt;/em&gt; results
-in a single message queued.&lt;/li&gt;
-  &lt;li&gt;&lt;em&gt;read&lt;/em&gt; - returns a received message. A call to &lt;em&gt;read&lt;/em&gt; returns a single
-received message (i.e. the buffer size given must be equal to the maximal
-transmission unit (MTU)).&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Since the &lt;em&gt;read&lt;/em&gt;/&lt;em&gt;write&lt;/em&gt; interface is based on complete messages the driver
-should allow for multiple processes to &lt;em&gt;read&lt;/em&gt; and &lt;em&gt;write&lt;/em&gt; at the same time.&lt;/p&gt;
-
-&lt;h3 id=&quot;modem-block-memory-mapped-interface&quot;&gt;Modem block memory mapped interface&lt;/h3&gt;
-&lt;p&gt;The modem block exposes two ring buffers in its address map. One for
-transmitting (TX) and one for receiving (RX), each of them are accompanied with
-read and write pointers.&lt;/p&gt;
-
-&lt;p&gt;For TX a device driver &lt;em&gt;write&lt;/em&gt; will result in one full message being put in
-the TX ring buffer. If there is no room then the driver will put the writing
-process to sleep. The read pointer updates in one go as the entire message is
-sent. An interrupt can be generated whenever the read pointer updates.&lt;/p&gt;
-
-&lt;p&gt;For RX a device driver &lt;em&gt;read&lt;/em&gt; will result in one full message being lifted from
-the RX ring buffer. If there are no message to lift then the calling process
-will be put to sleep. An interrupt can be generated when the write pointer
-updates. The write pointer will only be updated when a full message is put in
-the buffer. If the buffer overruns a counter will be incremented and possibly
-interrupt generated.&lt;/p&gt;
-
-&lt;p&gt;Everything is 32 bit aligned inside the ring buffers. A message begins with a
-32 bit header indicating the length of the message. The next message in the
-ring buffer will begin (i.e. have its header) at this offset but aligned to a
-32 bit boundary.&lt;/p&gt;
-
-&lt;p&gt;The following suggested address map of our modem device provides the essentials
-and fits well in 4KiB (i.e. 0x1000 bytes).&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;Begin&lt;/th&gt;
-      &lt;th&gt;End&lt;/th&gt;
-      &lt;th&gt;Access&lt;/th&gt;
-      &lt;th&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x000&lt;/td&gt;
-      &lt;td&gt;0x3ff&lt;/td&gt;
-      &lt;td&gt;W&lt;/td&gt;
-      &lt;td&gt;TX ring buffer (1 KiB)&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x400&lt;/td&gt;
-      &lt;td&gt;0x7ff&lt;/td&gt;
-      &lt;td&gt;R&lt;/td&gt;
-      &lt;td&gt;RX ring buffer (1 KiB)&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x800&lt;/td&gt;
-      &lt;td&gt;0x803&lt;/td&gt;
-      &lt;td&gt;R&lt;/td&gt;
-      &lt;td&gt;TX read pointer&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x804&lt;/td&gt;
-      &lt;td&gt;0x807&lt;/td&gt;
-      &lt;td&gt;R/W&lt;/td&gt;
-      &lt;td&gt;TX write pointer&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x808&lt;/td&gt;
-      &lt;td&gt;0x80b&lt;/td&gt;
-      &lt;td&gt;R/W&lt;/td&gt;
-      &lt;td&gt;RX read pointer&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x80c&lt;/td&gt;
-      &lt;td&gt;0x80f&lt;/td&gt;
-      &lt;td&gt;R&lt;/td&gt;
-      &lt;td&gt;RX write pointer&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;Access permissions are what one would expect, that is software cannot write to
-registers/memory owned by the modem block. All registers should be readable by
-software though to ease debugging. Writes to a read-only address are simply
-ignored.&lt;/p&gt;
-
-&lt;h3 id=&quot;signal-processing&quot;&gt;Signal processing&lt;/h3&gt;
-&lt;p&gt;The modulation of choice for our modem will be Quadrature Phase Shift Keying
-(QPSK), meaning that each &lt;em&gt;symbol&lt;/em&gt; will convey two data bits. A &lt;em&gt;symbol mapper&lt;/em&gt;
-will take care of the straight forward task of turning our byte stream message
-into a stream of QPSK symbols. For these symbols we then intend to apply the
-signal processing chain described
-&lt;a href=&quot;http://dspillustrations.com/pages/posts/misc/baseband-up-and-downconversion-and-iq-modulation.html&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Of course a lot more needs to be said about that and we will constantly return
-to this topic as needed. For now though, for the purpose of an overview, this
-should be enough.&lt;/p&gt;
-
-&lt;h2 id=&quot;implementation&quot;&gt;Implementation&lt;/h2&gt;
-&lt;p&gt;As there is certainly no shortage of work to be done for this project how do we
-decide what to do first?&lt;/p&gt;
-
-&lt;p&gt;Well, let us approach this from the top down so I say let’s begin with the ring
-buffers and their software interface.&lt;/p&gt;
-
-&lt;p&gt;To quickly have something that is testable we can set our first goal as
-follows: Implement RX and TX ring buffers and tie them together in loop back
-mode with some silly action like transforming lowercase letters to uppercase.&lt;/p&gt;
-
-&lt;p&gt;Having those parts in place early will hopefully allow us to develop a more
-sophisticated testing framework that will come in handy later on when we
-approach the more mathematical areas further down the pipe. As well as giving
-us additional mileage on our perhaps mundane but oh so error prone byte
-shoveling machinery.&lt;/p&gt;
-
-&lt;p&gt;That’s it for this post! When we return in the next post we will look into the
-details of implementing the ‘byte shoveling machinery’.&lt;/p&gt;
-
-&lt;p&gt;Until then, as usual, if there are questions or feedback - leave a comment
-below!&lt;/p&gt;</content><author><name></name></author><summary type="html">Introduction This is the first post of a new series where we are going to attempt the build a simple modem. In other words we will try to build a digital communications link where the sender modulates a communication message, a stream of bytes, to make it suitable for transmission over a given media and the receiver demodulates to recover the original message.</summary></entry></feed>
+&lt;p&gt;That is it for this post. Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><category term="rtl" /><category term="verilog" /><category term="modem" /><summary type="html">Introduction In this post we return to our modem building project to checkup on the progress.</summary></entry></feed>
