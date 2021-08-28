@@ -159,6 +159,21 @@ list below and report the results.</p>
   <li><a href="https://www.youtube.com/watch?v=dThZDl-QG5s">https://www.youtube.com/watch?v=dThZDl-QG5s</a></li>
 </ul>
 
+<p>I did a second try run using the stencil after having acquired
+<a href="https://www.oshstencils.com/">https://www.oshstencils.com/</a> excellent PCB fixture jig. To me having the
+board properly held in place by jig helped a lot when applying the paste. Of
+course one can get a similar effect using a few scrap PCBs but I don’t really
+have many of those lying around that are the right size and besides these
+brackets just cost a few dollars.</p>
+
+<p>As far as I can tell the stencil alignment and paste coverage turned out well
+and the end result looks good. So with this I feel reasonably confident that I
+will also be able to handle the larger FPGA BGA with its 0.8mm pitch (the
+HyperRAM BGA has a 1.0mm pitch). Again I still have not gotten around to
+actually verify that these modules work so maybe I should not say too much.</p>
+
+<p><img src="/download/pcb/hyperram-bga-pcb-2.jpg" alt="HyperRAM BGA second attempt" /></p>
+
 <h3 id="stage-2---max9850">Stage 2 - MAX9850</h3>
 <p>2-layer board.</p>
 
@@ -282,6 +297,36 @@ not go on any production variant.</p>
   </li>
 </ul>
 
+<p>In fact since FTDI appears to be a generally unlikable company it would be a
+good thing to try to not use their products at all. So instead of putting an
+overpriced FTDI chip on each board let us use an external JTAG cable for
+programming and only put a JTAG pin-header on the PCB (with pull-down on TCK
+but nothing else). Once the board has been “factory” programmed via JTAG
+subsequent updates could be handled via the USB interface.  During FPGA power
+up the configuration bitstream is read from the SPI flash but after that the
+SPI interface pins are controllable by the FPGA fabric (according to
+documentation). So in theory once our FPGA core is up and running we can
+receive a new configuration bitstream via our USB interface and then write that
+to the SPI flash so that it will be used during the following FPGA power up
+sequence.</p>
+
+<h4 id="pcb-manufacturing">PCB manufacturing</h4>
+
+<p>The chosen ECP5 BGA package is 0.8mm pitch so in order to escape route the
+inner rings (mostly power and gnd) rather small vias need to be placed (via
+diameter needs to be less than 0.55mm). Unfortunately it turns out that making
+such small vias exceeds the capabilities of Aisler so a different PCB service
+needs to be used. These vias are just within the capabilites of the Oshpark so
+we have to turn to them instead.</p>
+
+<p>When it comes to PCB services the order of preference for me would be Aisler
+(Europe), Oshpark (US), JLCPCB and PCBWAY (China).</p>
+
+<h4 id="pcb-layout">PCB layout</h4>
+
+<p>Thinking that we can mount the switch mode voltage regulators and support
+circuitry on the back side of the board. Also if possible decoupling capacitors
+for the BGA can go on the back side as well.</p>
 
   </div><div id="disqus_thread"></div>
   <script>

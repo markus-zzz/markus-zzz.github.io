@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2021-08-02T20:20:30+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">[DRAFT] Making some PCBs - part 1</title><link href="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html" rel="alternate" type="text/html" title="[DRAFT] Making some PCBs - part 1" /><published>2021-06-08T00:00:00+02:00</published><updated>2021-06-08T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2021/06/08/making-pcbs</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2021-08-28T18:18:51+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">[DRAFT] Making some PCBs - part 1</title><link href="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html" rel="alternate" type="text/html" title="[DRAFT] Making some PCBs - part 1" /><published>2021-06-08T00:00:00+02:00</published><updated>2021-06-08T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2021/06/08/making-pcbs</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
 draft I have decided to publish it anyway - mostly to serve as a notebook
 to myself while I work on the project.&lt;/strong&gt;&lt;/p&gt;
 
@@ -82,6 +82,21 @@ list below and report the results.&lt;/p&gt;
   &lt;li&gt;&lt;a href=&quot;https://1bitsquared.com/products/pmod-hyperram&quot;&gt;https://1bitsquared.com/products/pmod-hyperram&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://www.youtube.com/watch?v=dThZDl-QG5s&quot;&gt;https://www.youtube.com/watch?v=dThZDl-QG5s&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
+
+&lt;p&gt;I did a second try run using the stencil after having acquired
+&lt;a href=&quot;https://www.oshstencils.com/&quot;&gt;https://www.oshstencils.com/&lt;/a&gt; excellent PCB fixture jig. To me having the
+board properly held in place by jig helped a lot when applying the paste. Of
+course one can get a similar effect using a few scrap PCBs but I don’t really
+have many of those lying around that are the right size and besides these
+brackets just cost a few dollars.&lt;/p&gt;
+
+&lt;p&gt;As far as I can tell the stencil alignment and paste coverage turned out well
+and the end result looks good. So with this I feel reasonably confident that I
+will also be able to handle the larger FPGA BGA with its 0.8mm pitch (the
+HyperRAM BGA has a 1.0mm pitch). Again I still have not gotten around to
+actually verify that these modules work so maybe I should not say too much.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/pcb/hyperram-bga-pcb-2.jpg&quot; alt=&quot;HyperRAM BGA second attempt&quot; /&gt;&lt;/p&gt;
 
 &lt;h3 id=&quot;stage-2---max9850&quot;&gt;Stage 2 - MAX9850&lt;/h3&gt;
 &lt;p&gt;2-layer board.&lt;/p&gt;
@@ -204,7 +219,38 @@ needed. Actually the FTDI chips are really expensive (same cost as the ECP5
 12F) so while it may be useful for the development version of the board it will
 not go on any production variant.&lt;/p&gt;
   &lt;/li&gt;
-&lt;/ul&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">NOTE: This post is not finished yet but instead of keeping it as a hidden draft I have decided to publish it anyway - mostly to serve as a notebook to myself while I work on the project.</summary></entry><entry><title type="html">[DRAFT] A most basic GPU - part 1</title><link href="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html" rel="alternate" type="text/html" title="[DRAFT] A most basic GPU - part 1" /><published>2021-03-26T00:00:00+01:00</published><updated>2021-03-26T00:00:00+01:00</updated><id>https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
+&lt;/ul&gt;
+
+&lt;p&gt;In fact since FTDI appears to be a generally unlikable company it would be a
+good thing to try to not use their products at all. So instead of putting an
+overpriced FTDI chip on each board let us use an external JTAG cable for
+programming and only put a JTAG pin-header on the PCB (with pull-down on TCK
+but nothing else). Once the board has been “factory” programmed via JTAG
+subsequent updates could be handled via the USB interface.  During FPGA power
+up the configuration bitstream is read from the SPI flash but after that the
+SPI interface pins are controllable by the FPGA fabric (according to
+documentation). So in theory once our FPGA core is up and running we can
+receive a new configuration bitstream via our USB interface and then write that
+to the SPI flash so that it will be used during the following FPGA power up
+sequence.&lt;/p&gt;
+
+&lt;h4 id=&quot;pcb-manufacturing&quot;&gt;PCB manufacturing&lt;/h4&gt;
+
+&lt;p&gt;The chosen ECP5 BGA package is 0.8mm pitch so in order to escape route the
+inner rings (mostly power and gnd) rather small vias need to be placed (via
+diameter needs to be less than 0.55mm). Unfortunately it turns out that making
+such small vias exceeds the capabilities of Aisler so a different PCB service
+needs to be used. These vias are just within the capabilites of the Oshpark so
+we have to turn to them instead.&lt;/p&gt;
+
+&lt;p&gt;When it comes to PCB services the order of preference for me would be Aisler
+(Europe), Oshpark (US), JLCPCB and PCBWAY (China).&lt;/p&gt;
+
+&lt;h4 id=&quot;pcb-layout&quot;&gt;PCB layout&lt;/h4&gt;
+
+&lt;p&gt;Thinking that we can mount the switch mode voltage regulators and support
+circuitry on the back side of the board. Also if possible decoupling capacitors
+for the BGA can go on the back side as well.&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">NOTE: This post is not finished yet but instead of keeping it as a hidden draft I have decided to publish it anyway - mostly to serve as a notebook to myself while I work on the project.</summary></entry><entry><title type="html">[DRAFT] A most basic GPU - part 1</title><link href="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html" rel="alternate" type="text/html" title="[DRAFT] A most basic GPU - part 1" /><published>2021-03-26T00:00:00+01:00</published><updated>2021-03-26T00:00:00+01:00</updated><id>https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
 draft I have decided to publish it anyway. Right now I am not working on this
 project but if/when I return I will try to update the post with the progress.&lt;/strong&gt;&lt;/p&gt;
 
