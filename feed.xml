@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2021-08-28T18:18:51+02:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">[DRAFT] Making some PCBs - part 1</title><link href="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html" rel="alternate" type="text/html" title="[DRAFT] Making some PCBs - part 1" /><published>2021-06-08T00:00:00+02:00</published><updated>2021-06-08T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2021/06/08/making-pcbs</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2022-01-01T14:50:51+01:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">[DRAFT] Making some PCBs - part 1</title><link href="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html" rel="alternate" type="text/html" title="[DRAFT] Making some PCBs - part 1" /><published>2021-06-08T00:00:00+02:00</published><updated>2021-06-08T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2021/06/08/making-pcbs</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
 draft I have decided to publish it anyway - mostly to serve as a notebook
 to myself while I work on the project.&lt;/strong&gt;&lt;/p&gt;
 
@@ -98,15 +98,47 @@ actually verify that these modules work so maybe I should not say too much.&lt;/
 
 &lt;p&gt;&lt;img src=&quot;/download/pcb/hyperram-bga-pcb-2.jpg&quot; alt=&quot;HyperRAM BGA second attempt&quot; /&gt;&lt;/p&gt;
 
+&lt;h5 id=&quot;verification&quot;&gt;Verification&lt;/h5&gt;
+
+&lt;p&gt;Now a few monhts later I felt sufficiently energized to have a go at testing
+the HyperRAM boards.  I set up &lt;a href=&quot;https://github.com/markus-zzz/hyperram-test&quot;&gt;a test
+bench&lt;/a&gt; using &lt;a href=&quot;https://github.com/blackmesalabs/hyperram&quot;&gt;the portable
+HyperRAM controller from
+blackmesalabs&lt;/a&gt; and the
+&lt;a href=&quot;https://github.com/YosysHQ/picorv32&quot;&gt;PicoRV32&lt;/a&gt; RISC-V CPU core.&lt;/p&gt;
+
+&lt;p&gt;The DRAM is mapped into the CPU’s address space presenting its 8MB as 2M 32-bit
+dwords.&lt;/p&gt;
+
+&lt;p&gt;The test consists of having the CPU write the Fibonacci sequence, as 32-bit
+integers, to memory and then verifying that it reads back correctly. Test
+result is presented by lighting the appropriate LEDs.&lt;/p&gt;
+
+&lt;p&gt;So far only one (of three) boards have been fully assembled but this complete
+board does pass the test which is very good news to me.&lt;/p&gt;
+
+&lt;p&gt;It should be noted that this is a basic test running the memory at a low
+frequency (6.25MHz) so it does not stress test the board in any way. It does
+however provide some confidence in that the part survived the assembly process,
+the solder joints are reasonably sound and that there is no bridging.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/pcb/hyperram-test-pcb.jpg&quot; alt=&quot;Testing the HyperRAM board&quot; /&gt;&lt;/p&gt;
+
 &lt;h3 id=&quot;stage-2---max9850&quot;&gt;Stage 2 - MAX9850&lt;/h3&gt;
 &lt;p&gt;2-layer board.&lt;/p&gt;
 
-&lt;p&gt;Still have not decided if I will do an audio board but this seems like a nice
-DAC.&lt;/p&gt;
+&lt;p&gt;I also got started designing an audio extension board featuring the
+&lt;a href=&quot;https://www.maximintegrated.com/en/products/analog/audio/MAX9850.html&quot;&gt;MAX9850&lt;/a&gt;
+stereo audio DAC with builtin headphone amplifier.&lt;/p&gt;
 
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.maximintegrated.com/en/products/analog/audio/MAX9850.html&quot;&gt;https://www.maximintegrated.com/en/products/analog/audio/MAX9850.html&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;Now the MAX9850 part comes in TQFN-28 which is an absolutely tiny package with
+0.5mm pitch (KiCad footprint is TQFN-28-1EP_5x5mm_P0.5mm_EP3.25x3.25mm) so
+assembly will be challenging.&lt;/p&gt;
+
+&lt;p&gt;This is what PCB layout currently looks like. To be sent to fabrication
+(Aisler) in the coming days.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/pcb/dac-layout.png&quot; alt=&quot;PCB layout&quot; /&gt;&lt;/p&gt;
 
 &lt;h3 id=&quot;stage-3---ecp5&quot;&gt;Stage 3 - ECP5&lt;/h3&gt;
 &lt;p&gt;4-layer board (signal, power, gnd, signal).&lt;/p&gt;

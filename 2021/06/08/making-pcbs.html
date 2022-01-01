@@ -174,15 +174,47 @@ actually verify that these modules work so maybe I should not say too much.</p>
 
 <p><img src="/download/pcb/hyperram-bga-pcb-2.jpg" alt="HyperRAM BGA second attempt" /></p>
 
+<h5 id="verification">Verification</h5>
+
+<p>Now a few monhts later I felt sufficiently energized to have a go at testing
+the HyperRAM boards.  I set up <a href="https://github.com/markus-zzz/hyperram-test">a test
+bench</a> using <a href="https://github.com/blackmesalabs/hyperram">the portable
+HyperRAM controller from
+blackmesalabs</a> and the
+<a href="https://github.com/YosysHQ/picorv32">PicoRV32</a> RISC-V CPU core.</p>
+
+<p>The DRAM is mapped into the CPU’s address space presenting its 8MB as 2M 32-bit
+dwords.</p>
+
+<p>The test consists of having the CPU write the Fibonacci sequence, as 32-bit
+integers, to memory and then verifying that it reads back correctly. Test
+result is presented by lighting the appropriate LEDs.</p>
+
+<p>So far only one (of three) boards have been fully assembled but this complete
+board does pass the test which is very good news to me.</p>
+
+<p>It should be noted that this is a basic test running the memory at a low
+frequency (6.25MHz) so it does not stress test the board in any way. It does
+however provide some confidence in that the part survived the assembly process,
+the solder joints are reasonably sound and that there is no bridging.</p>
+
+<p><img src="/download/pcb/hyperram-test-pcb.jpg" alt="Testing the HyperRAM board" /></p>
+
 <h3 id="stage-2---max9850">Stage 2 - MAX9850</h3>
 <p>2-layer board.</p>
 
-<p>Still have not decided if I will do an audio board but this seems like a nice
-DAC.</p>
+<p>I also got started designing an audio extension board featuring the
+<a href="https://www.maximintegrated.com/en/products/analog/audio/MAX9850.html">MAX9850</a>
+stereo audio DAC with builtin headphone amplifier.</p>
 
-<ul>
-  <li><a href="https://www.maximintegrated.com/en/products/analog/audio/MAX9850.html">https://www.maximintegrated.com/en/products/analog/audio/MAX9850.html</a></li>
-</ul>
+<p>Now the MAX9850 part comes in TQFN-28 which is an absolutely tiny package with
+0.5mm pitch (KiCad footprint is TQFN-28-1EP_5x5mm_P0.5mm_EP3.25x3.25mm) so
+assembly will be challenging.</p>
+
+<p>This is what PCB layout currently looks like. To be sent to fabrication
+(Aisler) in the coming days.</p>
+
+<p><img src="/download/pcb/dac-layout.png" alt="PCB layout" /></p>
 
 <h3 id="stage-3---ecp5">Stage 3 - ECP5</h3>
 <p>4-layer board (signal, power, gnd, signal).</p>
