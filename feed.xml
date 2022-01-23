@@ -1,46 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2022-01-01T14:50:51+01:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Consulting services offered in the fields of Compiler engineering, Graphics programming and Embedded computing.</subtitle><entry><title type="html">[DRAFT] Making some PCBs - part 1</title><link href="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html" rel="alternate" type="text/html" title="[DRAFT] Making some PCBs - part 1" /><published>2021-06-08T00:00:00+02:00</published><updated>2021-06-08T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2021/06/08/making-pcbs</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
-draft I have decided to publish it anyway - mostly to serve as a notebook
-to myself while I work on the project.&lt;/strong&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;For a while now I have had a desire to make a custom PCB for the MyC64 project,
-a board with suitable display interface and perhaps some tiny keyboard.
-Something that could be used in a handheld. A handheld FPGA based C64 emulator
-now that would be pretty cool.&lt;/p&gt;
-
-&lt;p&gt;Back in 2019 I did play a bit with &lt;a href=&quot;https://www.kicad.org/&quot;&gt;KiCad&lt;/a&gt; making a
-very simple (through hole) PCB for &lt;a href=&quot;https://github.com/markus-zzz/myvgapmod&quot;&gt;PMOD like VGA
-interface&lt;/a&gt; but wrt complexity that is
-light years away from what I need to do now.&lt;/p&gt;
-
-&lt;p&gt;A board for the MyC64 will need to include the ECP5 FPGA with its, at least,
-256 ball BGA packaging as well as HyperRAM 24 ball BGA and multiple other fine
-pitch surface mount components.&lt;/p&gt;
-
-&lt;p&gt;While I certainly need to learn a lot about board design and KiCad that bit
-does not scare me half as much as doing the actual assembly for those parts.&lt;/p&gt;
-
-&lt;p&gt;As a side not I spent some time during summer vacation to build a workbench for
-my lab corner where I can put all my equipment. This is how it turned out.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/download/pcb/workbench.jpg&quot; alt=&quot;Workbench&quot; /&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;the-plan&quot;&gt;The Plan&lt;/h2&gt;
-
-&lt;p&gt;So to get started I thought I could begin with making a few rather simple PMOD
-boards for some of the components that I intend to use on the final board. This
-time actually following &lt;a href=&quot;https://www.digilentinc.com/Pmods/Digilent-Pmod_%20Interface_Specification.pdf&quot;&gt;the Pmod
-specification&lt;/a&gt;.
-This way I get a chance to improve my limited KiCad and assembly skills along
-the way as well as trying out interfacing the components with the FPGA on the
-trusted ULX3S board. That seems like a sound plan.&lt;/p&gt;
-
-&lt;h3 id=&quot;stage-1---hyperram&quot;&gt;Stage 1 - HyperRAM&lt;/h3&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="https://www.zzzconsulting.se/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.zzzconsulting.se/" rel="alternate" type="text/html" /><updated>2022-01-23T10:41:22+01:00</updated><id>https://www.zzzconsulting.se/feed.xml</id><title type="html">ZZZ-Consulting</title><subtitle>Me writing blog posts about various topics I find interesting. Turns out these are mostly FPGA and retro-computing related.</subtitle><entry><title type="html">Making some PCBs - part 2 (HyperRAM)</title><link href="https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-2.html" rel="alternate" type="text/html" title="Making some PCBs - part 2 (HyperRAM)" /><published>2022-01-05T00:00:00+01:00</published><updated>2022-01-05T00:00:00+01:00</updated><id>https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-2.html">&lt;h1 id=&quot;stage-1---hyperram&quot;&gt;Stage 1 - HyperRAM&lt;/h1&gt;
 &lt;p&gt;2-layer board.&lt;/p&gt;
 
-&lt;p&gt;I have 10 of these
-&lt;a href=&quot;https://www.mouser.se/ProductDetail/cypress-semiconductor/s27kl0641dabhi020/?qs=74EMXstkWMUC1hAb%252bS%2F79g==&amp;amp;countrycode=DE&amp;amp;currencycode=EUR&quot;&gt;S27KL0641DABHI020&lt;/a&gt;
+&lt;p&gt;First out is a HyperRAM expansion board for the ULX3S. It makes sense to see
+early if I will be able to pull off BGA assembly with the equipment I have.
+Also I happen to have 10 of these
+&lt;a href=&quot;https://www.mouser.se/ProductDetail/cypress-semiconductor/s27kl0641dabhi020/&quot;&gt;S27KL0641DABHI020&lt;/a&gt;
 laying around.&lt;/p&gt;
 
 &lt;p&gt;5x5 BGA means that the two outermost rings can be routed in the same layer
@@ -51,7 +15,7 @@ layer as one corner is missing a ball).&lt;/p&gt;
 had &lt;a href=&quot;https://aisler.net/&quot;&gt;https://aisler.net/&lt;/a&gt; manufacture it for me. By quick and dirty I mean that
 the layout is ugly and the traces are not length matched so I would not expect
 to get any performance out of it. The board should be functionally correct
-though but this has not yet been verified.&lt;/p&gt;
+though. I did not bother to put the KiCad files on GitHub.&lt;/p&gt;
 
 &lt;p&gt;Two different soldering methods were evaluated and I tried capturing the chip
 profile with a cheap cell-phone camera through a binocular microscope.&lt;/p&gt;
@@ -98,7 +62,7 @@ actually verify that these modules work so maybe I should not say too much.&lt;/
 
 &lt;p&gt;&lt;img src=&quot;/download/pcb/hyperram-bga-pcb-2.jpg&quot; alt=&quot;HyperRAM BGA second attempt&quot; /&gt;&lt;/p&gt;
 
-&lt;h5 id=&quot;verification&quot;&gt;Verification&lt;/h5&gt;
+&lt;h2 id=&quot;verification&quot;&gt;Verification&lt;/h2&gt;
 
 &lt;p&gt;Now a few monhts later I felt sufficiently energized to have a go at testing
 the HyperRAM boards.  I set up &lt;a href=&quot;https://github.com/markus-zzz/hyperram-test&quot;&gt;a test
@@ -114,8 +78,7 @@ dwords.&lt;/p&gt;
 integers, to memory and then verifying that it reads back correctly. Test
 result is presented by lighting the appropriate LEDs.&lt;/p&gt;
 
-&lt;p&gt;So far only one (of three) boards have been fully assembled but this complete
-board does pass the test which is very good news to me.&lt;/p&gt;
+&lt;p&gt;All three boards have been fully assembled and the test passes on all three.&lt;/p&gt;
 
 &lt;p&gt;It should be noted that this is a basic test running the memory at a low
 frequency (6.25MHz) so it does not stress test the board in any way. It does
@@ -124,7 +87,10 @@ the solder joints are reasonably sound and that there is no bridging.&lt;/p&gt;
 
 &lt;p&gt;&lt;img src=&quot;/download/pcb/hyperram-test-pcb.jpg&quot; alt=&quot;Testing the HyperRAM board&quot; /&gt;&lt;/p&gt;
 
-&lt;h3 id=&quot;stage-2---max9850&quot;&gt;Stage 2 - MAX9850&lt;/h3&gt;
+&lt;h2 id=&quot;future&quot;&gt;Future&lt;/h2&gt;
+
+&lt;p&gt;It could be interesting to improve the controller, setting a shorter latency,
+or simply switch to using a different one.&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">Stage 1 - HyperRAM 2-layer board.</summary></entry><entry><title type="html">[DRAFT] Making some PCBs - part 3 (MAX9850)</title><link href="https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-3.html" rel="alternate" type="text/html" title="[DRAFT] Making some PCBs - part 3 (MAX9850)" /><published>2022-01-05T00:00:00+01:00</published><updated>2022-01-05T00:00:00+01:00</updated><id>https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-3</id><content type="html" xml:base="https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-3.html">&lt;h1 id=&quot;stage-2---max9850&quot;&gt;Stage 2 - MAX9850&lt;/h1&gt;
 &lt;p&gt;2-layer board.&lt;/p&gt;
 
 &lt;p&gt;I also got started designing an audio extension board featuring the
@@ -132,15 +98,62 @@ the solder joints are reasonably sound and that there is no bridging.&lt;/p&gt;
 stereo audio DAC with builtin headphone amplifier.&lt;/p&gt;
 
 &lt;p&gt;Now the MAX9850 part comes in TQFN-28 which is an absolutely tiny package with
-0.5mm pitch (KiCad footprint is TQFN-28-1EP_5x5mm_P0.5mm_EP3.25x3.25mm) so
-assembly will be challenging.&lt;/p&gt;
+0.5mm pitch (the KiCad footprint is “TQFN-28-1EP_5x5mm_P0.5mm_EP3.25x3.25mm”).
+See comparison below to get an idea how tiny this really is.&lt;/p&gt;
 
-&lt;p&gt;This is what PCB layout currently looks like. To be sent to fabrication
-(Aisler) in the coming days.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/download/pcb/max9850-size-comp.jpg&quot; alt=&quot;&quot; /&gt;
+&lt;em&gt;MAX9850 next to a standard 3.5mm audio plug.&lt;/em&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;pcb-design&quot;&gt;PCB design&lt;/h2&gt;
+
+&lt;p&gt;Using the best of my currently rather amateurish PCB design skills I ended up
+with the following layout with &lt;a href=&quot;https://github.com/markus-zzz/mydacboard&quot;&gt;KiCad project files on
+GitHub&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;While it initially looked pretty good to me I realize that is has a number of
+layout flaws that I will need to remedy before I attempt the combined ECP5
+board. To this end I have signed up for the &lt;a href=&quot;https://www.phils-lab.net/courses&quot;&gt;Mixed-Signal Hardware Design with
+KiCad&lt;/a&gt; course from well known YouTube
+creator &lt;a href=&quot;https://www.phils-lab.net/&quot;&gt;Phil’s Lab&lt;/a&gt;. Having browsed through the 5
+hour video material that focuses heavily on PCB layout I can only say that this
+appears to be a goldmine. So after finishing this board I will probably take a
+detour to study the course material and follow along with its board project.&lt;/p&gt;
 
 &lt;p&gt;&lt;img src=&quot;/download/pcb/dac-layout.png&quot; alt=&quot;PCB layout&quot; /&gt;&lt;/p&gt;
 
-&lt;h3 id=&quot;stage-3---ecp5&quot;&gt;Stage 3 - ECP5&lt;/h3&gt;
+&lt;h2 id=&quot;assembly&quot;&gt;Assembly&lt;/h2&gt;
+
+&lt;p&gt;Again soldering the top side using stencil and paste. The board is placed on a
+hot-plate that slowly rises to 220C after which hot air is applied from above
+for about 20-30s with station set to 300C at 30l/min.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/pcb/max9850-full.jpg&quot; alt=&quot;&quot; /&gt;
+&lt;em&gt;Stencil alignment, stencil with paste, paste alignment, component placement
+and post solder result.&lt;/em&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;bring-up&quot;&gt;Bring up&lt;/h2&gt;
+
+&lt;p&gt;After skimming through the MAX9850 datasheet it does seem that setting up a
+working audio flow will require writing a fair amount of I2C configuration
+registers. Ideally you would want some simple kind of test that can be used
+immediately after assembly to verify that the part has not been totally
+destroyed in the process. Needless to say you want this test to be dead simple
+so that you are not led to believe that the part is broken after assembly just
+because you made a mistake in the test code.&lt;/p&gt;
+
+&lt;p&gt;The MAX9850 does have a (single) GPIO pin that is controllable by a I2C
+register. The pin has also been routed back to the FPGA so the dead simple
+first test we are looking for could be to write the appropriate I2C control
+register to toggle this GPIO and then have the FPGA forward the signal to a
+LED.&lt;/p&gt;
+
+&lt;p&gt;Using &lt;a href=&quot;https://github.com/markus-zzz/max9850-test&quot;&gt;the simple test bench&lt;/a&gt; I
+have been able to verify that both of the boards assembled so far accept I2C
+access and can toggle their GPIO pins.&lt;/p&gt;
+
+&lt;p&gt;Next up is to configure all required control registers and start streaming
+digital audio (simple sawtooth for starters) to verify that the device is fully
+operational.&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">Stage 2 - MAX9850 2-layer board.</summary></entry><entry><title type="html">[DRAFT] Making some PCBs - part 4 (ECP5)</title><link href="https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-4.html" rel="alternate" type="text/html" title="[DRAFT] Making some PCBs - part 4 (ECP5)" /><published>2022-01-05T00:00:00+01:00</published><updated>2022-01-05T00:00:00+01:00</updated><id>https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-4</id><content type="html" xml:base="https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-4.html">&lt;h1 id=&quot;stage-3---ecp5&quot;&gt;Stage 3 - ECP5&lt;/h1&gt;
 &lt;p&gt;4-layer board (signal, power, gnd, signal).&lt;/p&gt;
 
 &lt;p&gt;Study these designs:&lt;/p&gt;
@@ -204,7 +217,7 @@ crossing on the PCB.&lt;/p&gt;
 &lt;p&gt;Okay so it is quite a few but still much less than the 197 I/Os that are
 available in the given package.&lt;/p&gt;
 
-&lt;h4 id=&quot;configuration&quot;&gt;Configuration&lt;/h4&gt;
+&lt;h2 id=&quot;configuration&quot;&gt;Configuration&lt;/h2&gt;
 
 &lt;p&gt;When first looking into how the device is to be configured while on the PCB the
 options and tools involved seem quite a bit overwhelming. However after doing
@@ -266,7 +279,7 @@ receive a new configuration bitstream via our USB interface and then write that
 to the SPI flash so that it will be used during the following FPGA power up
 sequence.&lt;/p&gt;
 
-&lt;h4 id=&quot;pcb-manufacturing&quot;&gt;PCB manufacturing&lt;/h4&gt;
+&lt;h2 id=&quot;pcb-manufacturing&quot;&gt;PCB manufacturing&lt;/h2&gt;
 
 &lt;p&gt;The chosen ECP5 BGA package is 0.8mm pitch so in order to escape route the
 inner rings (mostly power and gnd) rather small vias need to be placed (via
@@ -278,11 +291,47 @@ we have to turn to them instead.&lt;/p&gt;
 &lt;p&gt;When it comes to PCB services the order of preference for me would be Aisler
 (Europe), Oshpark (US), JLCPCB and PCBWAY (China).&lt;/p&gt;
 
-&lt;h4 id=&quot;pcb-layout&quot;&gt;PCB layout&lt;/h4&gt;
+&lt;h2 id=&quot;pcb-layout&quot;&gt;PCB layout&lt;/h2&gt;
 
 &lt;p&gt;Thinking that we can mount the switch mode voltage regulators and support
 circuitry on the back side of the board. Also if possible decoupling capacitors
-for the BGA can go on the back side as well.&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">NOTE: This post is not finished yet but instead of keeping it as a hidden draft I have decided to publish it anyway - mostly to serve as a notebook to myself while I work on the project.</summary></entry><entry><title type="html">[DRAFT] A most basic GPU - part 1</title><link href="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html" rel="alternate" type="text/html" title="[DRAFT] A most basic GPU - part 1" /><published>2021-03-26T00:00:00+01:00</published><updated>2021-03-26T00:00:00+01:00</updated><id>https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
+for the BGA can go on the back side as well.&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">Stage 3 - ECP5 4-layer board (signal, power, gnd, signal).</summary></entry><entry><title type="html">[DRAFT] Making some PCBs - part 1</title><link href="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html" rel="alternate" type="text/html" title="[DRAFT] Making some PCBs - part 1" /><published>2021-06-08T00:00:00+02:00</published><updated>2021-06-08T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2021/06/08/making-pcbs</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/06/08/making-pcbs.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
+draft I have decided to publish it anyway - mostly to serve as a notebook
+to myself while I work on the project.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;For a while now I have had a desire to make a custom PCB for the MyC64 project,
+a board with suitable display interface and perhaps some tiny keyboard.
+Something that could be used in a handheld. A handheld FPGA based C64 emulator
+now that would be pretty cool.&lt;/p&gt;
+
+&lt;p&gt;Back in 2019 I did play a bit with &lt;a href=&quot;https://www.kicad.org/&quot;&gt;KiCad&lt;/a&gt; making a
+very simple (through hole) PCB for &lt;a href=&quot;https://github.com/markus-zzz/myvgapmod&quot;&gt;PMOD like VGA
+interface&lt;/a&gt; but wrt complexity that is
+light years away from what I need to do now.&lt;/p&gt;
+
+&lt;p&gt;A board for the MyC64 will need to include the ECP5 FPGA with its, at least,
+256 ball BGA packaging as well as HyperRAM 24 ball BGA and multiple other fine
+pitch surface mount components.&lt;/p&gt;
+
+&lt;p&gt;While I certainly need to learn a lot about board design and KiCad that bit
+does not scare me half as much as doing the actual assembly for those parts.&lt;/p&gt;
+
+&lt;p&gt;As a side not I spent some time during summer vacation to build a workbench for
+my lab corner where I can put all my equipment. This is how it turned out.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/download/pcb/workbench.jpg&quot; alt=&quot;Workbench&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;the-plan&quot;&gt;The Plan&lt;/h2&gt;
+
+&lt;p&gt;So to get started I thought I could begin with making a few rather simple PMOD
+boards for some of the components that I intend to use on the final board. This
+time actually following &lt;a href=&quot;https://www.digilentinc.com/Pmods/Digilent-Pmod_%20Interface_Specification.pdf&quot;&gt;the Pmod
+specification&lt;/a&gt;.
+This way I get a chance to improve my limited KiCad and assembly skills along
+the way as well as trying out interfacing the components with the FPGA on the
+trusted ULX3S board. That seems like a sound plan.&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">NOTE: This post is not finished yet but instead of keeping it as a hidden draft I have decided to publish it anyway - mostly to serve as a notebook to myself while I work on the project.</summary></entry><entry><title type="html">[DRAFT] A most basic GPU - part 1</title><link href="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html" rel="alternate" type="text/html" title="[DRAFT] A most basic GPU - part 1" /><published>2021-03-26T00:00:00+01:00</published><updated>2021-03-26T00:00:00+01:00</updated><id>https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2021/03/26/basic-gpu-part-1.html">&lt;p&gt;&lt;strong&gt;NOTE: This post is not finished yet but instead of keeping it as a hidden
 draft I have decided to publish it anyway. Right now I am not working on this
 project but if/when I return I will try to update the post with the progress.&lt;/strong&gt;&lt;/p&gt;
 
@@ -1445,573 +1494,4 @@ for decode and verification. It is just a matter of having simulation produce a
 
 &lt;p&gt;That concludes this post. Next time we will look closer at the design of our
 USB device, its simulation environment and traffic generator. Questions or
-feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">Last summer I bought a DSLogic Plus USB-based Logic Analyzer, about 6 months ago I tried it for the first time and today I hope to finish this post describing the experience. The thing comes with its own analyzer software running on the PC called DSView, but I never bothered trying that and instead went with the better known sigrok (of which DSView is a derivative).</summary></entry><entry><title type="html">Designing retro gaming hardware - part 1</title><link href="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html" rel="alternate" type="text/html" title="Designing retro gaming hardware - part 1" /><published>2019-08-12T00:00:00+02:00</published><updated>2019-08-12T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/08/12/retro-gaming-hw-part-1.html">&lt;p&gt;In this post we visit my latest pet project - that is building a custom 80’s
-style game console. Much fun ahead :)&lt;/p&gt;
-
-&lt;h2 id=&quot;background&quot;&gt;Background&lt;/h2&gt;
-&lt;p&gt;The main motivating factor behind this effort was seeing the game &lt;a href=&quot;https://www.lexaloffle.com/bbs/?tid=2145&quot;&gt;Celeste
-(classic)&lt;/a&gt; running on the
-&lt;a href=&quot;https://www.lexaloffle.com/pico-8.php&quot;&gt;Pico-8&lt;/a&gt; fantasy console. This game is
-in fact the precursor of the very well received 2018’s title
-&lt;a href=&quot;http://www.celestegame.com/&quot;&gt;Celeste&lt;/a&gt; and Pico-8 is a software emulator for a
-80’s game console that never existed. The limited environment offered by such a
-machine has made it quite popular among makers of small games as it turns out
-that having limited resources really can be a good thing when it comes to
-finishing a game project.&lt;/p&gt;
-
-&lt;p&gt;One of the many cool things with Pico-8 is that the cartridge for any game
-distributed is automatically open and its contents (sprites, tiles and maps as
-well as source code) can be examined by anyone, either through the builtin
-Pico-8 IDE or using the python
-&lt;a href=&quot;https://github.com/dansanderson/picotool&quot;&gt;picotool&lt;/a&gt; module.&lt;/p&gt;
-
-&lt;p&gt;I for one find this game to be truly awesome and I am really impressed with how
-well it plays even with such limited resources. As a result the goal of my
-project is now to design 80’s style sprite and tile based video game hardware
-that is capable of playing a game like this and run it on a FPGA.&lt;/p&gt;
-
-&lt;h2 id=&quot;design&quot;&gt;Design&lt;/h2&gt;
-
-&lt;p&gt;Lets begin by looking at the major components of the system.&lt;/p&gt;
-
-&lt;h3 id=&quot;graphics&quot;&gt;Graphics&lt;/h3&gt;
-&lt;p&gt;First there is no frame buffer (remember at this time memory is expensive and
-CPUs are slow). Instead all graphics are produced on the fly having dedicated
-hardware shift out pixel by pixel of movable sprites and stationary background
-tiles as the video beam traces along the screen.&lt;/p&gt;
-
-&lt;p&gt;The lowest video resolution broadly supported by modern display hardware is
-640x480@60Hz. The video timing generator for such a resolution uses a 25Mhz
-pixel clock which is also quite suitable to base the rest of our design on.&lt;/p&gt;
-
-&lt;p&gt;For a retro system 640x480 is too high resolution so we cut it down to 320x240
-by ignoring the lowest bit of the vertical video coordinate (so that even and
-odd scanlines will look the same) and introducing a clock enable (set by the
-lowest bit of the horizontal video coordinate) to have the sprite and tile
-shifters keep the same pixel value for two consecutive horizontal video pixels.&lt;/p&gt;
-
-&lt;p&gt;A sprite/tile in Pico-8 is 8x8 pixels and a pixel holds 4 bits of color
-information. We will do the same.&lt;/p&gt;
-
-&lt;p&gt;A sprite shifter module is basically a shift register combined with some
-triggering logic to make the shifting start only when a programmed horizontal
-position is reached.&lt;/p&gt;
-
-&lt;p&gt;Our system has eight sprite shifters and each of these need to be loaded per
-scanline before the visual region starts. As soon as a scanline starts (or
-rather when the previous one reached position 320) a FSM takes care of
-performing the following steps&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Scan the 64 entry sprite descriptor table in VRAM to find the first eight that
-have sprites intersecting the current scanline. While doing this load the
-corresponding sprite lines into the sprite shifters and set the horizontal
-trigger position.&lt;/li&gt;
-  &lt;li&gt;When the active region starts load the corresponding tile line into the tile
-shifter based simply on the contents of the VRAM tile table.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;The sprite descriptor format is:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;Field&lt;/th&gt;
-      &lt;th&gt;Bits&lt;/th&gt;
-      &lt;th&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;vpos&lt;/td&gt;
-      &lt;td&gt;8&lt;/td&gt;
-      &lt;td&gt;Vertical start position (0-319).&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;hpos&lt;/td&gt;
-      &lt;td&gt;9&lt;/td&gt;
-      &lt;td&gt;Horizontal start position (0-239).&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;idx&lt;/td&gt;
-      &lt;td&gt;7&lt;/td&gt;
-      &lt;td&gt;Index of sprite (0-127).&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;vflip&lt;/td&gt;
-      &lt;td&gt;1&lt;/td&gt;
-      &lt;td&gt;Flip pixels vertically.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;hflip&lt;/td&gt;
-      &lt;td&gt;1&lt;/td&gt;
-      &lt;td&gt;Flip pixels horizontally.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;active&lt;/td&gt;
-      &lt;td&gt;1&lt;/td&gt;
-      &lt;td&gt;Display sprite.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h3 id=&quot;vram&quot;&gt;VRAM&lt;/h3&gt;
-&lt;p&gt;As is customary the graphics system has its own memory (VRAM) to which it has
-exclusive access (CPU will stall if it tries to access) except for during the
-vertical blanking period when the CPU gets to update sprite descriptors and
-tile tables.&lt;/p&gt;
-
-&lt;h4 id=&quot;rationale-behind-dimension-and-memory-map&quot;&gt;Rationale behind dimension and memory map&lt;/h4&gt;
-
-&lt;p&gt;Each sprite/tile is 8x8 pixel with a color depth of 4 bits giving it a
-storage requirement of 32 bytes. We need at least 128 of these in VRAM so
-that results in 4096 bytes.&lt;/p&gt;
-
-&lt;p&gt;Each sprite descriptor is 32 bits wide and we need 64 of those, i.e. 256
-bytes.&lt;/p&gt;
-
-&lt;p&gt;With a screen resolution of 320x200 and sprite/tile size of 8x8 a total of
-40x30 tiles are needed to cover the screen using a 8 bit index for each results
-in 1200 bytes. Since we want to be able to index this memory without performing
-multiplication the dimension is rounded up to the nearest power-of-two i.e.
-64x32 resulting in 2048 bytes (in fact the storage size can be much less
-depending on if this is row major or column major).&lt;/p&gt;
-
-&lt;p&gt;The extra rows and columns may come in handy whey trying to support smooth
-scrolling.&lt;/p&gt;
-
-&lt;p&gt;All in all it is reasonable to dimension the VRAM to 8192 bytes. To allow
-efficient 32 bit access from both GFX and CPU this is laid out as 2048 x
-32 meaning that we need an address bus width of 11 bits.&lt;/p&gt;
-
-&lt;p&gt;So to sum it up VRAM is laid out as follows:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;Base&lt;/th&gt;
-      &lt;th&gt;Size&lt;/th&gt;
-      &lt;th&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0&lt;/td&gt;
-      &lt;td&gt;4096&lt;/td&gt;
-      &lt;td&gt;Table of 128 8x8 sprite/tile bitmaps with 4-bit color depth (each bitmap consumes 32 bytes).&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;4096&lt;/td&gt;
-      &lt;td&gt;256&lt;/td&gt;
-      &lt;td&gt;Table of 64 sprite descriptors each of size 32 bits.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;4352&lt;/td&gt;
-      &lt;td&gt;2048&lt;/td&gt;
-      &lt;td&gt;40x30 table of background tile indices (addressed as if dimensions were 64x32).&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h3 id=&quot;cpu&quot;&gt;CPU&lt;/h3&gt;
-&lt;p&gt;One thing that is not so awesome about 80’s systems is the software tools
-available (especially compilers), so instead of using a CPU from the era this
-project will use a modern &lt;a href=&quot;https://riscv.org/&quot;&gt;RISC-V&lt;/a&gt; 32-bit CPU which is well
-supported by modern tool-chains such as LLVM and GCC. The particular RISC-V
-implementation of choice is
-&lt;a href=&quot;https://github.com/cliffordwolf/picorv32&quot;&gt;PicoRV32&lt;/a&gt; as we favor small size
-over computational efficiency.&lt;/p&gt;
-
-&lt;h3 id=&quot;system-memory-map&quot;&gt;System memory map&lt;/h3&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;Base&lt;/th&gt;
-      &lt;th&gt;Size&lt;/th&gt;
-      &lt;th&gt;Memory&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x00000000&lt;/td&gt;
-      &lt;td&gt;16KB&lt;/td&gt;
-      &lt;td&gt;ROM&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x10000000&lt;/td&gt;
-      &lt;td&gt;4KB&lt;/td&gt;
-      &lt;td&gt;RAM&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x20000000&lt;/td&gt;
-      &lt;td&gt;8KB&lt;/td&gt;
-      &lt;td&gt;VRAM&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;0x30000000&lt;/td&gt;
-      &lt;td&gt;4&lt;/td&gt;
-      &lt;td&gt;System status register&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h2 id=&quot;current-implementation&quot;&gt;Current implementation&lt;/h2&gt;
-
-&lt;p&gt;The implementation can be found on
-&lt;a href=&quot;https://github.com/markus-zzz/retrocon/tree/dev&quot;&gt;github&lt;/a&gt;. While being very
-much work in progress it is capable of bouncing sprites around over static
-background tiles as can be seen in this animation&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/download/retrocon-sprite-bounce.apng&quot; alt=&quot;Bouncing sprites&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;The PNGs for the animation above were produced by a
-&lt;a href=&quot;https://www.veripool.org/wiki/verilator&quot;&gt;Verilator&lt;/a&gt; based simulation using the
-custom tool
-&lt;a href=&quot;https://github.com/markus-zzz/retrocon/blob/dev/sim/verilator/vgamon.cpp&quot;&gt;vgamon&lt;/a&gt;
-that captures the VGA output of the design either displaying it in real time
-(i.e. on my machine ~8 frames per second) and optionally storing frames to PNG
-files.&lt;/p&gt;
-
-&lt;p&gt;Now Verilator is pretty awesome and this tool has already proven extremely
-useful. Considering the sheer amount of simulation cycles that go into
-producing a single frame makes you quickly realize that traditional simulators
-such as &lt;a href=&quot;http://iverilog.icarus.com/&quot;&gt;Icarus Verilog&lt;/a&gt; don’t quite cut it for
-this purpose.&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Usage: ./vgamon [OPTIONS]
-
-  --scale=N             -- set pixel scaling
-  --frame-rate=N        -- try to produce a new frame every N ms
-  --save-frame-from=N   -- dump frames to .png starting from frame #N
-  --save-frame-to=N=N   -- dump frames to .png ending with frame #N
-  --save-frame-prefix=S -- prefix dump frame files with S
-  --exit-after-frame=N  -- exit after frame #N
-  --trace               -- create dump.vcd
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;The design has been tested on a &lt;a href=&quot;https://radiona.org/ulx3s/&quot;&gt;ULX3S&lt;/a&gt; FPGA board
-using the open source &lt;a href=&quot;https://symbiflow.github.io/&quot;&gt;SymbiFlow&lt;/a&gt; tools (Yosys
-and nextpnr). Doing so gives a device utilization as follows for the boards
-&lt;a href=&quot;https://www.latticesemi.com/Products/FPGAandCPLD/ECP5&quot;&gt;ECP5 12F&lt;/a&gt;.&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Info: Device utilisation:
-Info:          TRELLIS_SLICE:  2822/12144    23%
-Info:             TRELLIS_IO:    10/  196     5%
-Info:                   DCCA:     3/   56     5%
-Info:                 DP16KD:    16/   56    28%
-Info:             MULT18X18D:     0/   28     0%
-Info:                 ALU54B:     0/   14     0%
-Info:                EHXPLLL:     1/    2    50%
-Info:                EXTREFB:     0/    1     0%
-Info:                   DCUA:     0/    1     0%
-Info:              PCSCLKDIV:     0/    2     0%
-Info:                IOLOGIC:     0/  128     0%
-Info:               SIOLOGIC:     8/   68    11%
-Info:                    GSR:     0/    1     0%
-Info:                  JTAGG:     0/    1     0%
-Info:                   OSCG:     0/    1     0%
-Info:                  SEDGA:     0/    1     0%
-Info:                    DTR:     0/    1     0%
-Info:                USRMCLK:     0/    1     0%
-Info:                CLKDIVF:     0/    4     0%
-Info:              ECLKSYNCB:     0/    8     0%
-Info:                DLLDELD:     0/    8     0%
-Info:                 DDRDLL:     0/    4     0%
-Info:                DQSBUFM:     0/    8     0%
-Info:        TRELLIS_ECLKBUF:     0/    8     0%
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;The only video output on ULX3S is a HDMI compatible connector so we borrow the
-code from &lt;a href=&quot;https://github.com/daveshah1/prjtrellis-dvi&quot;&gt;Project Trellis DVI&lt;/a&gt; to
-output DVI over that connector. It works surprisingly well!&lt;/p&gt;
-
-&lt;h2 id=&quot;next-steps&quot;&gt;Next steps&lt;/h2&gt;
-&lt;p&gt;Some ideas for the future:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Implement UART based means to upload CPU code and RAM contents to running
-board (having to re-synthesize as is the case now really slows down the
-development cycle).&lt;/li&gt;
-  &lt;li&gt;Implement horizontal flip and vertical flip sprite flags.&lt;/li&gt;
-  &lt;li&gt;Support for smooth scrolling background tiles (preferably in all directions).&lt;/li&gt;
-  &lt;li&gt;Look into supporting Pico-8 style sound effects.&lt;/li&gt;
-  &lt;li&gt;Fix a million bugs :)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;That is it for now. Hopefully I will make some more progress soon!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><category term="rtl" /><category term="verilog" /><category term="game" /><category term="retro" /><summary type="html">In this post we visit my latest pet project - that is building a custom 80’s style game console. Much fun ahead :)</summary></entry><entry><title type="html">A look at retro gaming hardware</title><link href="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html" rel="alternate" type="text/html" title="A look at retro gaming hardware" /><published>2019-06-26T00:00:00+02:00</published><updated>2019-06-26T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro</id><content type="html" xml:base="https://www.zzzconsulting.se/2019/06/26/retro-gaming-intro.html">&lt;p&gt;Back when I was a kid in the late 80’s and early 90’s I had a &lt;a href=&quot;https://en.wikipedia.org/wiki/Commodore_64&quot;&gt;Commodore
-64&lt;/a&gt;, a &lt;a href=&quot;https://en.wikipedia.org/wiki/Amiga_500&quot;&gt;Amiga
-500&lt;/a&gt; and eventually a &lt;a href=&quot;https://en.wikipedia.org/wiki/Amiga_1200&quot;&gt;Amiga
-1200&lt;/a&gt;. Now besides playing games and
-calling &lt;a href=&quot;https://en.wikipedia.org/wiki/Bulletin_board_system&quot;&gt;BBS&lt;/a&gt;s I never got
-around to do any programming on these devices.  Something that I quite regret
-now in grown age when I realize how beautiful, and in a way simple, these
-machines were. Well to be honest I did play around a bit with
-&lt;a href=&quot;https://en.wikipedia.org/wiki/BASIC&quot;&gt;BASIC&lt;/a&gt; but as BASIC is well BASIC I never
-really got a hang of anything and didn’t understand much either. It wasn’t
-until years later when I finally learned C that things started to make sense.&lt;/p&gt;
-
-&lt;p&gt;Not too long ago I read about the
-&lt;a href=&quot;https://github.com/MiSTer-devel/Main_MiSTer/wiki&quot;&gt;MiSTer&lt;/a&gt; project and while I
-have known about the &lt;a href=&quot;https://en.wikipedia.org/wiki/Minimig&quot;&gt;Minimig&lt;/a&gt; core for
-a long time it wasn’t until now it appeared to be running on a almost
-off-the-shelf FPGA board not requiring a hard
-&lt;a href=&quot;https://en.wikipedia.org/wiki/Motorola_68000&quot;&gt;m68k&lt;/a&gt; CPU. This and seeing
-Youtube videos of people reverse engineering old arcade PCBs (e.g.
-&lt;a href=&quot;https://www.youtube.com/watch?v=g8gZT1F9UkE&quot;&gt;this&lt;/a&gt;) inspired me to try and do
-some work in this area myself.&lt;/p&gt;
-
-&lt;p&gt;I also found a nice little book called &lt;a href=&quot;https://www.amazon.com/dp/B07LD48CTV/ref=pe_385040_118058080_TE_M1DP&quot;&gt;Designing Video Game Hardware in
-Verilog&lt;/a&gt;
-by a guy named Steven Hugg. The Kindle version sells for only $12 and I highly
-recommend this book, not because it contains tons of stuff you didn’t already
-know or could not figure out yourself but because it is a nice read with
-interesting historical remarks and it comes with a website called
-&lt;a href=&quot;https://8bitworkshop.com/&quot;&gt;8bitworkshops&lt;/a&gt; that is pretty awesome.&lt;/p&gt;
-
-&lt;p&gt;Now the website can actually be fully used without purchasing the book but I
-really think it is an effort worth supporting.&lt;/p&gt;
-
-&lt;p&gt;While the website allows you to interactively program and run old arcade
-systems and consoles such as the Atari 2600 in both C and assembler what totally
-blew my mind is the ability to write a custom hardware design in Verilog,
-producing a VGA video signal and then having that run in the browser displaying
-graphics on a simulated CRT (and with a pretty impressive frame rate too).&lt;/p&gt;
-
-&lt;p&gt;To me that all seemed fictional, did this guy implement a complete Verilog
-simulator in JavaScript that runs that fast? Well it turns out that he did not
-but instead used existing software in clever ways and this post will now
-briefly digress to shed some light on how.&lt;/p&gt;
-
-&lt;p&gt;First, the source code behind the entire 8bitworkshops website is available on
-Github &lt;a href=&quot;https://github.com/sehugg/8bitworkshop&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;To pull off the Verilog stunt described above it uses mainly two components:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://emscripten.org/&quot;&gt;Emscripten&lt;/a&gt; - a LLVM backend that generates
-JavaScript effectively allowing you to compile C++ code into JavaScript and
-execute in a browser.&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.veripool.org/wiki/verilator&quot;&gt;Verilator&lt;/a&gt; - a verilog simulator
-that compiles synthesizable verilog modules into C++ code.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Now Verilator is compiled into JavaScript by Emscripten so Verilator will run
-in your browser outputting C++ code for the Verilog modules you provide. The
-following question is of course what happens with this Verilator generated C++.
-One option would be if Emscripten ‘Emsripted’ itself so that your browser had
-the ability to turn C++ into JavaScript but that is not what is happening. The
-C++ generated by Verilator only uses a subset of the full language and is quite
-regular. The fact that this subset is similar, expect for some syntax details,
-to JavaScript is taken advantage of to to simply do a regexp based translation.&lt;/p&gt;
-
-&lt;p&gt;Verilated C++ is translated into JavaScript by
-&lt;a href=&quot;https://github.com/sehugg/8bitworkshop/blob/10f89d0c53e610934b0035bbed5a4af258844786/src/worker/verilator2js.ts&quot;&gt;src/worker/verilator2js.ts&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;If one studies an example of how to use Verilator natively in C++ then one can
-see that pattern being hand translated to JS in
-&lt;a href=&quot;https://github.com/sehugg/8bitworkshop/blob/10f89d0c53e610934b0035bbed5a4af258844786/src/platform/verilog.ts&quot;&gt;src/platform/verilog.ts&lt;/a&gt;.
-Especially the function
-&lt;a href=&quot;https://github.com/sehugg/8bitworkshop/blob/10f89d0c53e610934b0035bbed5a4af258844786/src/platform/verilog.ts#L496-L539&quot;&gt;updateVideoFrameCycles&lt;/a&gt;
-calls vidtick (calling tick2 to toggle the clock and advance simulation) and
-extracting VGA signals from the model, storing to a JS frame buffer for display
-on the web page.&lt;/p&gt;
-
-&lt;p&gt;That concludes this post. Hopefully it will mark the start of a new series
-diving into the details of designing some old school video game hardware.&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><category term="rtl" /><category term="verilog" /><category term="game" /><category term="retro" /><summary type="html">Back when I was a kid in the late 80’s and early 90’s I had a Commodore 64, a Amiga 500 and eventually a Amiga 1200. Now besides playing games and calling BBSs I never got around to do any programming on these devices. Something that I quite regret now in grown age when I realize how beautiful, and in a way simple, these machines were. Well to be honest I did play around a bit with BASIC but as BASIC is well BASIC I never really got a hang of anything and didn’t understand much either. It wasn’t until years later when I finally learned C that things started to make sense.</summary></entry><entry><title type="html">Building a modem - part 2</title><link href="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html" rel="alternate" type="text/html" title="Building a modem - part 2" /><published>2018-08-11T00:00:00+02:00</published><updated>2018-08-11T00:00:00+02:00</updated><id>https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2</id><content type="html" xml:base="https://www.zzzconsulting.se/2018/08/11/build-a-modem-part-2.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-&lt;p&gt;In this post we return to our modem building project to checkup on the
-progress.&lt;/p&gt;
-
-&lt;p&gt;The code corresponding to the progress of this post is available as branch
-&lt;a href=&quot;https://github.com/markus-zzz/modem/tree/part-2&quot;&gt;part-2&lt;/a&gt; of the modem GitHub
-repository.&lt;/p&gt;
-
-&lt;h3 id=&quot;hardware-blocks&quot;&gt;Hardware blocks&lt;/h3&gt;
-&lt;p&gt;The current implementation exposes two AXI mapped ring buffers, and some
-control register, using the address map from the &lt;a href=&quot;/2018/08/03/build-a-modem-part-1.html&quot;&gt;previous
-post&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Each ring buffer is currently implemented using a dual ported synchronous SRAM
-block with one port being tied to the AXI and the other to the internal data
-path of the modem.&lt;/p&gt;
-
-&lt;p&gt;Now dual ported memories are large and expensive and for the modest data rates
-we plan to put on these memories we can certainly get a way both AXI and
-internal data path sharing the single port on a single ported memory. Doing so
-is of course not free and it will be at the expense of some increased
-implementation complexity but that we can handle later. So in other words, for
-now dual ported is good since they allow for slightly simpler implementation
-but we should eventually switch to using single ported.&lt;/p&gt;
-
-&lt;p&gt;Either way, dual ported or not, Synchronous SRAM blocks have one slightly
-annoying property with respect to reads and that is that the read address is
-clocked. That is the behavioural model looks like this&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    // read operation
-    always @(posedge rclk) begin
-        if (rce) begin
-            ra &amp;lt;= raddr;
-        end
-    end
-
-    assign do = mem[ra];
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;In other words you cannot simply present the read address (&lt;em&gt;raddr&lt;/em&gt;) and expect
-to latch the data (&lt;em&gt;do&lt;/em&gt;) at the next rising clock edge but instead you have to
-wait an additional cycle. Of course it is all pretty obvious when you think
-about it (they are called synchronous for a reason) but I for one tend to
-forget this ever so often.&lt;/p&gt;
-
-&lt;p&gt;One place where this shows up is in the AXI read channel response logic in
-&lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/modem_axi_slave.v&quot;&gt;rtl/verilog/modem_axi_slave.v&lt;/a&gt;
-since we have to delay the read response for ring buffer reads by one cycle
-compared to if it was a register read.&lt;/p&gt;
-
-&lt;p&gt;Another thing that slightly complicates matters is that we cannot simply drain
-the TX ring buffer at constant full speed but instead need to repeatedly do
-stop and go to avoid overflowing the internal data path as it operates at a
-much lower speed (one byte is several symbols, one symbol is several samples,
-etc, etc).&lt;/p&gt;
-
-&lt;p&gt;To deal with this we need a &lt;em&gt;handshake&lt;/em&gt; mechanism, and we have chosen to do one
-using two signals, &lt;em&gt;valid&lt;/em&gt; and &lt;em&gt;ready&lt;/em&gt;, as follows.&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Producer asserts &lt;em&gt;valid&lt;/em&gt; when valid data is output&lt;/li&gt;
-  &lt;li&gt;Consumer asserts &lt;em&gt;ready&lt;/em&gt; when it can accept data&lt;/li&gt;
-  &lt;li&gt;The transaction occurs on a rising clock edge when both &lt;em&gt;ready&lt;/em&gt; and &lt;em&gt;valid&lt;/em&gt;
-are sampled high&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Right now the TX and RX ring buffers are tied together in loop-back mode with
-the silly action of transforming lower-case letters to upper-case and vice
-versa.&lt;/p&gt;
-
-&lt;p&gt;An interrupt pulse is generated when the hardware updates the read pointer of
-the TX ring and the write pointer of the RX ring.&lt;/p&gt;
-
-&lt;p&gt;See &lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/modem_axi_top.v&quot;&gt;rtl/verilog/modem_axi_top.v&lt;/a&gt;&lt;/p&gt;
-
-&lt;h4 id=&quot;tx-ctrl&quot;&gt;TX-Ctrl&lt;/h4&gt;
-&lt;p&gt;This is the controller for the transmit ring buffer. It is basically a state
-machine that sits around waiting for the read pointer to be become unequal the
-write pointer (indicating that the buffer is no longer empty) and then starts
-reading words.&lt;/p&gt;
-
-&lt;p&gt;The fact that the internal data path needs to be fed with bytes, the pipelined
-read behaviour of the memory and the presence of flow control slightly
-complicates things. This in combination with the long term ambition to switch
-to a single ported memory results in the current simple design, with perhaps a
-seemingly abundant number of states.&lt;/p&gt;
-
-&lt;p&gt;See &lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/tx_ctrl.v&quot;&gt;rtl/verilog/tx_ctrl.v&lt;/a&gt;&lt;/p&gt;
-
-&lt;h4 id=&quot;rx-ctrl&quot;&gt;RX-Ctrl&lt;/h4&gt;
-&lt;p&gt;This is the controller for the receive ring buffer. It is quite similar to its
-transmit counterpart although it operates in the opposite direction and as a
-result does not have to deal with the issues of memory reads.&lt;/p&gt;
-
-&lt;p&gt;One thing we do have to deal with here however is the detection of overflows,
-but that is rather straight forward and we simply skip writing the message
-header and advancing the write pointer when this condition is detected.
-Eventually we should set a status bit indicating the overflow in the header of
-the next message written to the ring and have the device driver informing
-user-space somehow (perhaps by one &lt;em&gt;read&lt;/em&gt; returning &lt;em&gt;EOVERFLOW&lt;/em&gt;).&lt;/p&gt;
-
-&lt;p&gt;See &lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/rtl/verilog/rx_ctrl.v&quot;&gt;rtl/verilog/rx_ctrl.v&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&quot;linux-device-driver&quot;&gt;Linux device driver&lt;/h3&gt;
-&lt;p&gt;The current device driver resembles the one from the I2C series quite a lot. A
-&lt;em&gt;read&lt;/em&gt; operation will block if the RX ring is empty and a &lt;em&gt;write&lt;/em&gt; operation
-will block if the TX ring has insufficient space left for the message. In
-either case the sleeping process will be awoken by previously mentioned
-interrupt pulse (indicating that the HW has updated its pointers).&lt;/p&gt;
-
-&lt;p&gt;This implementation seems to work for now but later on should probably add
-mutexes to protect the ring buffers from concurrent access (i.e. many processes
-doing &lt;em&gt;read&lt;/em&gt; at the same time and similarly for &lt;em&gt;write&lt;/em&gt;). Not sure if that
-use-case make a ton of sense though but we should properly handle that
-situation anyway.&lt;/p&gt;
-
-&lt;p&gt;Also we would likely benefit from a more fine grained interrupt control, being
-able to see if the source was RX or TX and being able to mask.&lt;/p&gt;
-
-&lt;p&gt;For details see
-&lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/linux/zzz-modem-driver.c&quot;&gt;linux/zzz-modem-driver.c&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&quot;try-it-out&quot;&gt;Try it out!&lt;/h3&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone https://github.com/markus-zzz/modem.git
-cd modem
-git checkout part-2
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;As a sanity check run the simple standalone test transmitting a sequence of
-test messages from size 4 to size 16&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;./build-all.sh &amp;amp;&amp;amp; ./run-all.sh
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;After that we can move on to do testing with QEMU and the Linux device driver.
-The steps for setting this up are almost identical to what was described in the
-I2C controller series (especially &lt;a href=&quot;/2018/07/18/i2c-controller-part-2.html&quot;&gt;part-2&lt;/a&gt; and &lt;a href=&quot;/2018/07/27/i2c-controller-part-4.html&quot;&gt;part-4&lt;/a&gt;) so repetion here will be brief.&lt;/p&gt;
-
-&lt;p&gt;Modify the Linux device tree for our modem device&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gh&quot;&gt;diff --git a/arch/arm/boot/dts/vexpress-v2m.dtsi b/arch/arm/boot/dts/vexpress-v2m.dtsi
-index b0021a8..2279196 100644
-&lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2m.dtsi
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2m.dtsi
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -179,8 +179,8 @@&lt;/span&gt;
-                                clock-names = &quot;uartclk&quot;, &quot;apb_pclk&quot;;
-                        };
-
--                       v2m_serial3: uart@c000 {
-&lt;span class=&quot;gd&quot;&gt;-                               compatible = &quot;arm,pl011&quot;, &quot;arm,primecell&quot;;
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+                       zzz_modem: zzz_modem@c000 {
-+                               compatible = &quot;zzz-modem&quot;;
-&lt;/span&gt;                                reg = &amp;lt;0x0c000 0x1000&amp;gt;;
-                                interrupts = &amp;lt;8&amp;gt;;
-                                clocks = &amp;lt;&amp;amp;v2m_oscclk2&amp;gt;, &amp;lt;&amp;amp;smbclk&amp;gt;;
-&lt;span class=&quot;gh&quot;&gt;diff --git a/arch/arm/boot/dts/vexpress-v2p-ca9.dts b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-index 5814460..98206c0 100644
-&lt;/span&gt;&lt;span class=&quot;gd&quot;&gt;--- a/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/arch/arm/boot/dts/vexpress-v2p-ca9.dts
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -25,7 +25,6 @@&lt;/span&gt;
-                serial0 = &amp;amp;v2m_serial0;
-                serial1 = &amp;amp;v2m_serial1;
-                serial2 = &amp;amp;v2m_serial2;
-&lt;span class=&quot;gd&quot;&gt;-               serial3 = &amp;amp;v2m_serial3;
-&lt;/span&gt;                i2c0 = &amp;amp;v2m_i2c_dvi;
-                i2c1 = &amp;amp;v2m_i2c_pcie;
-        };
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;For QEMU we need to be using
-&lt;a href=&quot;https://github.com/markus-zzz/modem/blob/part-2/qemu/axi_master_client_device.c&quot;&gt;qemu/axi_master_client_device.c&lt;/a&gt;
-and not the corresponding file from the previous repository.&lt;/p&gt;
-
-&lt;p&gt;Once everything is built and moved to the proper places the RTL simulation is
-started with&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;vvp -M. -mvpi_axi_master modem.vvp
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;and QEMU as before. Watch Linux boot, then login, install the module and do the
-following&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cat /dev/zzz-modem &amp;gt; rx.txt &amp;amp;
-echo &quot;Hello World!&quot; &amp;gt; /dev/zzz-modem
-cat rx.txt
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;And to transmit some more messages of varying length&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;for i in $(seq 100); do echo &quot;Hello $(seq -s &quot; &quot; $i)&quot; &amp;gt; /dev/zzz-modem; done
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;h3 id=&quot;what-is-next&quot;&gt;What is next?&lt;/h3&gt;
-
-&lt;p&gt;Right now we have implemented the loop-back at the highest level possible, i.e.
-right after the ring buffers. This is nice, in my opinion, since it allows for
-easy testing with the &lt;em&gt;/dev/zzz-modem&lt;/em&gt; device node right away and gives us more
-time to flush out any annoying bugs in the HW/SW interface.&lt;/p&gt;
-
-&lt;p&gt;Since our implementation strategy is to go top down we will continue to do so
-and keep on moving the loop-back loop further down the stack as more layers are
-added.&lt;/p&gt;
-
-&lt;p&gt;Currently I imagine that the following milestones will be useful&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Next have loop-back of IQ symbols&lt;/li&gt;
-  &lt;li&gt;Then loop-back of sampled pulse shaped IQ symbols&lt;/li&gt;
-  &lt;li&gt;Then introduce a shift so that we need to do synchronization in RX&lt;/li&gt;
-  &lt;li&gt;Do the same thing as previous step but use passband instead of baseband&lt;/li&gt;
-  &lt;li&gt;…&lt;/li&gt;
-  &lt;li&gt;Finally, a physical audio loop-back wire on the ZedBoard&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;That is it for this post. Questions or feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><category term="rtl" /><category term="verilog" /><category term="modem" /><summary type="html">Introduction In this post we return to our modem building project to checkup on the progress.</summary></entry></feed>
+feedback - leave a comment below!&lt;/p&gt;</content><author><name></name></author><category term="hardware" /><summary type="html">Last summer I bought a DSLogic Plus USB-based Logic Analyzer, about 6 months ago I tried it for the first time and today I hope to finish this post describing the experience. The thing comes with its own analyzer software running on the PC called DSView, but I never bothered trying that and instead went with the better known sigrok (of which DSView is a derivative).</summary></entry></feed>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>[DRAFT] Making some PCBs - part 3 (MAX9850) | ZZZ-Consulting</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="[DRAFT] Making some PCBs - part 3 (MAX9850)" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Stage 2 - MAX9850 2-layer board." />
+<meta property="og:description" content="Stage 2 - MAX9850 2-layer board." />
+<link rel="canonical" href="https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-3.html" />
+<meta property="og:url" content="https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-3.html" />
+<meta property="og:site_name" content="ZZZ-Consulting" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-05T00:00:00+01:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="[DRAFT] Making some PCBs - part 3 (MAX9850)" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","datePublished":"2022-01-05T00:00:00+01:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-3.html"},"headline":"[DRAFT] Making some PCBs - part 3 (MAX9850)","url":"https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-3.html","description":"Stage 2 - MAX9850 2-layer board.","dateModified":"2022-01-05T00:00:00+01:00","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://www.zzzconsulting.se/feed.xml" title="ZZZ-Consulting" /><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-122494618-1', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">ZZZ-Consulting</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About me</a><a class="page-link" href="/links/">Links</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">[DRAFT] Making some PCBs - part 3 (MAX9850)</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-01-05T00:00:00+01:00" itemprop="datePublished">Jan 5, 2022
+      </time></p>
+  </header>
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+  
+
+  
+    <script type="text/javascript" async
+		  src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.1.2/mermaid.min.js">
+</script>
+
+  
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h1 id="stage-2---max9850">Stage 2 - MAX9850</h1>
+<p>2-layer board.</p>
+
+<p>I also got started designing an audio extension board featuring the
+<a href="https://www.maximintegrated.com/en/products/analog/audio/MAX9850.html">MAX9850</a>
+stereo audio DAC with builtin headphone amplifier.</p>
+
+<p>Now the MAX9850 part comes in TQFN-28 which is an absolutely tiny package with
+0.5mm pitch (the KiCad footprint is “TQFN-28-1EP_5x5mm_P0.5mm_EP3.25x3.25mm”).
+See comparison below to get an idea how tiny this really is.</p>
+
+<p><img src="/download/pcb/max9850-size-comp.jpg" alt="" />
+<em>MAX9850 next to a standard 3.5mm audio plug.</em></p>
+
+<h2 id="pcb-design">PCB design</h2>
+
+<p>Using the best of my currently rather amateurish PCB design skills I ended up
+with the following layout with <a href="https://github.com/markus-zzz/mydacboard">KiCad project files on
+GitHub</a>.</p>
+
+<p>While it initially looked pretty good to me I realize that is has a number of
+layout flaws that I will need to remedy before I attempt the combined ECP5
+board. To this end I have signed up for the <a href="https://www.phils-lab.net/courses">Mixed-Signal Hardware Design with
+KiCad</a> course from well known YouTube
+creator <a href="https://www.phils-lab.net/">Phil’s Lab</a>. Having browsed through the 5
+hour video material that focuses heavily on PCB layout I can only say that this
+appears to be a goldmine. So after finishing this board I will probably take a
+detour to study the course material and follow along with its board project.</p>
+
+<p><img src="/download/pcb/dac-layout.png" alt="PCB layout" /></p>
+
+<h2 id="assembly">Assembly</h2>
+
+<p>Again soldering the top side using stencil and paste. The board is placed on a
+hot-plate that slowly rises to 220C after which hot air is applied from above
+for about 20-30s with station set to 300C at 30l/min.</p>
+
+<p><img src="/download/pcb/max9850-full.jpg" alt="" />
+<em>Stencil alignment, stencil with paste, paste alignment, component placement
+and post solder result.</em></p>
+
+<h2 id="bring-up">Bring up</h2>
+
+<p>After skimming through the MAX9850 datasheet it does seem that setting up a
+working audio flow will require writing a fair amount of I2C configuration
+registers. Ideally you would want some simple kind of test that can be used
+immediately after assembly to verify that the part has not been totally
+destroyed in the process. Needless to say you want this test to be dead simple
+so that you are not led to believe that the part is broken after assembly just
+because you made a mistake in the test code.</p>
+
+<p>The MAX9850 does have a (single) GPIO pin that is controllable by a I2C
+register. The pin has also been routed back to the FPGA so the dead simple
+first test we are looking for could be to write the appropriate I2C control
+register to toggle this GPIO and then have the FPGA forward the signal to a
+LED.</p>
+
+<p>Using <a href="https://github.com/markus-zzz/max9850-test">the simple test bench</a> I
+have been able to verify that both of the boards assembled so far accept I2C
+access and can toggle their GPIO pins.</p>
+
+<p>Next up is to configure all required control registers and start streaming
+digital audio (simple sawtooth for starters) to verify that the device is fully
+operational.</p>
+
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-3.html';
+      this.page.identifier = 'https://www.zzzconsulting.se/2022/01/05/making-pcbs-part-3.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://www-zzzconsulting-se.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2022/01/05/making-pcbs-part-3.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ZZZ-Consulting</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ZZZ-Consulting</li><li><a class="u-email" href="mailto:firstname.lastname@gmail.com">firstname.lastname@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/markus-zzz"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">markus-zzz</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Me writing blog posts about various topics I find interesting. Turns out these are mostly FPGA and retro-computing related.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
