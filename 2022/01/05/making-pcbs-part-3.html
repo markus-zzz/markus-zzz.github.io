@@ -94,6 +94,8 @@ See comparison below to get an idea how tiny this really is.</p>
 with the following layout with <a href="https://github.com/markus-zzz/mydacboard">KiCad project files on
 GitHub</a>.</p>
 
+<p><img src="/download/pcb/dac-layout.png" alt="PCB layout" /></p>
+
 <p>While it initially looked pretty good to me I realize that is has a number of
 layout flaws that I will need to remedy before I attempt the combined ECP5
 board. To this end I have signed up for the <a href="https://www.phils-lab.net/courses">Mixed-Signal Hardware Design with
@@ -102,8 +104,6 @@ creator <a href="https://www.phils-lab.net/">Phil’s Lab</a>. Having browsed th
 hour video material that focuses heavily on PCB layout I can only say that this
 appears to be a goldmine. So after finishing this board I will probably take a
 detour to study the course material and follow along with its board project.</p>
-
-<p><img src="/download/pcb/dac-layout.png" alt="PCB layout" /></p>
 
 <h2 id="assembly">Assembly</h2>
 
@@ -131,14 +131,33 @@ first test we are looking for could be to write the appropriate I2C control
 register to toggle this GPIO and then have the FPGA forward the signal to a
 LED.</p>
 
-<p>Using <a href="https://github.com/markus-zzz/max9850-test">the simple test bench</a> I
-have been able to verify that both of the boards assembled so far accept I2C
+<p>Using <a href="https://github.com/markus-zzz/max9850-test/tree/fafe550eb5bd27762d1c5857b90f52380dd440eb">the simple test
+bench</a>
+I have been able to verify that both of the boards assembled so far accept I2C
 access and can toggle their GPIO pins.</p>
 
 <p>Next up is to configure all required control registers and start streaming
-digital audio (simple sawtooth for starters) to verify that the device is fully
-operational.</p>
+digital audio. Using <a href="https://github.com/markus-zzz/max9850-test/tree/d2ac9c3ed896a54b3c6f4d6b7b6cd1a0d96cc9c4">the slightly more advanced test
+bench</a>
+the device is configured to use a sample rate of 48.8kHz and sawtooth waveforms
+at two different frequencies are generated in the FPGA (one for each channel).
+Pressing a button swaps the sawtooth frequencies. Both assembled boards pass
+this test.</p>
 
+<p>And finally just for fun, here is a quick integration with the MyC64 project
+playing the classic Bubble Bobble tune. Using branches
+<a href="https://github.com/markus-zzz/myc64/tree/max9850">myc64/max9850</a> and
+<a href="https://github.com/markus-zzz/usbdev/tree/max9850">usbdev/max9850</a>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./myc64-keyb ../../../c64-psid/MUSICIANS/C/Clarke_Peter/Bubble_Bobble.prg
+</code></pre></div></div>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/SnuTHjIvyxg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write;
+encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+
+<p>This does not sound quite right though, frequency (of the MyC64 design) is
+expected to be off but I suspect there is more to it than that. Need to examine
+closer at some point but for now this is good enough.</p>
 
   </div><div id="disqus_thread"></div>
   <script>
